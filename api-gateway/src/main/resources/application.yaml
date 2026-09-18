@@ -1,0 +1,113 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+
+            # ==============================
+            # CUSTOMER & PARTY SERVICE
+            # ==============================
+            - id: customer-party-service
+              uri: lb://customer-party-service
+              predicates:
+                - Path=/api/auth/**,/api/users/**
+
+            # ==============================
+            # QUOTE & POLICY SERVICE
+            # ==============================
+            - id: quote-policy-service
+              uri: lb://quote-policy-service
+              predicates:
+                - Path=/api/quotes/**,/api/policies/**
+
+            # ==============================
+            # RISK & UNDERWRITING SERVICE
+            # ==============================
+            - id: risk-underwriting-service
+              uri: lb://risk-underwriting-service
+              predicates:
+                - Path=/api/risks/**,/api/underwriting/**
+
+            # ==============================
+            # CLAIMS SERVICE
+            # ==============================
+            - id: claims-service
+              uri: lb://claims-service
+              predicates:
+                - Path=/api/claims/**
+
+            # ==============================
+            # VENDOR & PARTNER SERVICE
+            # ==============================
+            - id: vendor-partner-service
+              uri: lb://vendor-partner-service
+              predicates:
+                - Path=/api/vendors/**,/api/partners/**
+
+            # ==============================
+            # RECOVERY & BUSINESS CONTINUITY
+            # ==============================
+            - id: recovery-service
+              uri: lb://recovery-service
+              predicates:
+                - Path=/api/recovery/**,/api/business-continuity/**
+
+            # ==============================
+            # WORKFLOW & NOTIFICATION
+            # ==============================
+            - id: workflow-notification-service
+              uri: lb://workflow-notification-service
+              predicates:
+                - Path=/api/workflows/**,/api/notifications/**
+
+            # ==============================
+            # DOCUMENT & AUDIT
+            # ==============================
+            - id: document-audit-service
+              uri: lb://document-audit-service
+              predicates:
+                - Path=/api/documents/**,/api/audit/**
+
+            # ==============================
+            # ANALYTICS & INTELLIGENCE
+            # ==============================
+            - id: analytics-intelligence-service
+              uri: lb://analytics-intelligence-service
+              predicates:
+                - Path=/api/analytics/**,/api/intelligence/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info
+          - gateway
+
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  api-docs:
+    enabled: true
+
+  swagger-ui:
+    enabled: true
+
+
+jwt:
+  secret: VVGF9BeSRx3K2epQp4/DRnq881+8YixWG3KHI4qTl9I=
