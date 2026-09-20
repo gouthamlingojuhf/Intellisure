@@ -14,7 +14,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import reactor.core.publisher.Mono;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -33,5 +36,10 @@ public class AuthController {
     @PostMapping("/login")
     public Mono<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest){
         return authService.login(loginRequest);
+    }
+
+    @GetMapping("/me")
+    public Mono<UserResponse> me(@AuthenticationPrincipal Jwt jwt) {
+        return userAccountService.getUserById(UUID.fromString(jwt.getSubject()));
     }
 }

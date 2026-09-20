@@ -1,0 +1,32 @@
+S.No,Service,Database,Table,Entity,Purpose,PK
+1,Customer & Party Service,customer_party_db,user_account,UserAccount,"Identity, credentials, role and account lifecycle",user_id
+2,Customer & Party Service,customer_party_db,business_customer,BusinessCustomer,Small-business customer/party profile,customer_id
+3,Quote & Policy Service,quote_policy_db,quote,Quote,Insurance quote lifecycle and proposed terms,quote_id
+4,Quote & Policy Service,quote_policy_db,policy,Policy,Issued insurance contract and lifecycle,policy_id
+5,Quote & Policy Service,quote_policy_db,endorsement,Endorsement,Policy change transaction,endorsement_id
+6,Quote & Policy Service,quote_policy_db,renewal_transaction,RenewalTransaction,Renewal decision and transaction record,renewal_id
+7,Risk & Underwriting Service,risk_underwriting_db,risk_assessment,RiskAssessment,Structured risk assessment attached to quote/policy,assessment_id
+8,Risk & Underwriting Service,risk_underwriting_db,risk_finding,RiskFinding,Individual hazard/finding within an assessment,finding_id
+9,Risk & Underwriting Service,risk_underwriting_db,risk_recommendation,RiskRecommendation,Loss-prevention recommendation,recommendation_id
+10,Risk & Underwriting Service,risk_underwriting_db,risk_rule,RiskRule,Configurable underwriting/risk rule,rule_id
+11,Claims Service,claims_db,claim,Claim,Claim/FNOL lifecycle and case summary,claim_id
+12,Claims Service,claims_db,claim_assessment,ClaimAssessment,Damage/loss assessment,assessment_id
+13,Claims Service,claims_db,payout_calculation,PayoutCalculation,Versioned payout calculation,calculation_id
+14,Claims Service,claims_db,claim_settlement,ClaimSettlement,Approved settlement record,settlement_id
+15,Claims Service,claims_db,business_impact,BusinessImpact,Post-loss operational impact assessment,business_impact_id
+16,Claims Service,claims_db,claim_timeline_event,ClaimTimelineEvent,Claim-specific lifecycle history,timeline_event_id
+17,Vendor & Partner Service,vendor_partner_db,vendor,Vendor,Service provider/contractor profile,vendor_id
+18,Vendor & Partner Service,vendor_partner_db,vendor_onboarding_request,VendorOnboardingRequest,Contractor onboarding workflow record,onboarding_request_id
+19,Vendor & Partner Service,vendor_partner_db,vendor_assignment,VendorAssignment,Work assignment to a vendor,assignment_id
+20,Vendor & Partner Service,vendor_partner_db,vendor_performance,VendorPerformance,Completed-work performance record,performance_id
+21,Recovery & Business Continuity Service,recovery_continuity_db,recovery_case,RecoveryCase,Business recovery case linked to a claim,recovery_case_id
+22,Recovery & Business Continuity Service,recovery_continuity_db,recovery_plan,RecoveryPlan,Structured continuity/recovery plan,recovery_plan_id
+23,Recovery & Business Continuity Service,recovery_continuity_db,recovery_support_request,RecoverySupportRequest,Request for specific recovery support,support_request_id
+24,Workflow & Notification Service,workflow_notification_db,workflow,Workflow,Business process orchestration state,workflow_id
+25,Workflow & Notification Service,workflow_notification_db,workflow_task,WorkflowTask,Human/system task within workflow,task_id
+26,Workflow & Notification Service,workflow_notification_db,notification,Notification,In-app user notification,notification_id
+27,Document & Audit Service,document_audit_db,document,Document,Document metadata and object-storage reference,document_id
+28,Document & Audit Service,document_audit_db,audit_event,AuditEvent,Append-only audit record,audit_event_id
+29,Analytics & Intelligence Service,analytics_intelligence_db,claim_intelligence_snapshot,ClaimIntelligenceSnapshot,Persisted claim-intelligence/priority result,snapshot_id
+30,Analytics & Intelligence Service,analytics_intelligence_db,risk_score_snapshot,RiskScoreSnapshot,Persisted analytical risk score,snapshot_id
+31,Analytics & Intelligence Service,analytics_intelligence_db,renewal_intelligence_snapshot,RenewalIntelligenceSnapshot,Persisted renewal intelligence result,snapshot_id

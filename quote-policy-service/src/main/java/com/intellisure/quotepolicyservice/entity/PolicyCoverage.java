@@ -10,12 +10,29 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.springframework.data.domain.Persistable;
+import org.springframework.data.annotation.Transient;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table("policy_coverage")
-public class PolicyCoverage {
+public class PolicyCoverage implements Persistable<UUID> {
+
+    @Transient
+    @Builder.Default
+    private boolean isNew = true;
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @Override
+    public UUID getId() {
+        return policyCoverageId;
+    }
 
     @Id
     private UUID policyCoverageId;

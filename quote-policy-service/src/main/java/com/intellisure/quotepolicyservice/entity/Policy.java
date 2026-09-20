@@ -12,12 +12,29 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.springframework.data.domain.Persistable;
+import org.springframework.data.annotation.Transient;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table("policy")
-public class Policy {
+public class Policy implements Persistable<UUID> {
+
+    @Transient
+    @Builder.Default
+    private boolean isNew = true;
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @Override
+    public UUID getId() {
+        return policyId;
+    }
 
     @Id
     private UUID policyId;

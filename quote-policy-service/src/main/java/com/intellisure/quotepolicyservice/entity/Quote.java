@@ -11,12 +11,29 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.springframework.data.domain.Persistable;
+import org.springframework.data.annotation.Transient;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table("quote")
-public class Quote {
+public class Quote implements Persistable<UUID> {
+
+    @Transient
+    @Builder.Default
+    private boolean isNew = true;
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @Override
+    public UUID getId() {
+        return quoteId;
+    }
 
     @Id
     private UUID quoteId;

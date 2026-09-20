@@ -36,6 +36,26 @@ public class QuoteController {
         return quoteService.getQuote(quoteId);
     }
 
+    @GetMapping
+    public Flux<QuoteResponse> getQuotes(@RequestParam UUID customerId) {
+        return quoteService.getQuotesByCustomer(customerId);
+    }
+
+    @PostMapping("/{quoteId}/submit")
+    public Mono<QuoteResponse> submit(@PathVariable UUID quoteId) {
+        return quoteService.updateStatus(quoteId, "SUBMITTED");
+    }
+
+    @PostMapping("/{quoteId}/approve")
+    public Mono<QuoteResponse> approve(@PathVariable UUID quoteId) {
+        return quoteService.updateStatus(quoteId, "ACCEPTED");
+    }
+
+    @PostMapping("/{quoteId}/reject")
+    public Mono<QuoteResponse> reject(@PathVariable UUID quoteId) {
+        return quoteService.updateStatus(quoteId, "REJECTED");
+    }
+
 
     @GetMapping("/customer/{customerId}")
     public Flux<QuoteResponse> getCustomerQuotes(

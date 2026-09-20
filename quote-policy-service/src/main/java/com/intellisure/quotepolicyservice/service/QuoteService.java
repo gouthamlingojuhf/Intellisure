@@ -119,6 +119,17 @@ public class QuoteService {
                 .map(quoteMapper::toQuoteResponse);
     }
 
+    public Mono<QuoteResponse> updateStatus(UUID quoteId, String status) {
+        return quoteRepository.findById(quoteId)
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException("Quote not found: " + quoteId)))
+                .flatMap(quote -> {
+                    quote.setQuoteStatus(status);
+                    quote.setUpdatedAt(LocalDateTime.now());
+                    quote.setNew(false);
+                    return quoteRepository.save(quote);
+                }).map(quoteMapper::toQuoteResponse);
+    }
+
 
     private BigDecimal calculateInitialPremium(
             BigDecimal coverageAmount) {
