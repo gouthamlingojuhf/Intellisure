@@ -1,8 +1,6 @@
 package com.intellisure.quotepolicyservice.entity;
 
 import com.intellisure.quotepolicyservice.enums.RenewalStatus;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -12,8 +10,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@NoArgsConstructor
-@AllArgsConstructor
 @Table("renewal_transaction")
 public class RenewalTransaction {
 
@@ -68,6 +64,76 @@ public class RenewalTransaction {
 
     @Column("updated_at")
     private LocalDateTime updatedAt;
+
+    public RenewalTransaction() {}
+
+    public RenewalTransaction(UUID renewalId, UUID policyId, String renewalNumber,
+                              RenewalStatus status, LocalDate proposedStartDate, LocalDate proposedEndDate,
+                              BigDecimal proposedTotalPremium, String proposedCoverageSnapshot, String subjectivities,
+                              UUID decidedByUserId, LocalDateTime decidedAt, String decisionReason,
+                              UUID boundByUserId, LocalDateTime boundAt, LocalDateTime issuedAt,
+                              LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.renewalId = renewalId;
+        this.policyId = policyId;
+        this.renewalNumber = renewalNumber;
+        this.status = status;
+        this.proposedStartDate = proposedStartDate;
+        this.proposedEndDate = proposedEndDate;
+        this.proposedTotalPremium = proposedTotalPremium;
+        this.proposedCoverageSnapshot = proposedCoverageSnapshot;
+        this.subjectivities = subjectivities;
+        this.decidedByUserId = decidedByUserId;
+        this.decidedAt = decidedAt;
+        this.decisionReason = decisionReason;
+        this.boundByUserId = boundByUserId;
+        this.boundAt = boundAt;
+        this.issuedAt = issuedAt;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    public static RenewalTransactionBuilder builder() {
+        return new RenewalTransactionBuilder();
+    }
+
+    public static class RenewalTransactionBuilder {
+        private UUID renewalId;
+        private UUID policyId;
+        private String renewalNumber;
+        private RenewalStatus status;
+        private LocalDate proposedStartDate;
+        private LocalDate proposedEndDate;
+        private BigDecimal proposedTotalPremium;
+        private String proposedCoverageSnapshot;
+        private String subjectivities;
+        private UUID decidedByUserId;
+        private LocalDateTime decidedAt;
+        private String decisionReason;
+        private UUID boundByUserId;
+        private LocalDateTime boundAt;
+        private LocalDateTime issuedAt;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
+
+        public RenewalTransactionBuilder renewalId(UUID renewalId) { this.renewalId = renewalId; return this; }
+        public RenewalTransactionBuilder policyId(UUID policyId) { this.policyId = policyId; return this; }
+        public RenewalTransactionBuilder renewalNumber(String renewalNumber) { this.renewalNumber = renewalNumber; return this; }
+        public RenewalTransactionBuilder status(RenewalStatus status) { this.status = status; return this; }
+        public RenewalTransactionBuilder proposedStartDate(LocalDate proposedStartDate) { this.proposedStartDate = proposedStartDate; return this; }
+        public RenewalTransactionBuilder proposedEndDate(LocalDate proposedEndDate) { this.proposedEndDate = proposedEndDate; return this; }
+        public RenewalTransactionBuilder proposedTotalPremium(BigDecimal proposedTotalPremium) { this.proposedTotalPremium = proposedTotalPremium; return this; }
+        public RenewalTransactionBuilder proposedCoverageSnapshot(String proposedCoverageSnapshot) { this.proposedCoverageSnapshot = proposedCoverageSnapshot; return this; }
+        public RenewalTransactionBuilder subjectivities(String subjectivities) { this.subjectivities = subjectivities; return this; }
+        public RenewalTransactionBuilder decidedByUserId(UUID decidedByUserId) { this.decidedByUserId = decidedByUserId; return this; }
+        public RenewalTransactionBuilder decidedAt(LocalDateTime decidedAt) { this.decidedAt = decidedAt; return this; }
+        public RenewalTransactionBuilder decisionReason(String decisionReason) { this.decisionReason = decisionReason; return this; }
+        public RenewalTransactionBuilder boundByUserId(UUID boundByUserId) { this.boundByUserId = boundByUserId; return this; }
+        public RenewalTransactionBuilder boundAt(LocalDateTime boundAt) { this.boundAt = boundAt; return this; }
+        public RenewalTransactionBuilder issuedAt(LocalDateTime issuedAt) { this.issuedAt = issuedAt; return this; }
+        public RenewalTransactionBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
+        public RenewalTransactionBuilder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
+        public RenewalTransaction build() { return new RenewalTransaction(renewalId, policyId, renewalNumber, status, proposedStartDate, proposedEndDate, proposedTotalPremium, proposedCoverageSnapshot, subjectivities, decidedByUserId, decidedAt, decisionReason, boundByUserId, boundAt, issuedAt, createdAt, updatedAt); }
+    }
 
     public UUID getRenewalId() { return renewalId; }
     public void setRenewalId(UUID renewalId) { this.renewalId = renewalId; }

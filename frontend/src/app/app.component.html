@@ -1,0 +1,45 @@
+<header class="bg-blue-900 text-white shadow">
+  <nav class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center gap-2">
+    <a routerLink="/" class="font-bold text-lg mr-4">IntelliSure</a>
+    <a routerLink="/auth/login" class="hover:underline">Login</a>
+    <a routerLink="/policy" class="hover:underline">Quotes &amp; Policies</a>
+    <a routerLink="/underwriting" class="hover:underline">Underwriting</a>
+    <a routerLink="/claims" class="hover:underline">Claims</a>
+    <a routerLink="/vendor" class="hover:underline">Vendors</a>
+    <a routerLink="/analytics" class="hover:underline">Analytics</a>
+    <a routerLink="/recovery" class="hover:underline">Recovery</a>
+    <a routerLink="/docs" class="hover:underline">Docs &amp; Notifications</a>
+    <span class="flex-1"></span>
+    @if (isAuthenticated$ | async) {
+      <span class="badge-success">{{ (role$ | async) ?? 'USER' }}</span>
+      <button class="btn-secondary !py-1" (click)="logout()">Logout</button>
+    }
+  </nav>
+</header>
+
+@if (loading$ | async) {
+  <div class="bg-amber-600 text-white text-center text-sm py-1">Loading…</div>
+}
+
+<div class="max-w-7xl mx-auto px-4 py-4 space-y-2">
+  @for (t of toasts$ | async; track t.id) {
+    <div
+      class="rounded px-3 py-2 text-sm"
+      [class.bg-emerald-600]="t.kind === 'success'"
+      [class.bg-rose-600]="t.kind === 'error'"
+      [class.bg-blue-900]="t.kind === 'info'"
+      [class.text-white]="true"
+    >
+      {{ t.message }}
+      <button class="ml-3 underline" (click)="dismiss(t.id)">dismiss</button>
+    </div>
+  }
+</div>
+
+<main class="max-w-7xl mx-auto px-4 pb-10">
+  <router-outlet />
+</main>
+
+<footer class="max-w-7xl mx-auto px-4 pb-6 text-xs text-gray-500">
+  API gateway: http://localhost:8080 · Requests carry Authorization + X-Correlation-ID.
+</footer>

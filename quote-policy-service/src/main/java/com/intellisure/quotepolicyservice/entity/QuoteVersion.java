@@ -1,7 +1,5 @@
 package com.intellisure.quotepolicyservice.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -10,8 +8,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@NoArgsConstructor
-@AllArgsConstructor
 @Table("quote_version")
 public class QuoteVersion {
 
@@ -39,6 +35,45 @@ public class QuoteVersion {
 
     @Column("created_at")
     private LocalDateTime createdAt;
+
+    public QuoteVersion() {}
+
+    public QuoteVersion(UUID quoteVersionId, UUID quoteId, Long version, BigDecimal totalPremium,
+                        String coverageSnapshot, UUID offeredByUserId, LocalDateTime offeredAt, LocalDateTime createdAt) {
+        this.quoteVersionId = quoteVersionId;
+        this.quoteId = quoteId;
+        this.version = version;
+        this.totalPremium = totalPremium;
+        this.coverageSnapshot = coverageSnapshot;
+        this.offeredByUserId = offeredByUserId;
+        this.offeredAt = offeredAt;
+        this.createdAt = createdAt;
+    }
+
+    public static QuoteVersionBuilder builder() {
+        return new QuoteVersionBuilder();
+    }
+
+    public static class QuoteVersionBuilder {
+        private UUID quoteVersionId;
+        private UUID quoteId;
+        private Long version;
+        private BigDecimal totalPremium;
+        private String coverageSnapshot;
+        private UUID offeredByUserId;
+        private LocalDateTime offeredAt;
+        private LocalDateTime createdAt;
+
+        public QuoteVersionBuilder quoteVersionId(UUID quoteVersionId) { this.quoteVersionId = quoteVersionId; return this; }
+        public QuoteVersionBuilder quoteId(UUID quoteId) { this.quoteId = quoteId; return this; }
+        public QuoteVersionBuilder version(Long version) { this.version = version; return this; }
+        public QuoteVersionBuilder totalPremium(BigDecimal totalPremium) { this.totalPremium = totalPremium; return this; }
+        public QuoteVersionBuilder coverageSnapshot(String coverageSnapshot) { this.coverageSnapshot = coverageSnapshot; return this; }
+        public QuoteVersionBuilder offeredByUserId(UUID offeredByUserId) { this.offeredByUserId = offeredByUserId; return this; }
+        public QuoteVersionBuilder offeredAt(LocalDateTime offeredAt) { this.offeredAt = offeredAt; return this; }
+        public QuoteVersionBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
+        public QuoteVersion build() { return new QuoteVersion(quoteVersionId, quoteId, version, totalPremium, coverageSnapshot, offeredByUserId, offeredAt, createdAt); }
+    }
 
     public UUID getQuoteVersionId() { return quoteVersionId; }
     public void setQuoteVersionId(UUID quoteVersionId) { this.quoteVersionId = quoteVersionId; }

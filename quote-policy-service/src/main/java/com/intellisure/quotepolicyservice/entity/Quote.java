@@ -1,9 +1,6 @@
 package com.intellisure.quotepolicyservice.entity;
 
 import com.intellisure.quotepolicyservice.enums.QuoteStatus;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -13,9 +10,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @Table("quote")
 public class Quote {
 
@@ -91,6 +85,98 @@ public class Quote {
 
     @Column("updated_at")
     private LocalDateTime updatedAt;
+
+    public Quote() {}
+
+    public Quote(UUID quoteId, String quoteNumber, UUID customerId, String productCode,
+                 String insuranceNeed, String businessOperations, QuoteStatus status,
+                 LocalDate requestedEffectiveDate, LocalDateTime quoteExpiresAt, UUID assignedUnderwriterId,
+                 UUID riskAssessmentId, BigDecimal totalPremium, LocalDateTime submittedAt,
+                 LocalDateTime quotedAt, UUID acceptedByUserId, LocalDateTime acceptedAt,
+                 UUID boundByUserId, LocalDateTime boundAt, String declineReason, String withdrawalReason,
+                 Long version, String subjectivities, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.quoteId = quoteId;
+        this.quoteNumber = quoteNumber;
+        this.customerId = customerId;
+        this.productCode = productCode;
+        this.insuranceNeed = insuranceNeed;
+        this.businessOperations = businessOperations;
+        this.status = status;
+        this.requestedEffectiveDate = requestedEffectiveDate;
+        this.quoteExpiresAt = quoteExpiresAt;
+        this.assignedUnderwriterId = assignedUnderwriterId;
+        this.riskAssessmentId = riskAssessmentId;
+        this.totalPremium = totalPremium;
+        this.submittedAt = submittedAt;
+        this.quotedAt = quotedAt;
+        this.acceptedByUserId = acceptedByUserId;
+        this.acceptedAt = acceptedAt;
+        this.boundByUserId = boundByUserId;
+        this.boundAt = boundAt;
+        this.declineReason = declineReason;
+        this.withdrawalReason = withdrawalReason;
+        this.version = version;
+        this.subjectivities = subjectivities;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    public static QuoteBuilder builder() {
+        return new QuoteBuilder();
+    }
+
+    public static class QuoteBuilder {
+        private UUID quoteId;
+        private String quoteNumber;
+        private UUID customerId;
+        private String productCode;
+        private String insuranceNeed;
+        private String businessOperations;
+        private QuoteStatus status;
+        private LocalDate requestedEffectiveDate;
+        private LocalDateTime quoteExpiresAt;
+        private UUID assignedUnderwriterId;
+        private UUID riskAssessmentId;
+        private BigDecimal totalPremium;
+        private LocalDateTime submittedAt;
+        private LocalDateTime quotedAt;
+        private UUID acceptedByUserId;
+        private LocalDateTime acceptedAt;
+        private UUID boundByUserId;
+        private LocalDateTime boundAt;
+        private String declineReason;
+        private String withdrawalReason;
+        private Long version;
+        private String subjectivities;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
+
+        public QuoteBuilder quoteId(UUID quoteId) { this.quoteId = quoteId; return this; }
+        public QuoteBuilder quoteNumber(String quoteNumber) { this.quoteNumber = quoteNumber; return this; }
+        public QuoteBuilder customerId(UUID customerId) { this.customerId = customerId; return this; }
+        public QuoteBuilder productCode(String productCode) { this.productCode = productCode; return this; }
+        public QuoteBuilder insuranceNeed(String insuranceNeed) { this.insuranceNeed = insuranceNeed; return this; }
+        public QuoteBuilder businessOperations(String businessOperations) { this.businessOperations = businessOperations; return this; }
+        public QuoteBuilder status(QuoteStatus status) { this.status = status; return this; }
+        public QuoteBuilder requestedEffectiveDate(LocalDate requestedEffectiveDate) { this.requestedEffectiveDate = requestedEffectiveDate; return this; }
+        public QuoteBuilder quoteExpiresAt(LocalDateTime quoteExpiresAt) { this.quoteExpiresAt = quoteExpiresAt; return this; }
+        public QuoteBuilder assignedUnderwriterId(UUID assignedUnderwriterId) { this.assignedUnderwriterId = assignedUnderwriterId; return this; }
+        public QuoteBuilder riskAssessmentId(UUID riskAssessmentId) { this.riskAssessmentId = riskAssessmentId; return this; }
+        public QuoteBuilder totalPremium(BigDecimal totalPremium) { this.totalPremium = totalPremium; return this; }
+        public QuoteBuilder submittedAt(LocalDateTime submittedAt) { this.submittedAt = submittedAt; return this; }
+        public QuoteBuilder quotedAt(LocalDateTime quotedAt) { this.quotedAt = quotedAt; return this; }
+        public QuoteBuilder acceptedByUserId(UUID acceptedByUserId) { this.acceptedByUserId = acceptedByUserId; return this; }
+        public QuoteBuilder acceptedAt(LocalDateTime acceptedAt) { this.acceptedAt = acceptedAt; return this; }
+        public QuoteBuilder boundByUserId(UUID boundByUserId) { this.boundByUserId = boundByUserId; return this; }
+        public QuoteBuilder boundAt(LocalDateTime boundAt) { this.boundAt = boundAt; return this; }
+        public QuoteBuilder declineReason(String declineReason) { this.declineReason = declineReason; return this; }
+        public QuoteBuilder withdrawalReason(String withdrawalReason) { this.withdrawalReason = withdrawalReason; return this; }
+        public QuoteBuilder version(Long version) { this.version = version; return this; }
+        public QuoteBuilder subjectivities(String subjectivities) { this.subjectivities = subjectivities; return this; }
+        public QuoteBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
+        public QuoteBuilder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
+        public Quote build() { return new Quote(quoteId, quoteNumber, customerId, productCode, insuranceNeed, businessOperations, status, requestedEffectiveDate, quoteExpiresAt, assignedUnderwriterId, riskAssessmentId, totalPremium, submittedAt, quotedAt, acceptedByUserId, acceptedAt, boundByUserId, boundAt, declineReason, withdrawalReason, version, subjectivities, createdAt, updatedAt); }
+    }
 
     public UUID getQuoteId() { return quoteId; }
     public void setQuoteId(UUID quoteId) { this.quoteId = quoteId; }

@@ -14,7 +14,7 @@ spring:
             - id: customer-party-service
               uri: lb://customer-party-service
               predicates:
-                - Path=/api/auth/**,/api/users/**,/api/customers/**
+                - Path=/api/auth/**,/api/users/**,/api/customers/**,/api/admin/**
 
             - id: quote-policy-service
               uri: lb://quote-policy-service
@@ -30,6 +30,31 @@ spring:
               uri: lb://claims-service
               predicates:
                 - Path=/api/v1/claims/**
+
+            - id: vendor-partner-service
+              uri: lb://vendor-partner-service
+              predicates:
+                - Path=/api/vendors/**,/api/vendor-assignments/**
+
+            - id: workflow-notification-service
+              uri: lb://workflow-notification-service
+              predicates:
+                - Path=/api/workflows/**,/api/notifications/**,/api/tasks/**
+
+            - id: recovery-service
+              uri: lb://recovery-service
+              predicates:
+                - Path=/api/recovery/cases/**,/api/recovery/**
+
+            - id: document-audit-service
+              uri: lb://document-audit-service
+              predicates:
+                - Path=/api/documents/**,/api/audit-events/**
+
+            - id: analytics-intelligence-service
+              uri: lb://analytics-intelligence-service
+              predicates:
+                - Path=/api/analytics/**
 
 eureka:
   client:
@@ -54,7 +79,6 @@ springdoc:
     enabled: true
   swagger-ui:
     enabled: true
-    # This automatically detects your Eureka routes and populates the Swagger UI dropdown!
     use-root-path: true
     urls:
       - name: Customer & Party Service
@@ -63,7 +87,18 @@ springdoc:
         url: /api/quotes/v3/api-docs
       - name: Risk & Underwriting Service
         url: /api/underwriting/v3/api-docs
-
+      - name: Claims Service
+        url: /api/claims/v3/api-docs
+      - name: Vendor & Partner Service
+        url: /api/vendors/v3/api-docs
+      - name: Workflow & Notification Service
+        url: /api/workflows/v3/api-docs
+      - name: Recovery & Business Continuity Service
+        url: /api/recovery/v3/api-docs
+      - name: Document & Audit Service
+        url: /api/documents/v3/api-docs
+      - name: Analytics & Intelligence Service
+        url: /api/analytics/v3/api-docs
 
 jwt:
   secret: VVGF9BeSRx3K2epQp4/DRnq881+8YixWG3KHI4qTl9I=
