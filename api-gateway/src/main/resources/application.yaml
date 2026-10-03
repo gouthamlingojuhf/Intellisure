@@ -1,0 +1,95 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+
+            - id: customer-party-service
+              uri: lb://customer-party-service
+              predicates:
+                - Path=/api/auth/**,/api/users/**,/api/customers/**
+
+            - id: quote-policy-service
+              uri: lb://quote-policy-service
+              predicates:
+                - Path=/api/v1/quotes/**,/api/v1/policies/**
+
+            - id: risk-underwriting-service
+              uri: lb://risk-underwriting-service
+              predicates:
+                - Path=/api/v1/risk-assessments/**,/api/v1/referrals/**,/api/v1/subjectivities/**
+
+            - id: claims-service
+              uri: lb://claims-service
+              predicates:
+                - Path=/api/v1/claims/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info
+          - gateway
+
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    # This automatically detects your Eureka routes and populates the Swagger UI dropdown!
+    use-root-path: true
+    urls:
+      - name: Customer & Party Service
+        url: /api/users/v3/api-docs
+      - name: Quote & Policy Service
+        url: /api/quotes/v3/api-docs
+      - name: Risk & Underwriting Service
+        url: /api/underwriting/v3/api-docs
+
+
+jwt:
+  secret: VVGF9BeSRx3K2epQp4/DRnq881+8YixWG3KHI4qTl9I=
+
+logging:
+  level:
+    root: INFO
+    com.intellisure: INFO
+    org.springframework.security: WARN
+    org.springframework.r2dbc: WARN
+    io.asyncer.r2dbc.mysql: WARN
+    reactor.netty.http.client: WARN
+
+  pattern:
+    console: >-
+      %d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}
+      %-5level
+      [%thread]
+      %logger{36}
+      - %msg%n
+
+  file:
+    name: logs/${spring.application.name}.log
+
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 7
+      total-size-cap: 100MB

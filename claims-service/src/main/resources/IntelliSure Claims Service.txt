@@ -1,0 +1,1015 @@
+IntelliSure Claims Service
+Low Level Design (LLD) + Product Requirements Document (PRD)
+1. Service Overview
+Service Name
+claims-service
+
+Port
+8084
+
+Database
+claims_db
+
+Technology Stack
+Spring Boot 4.1.1
+Java 17
+Spring WebFlux
+Spring Security
+OAuth2 Resource Server
+Spring Data R2DBC
+MySQL
+Eureka Client
+OpenAPI / Swagger
+Reactive Resilience4J
+Lombok
+
+2. Business Mission
+
+The Claims Service manages an insured loss from:
+
+FNOL
+→ Investigation
+→ Coverage Determination
+→ Financial Evaluation
+→ Settlement
+→ Payment
+→ Closure
+
+
+It answers:
+
+What happened?
+
+Is it covered?
+
+How much is payable?
+
+What evidence supports the decision?
+
+What actions remain open?
+
+3. Service Ownership
+Owns
+Claim
+ClaimAssessment
+ClaimReserve
+PayoutCalculation
+ClaimSettlement
+BusinessImpact
+ClaimTimelineEvent
+RecoveryTrigger
+
+Does NOT Own
+Policy Master
+Customer Master
+Vendor Master
+Risk Assessment
+Underwriting Decision
+Audit History
+
+4. Domain Model
+4.1 Claim
+Purpose
+
+Primary business record.
+
+Represents a reported claim.
+
+Table
+claim
+
+Fields
+UUID claimId
+
+String claimNumber
+
+UUID customerId
+
+UUID policyId
+
+String policyNumber
+
+String incidentType
+
+String incidentDescription
+
+LocalDate incidentDate
+
+LocalDate reportedDate
+
+String incidentLocation
+
+ClaimStatus status
+
+ClaimPriority priority
+
+UUID assignedAdjusterId
+
+BigDecimal estimatedLossAmount
+
+BigDecimal estimatedCoveredLoss
+
+Boolean coverageConfirmed
+
+String coverageDecision
+
+String closureReason
+
+LocalDateTime createdAt
+
+LocalDateTime updatedAt
+
+4.2 ClaimAssessment
+Purpose
+
+Investigation outcome.
+
+Stores:
+
+Cause of loss
+Liability
+Coverage applicability
+Loss quantification
+
+Table
+claim_assessment
+
+Fields
+UUID assessmentId
+
+UUID claimId
+
+String causeOfLoss
+
+String findings
+
+Boolean covered
+
+String coverageRationale
+
+BigDecimal totalLossAmount
+
+BigDecimal coveredLossAmount
+
+BigDecimal deductibleApplied
+
+BigDecimal netLossAmount
+
+UUID assessorId
+
+LocalDateTime assessedAt
+
+LocalDateTime createdAt
+
+4.3 ClaimReserve
+Purpose
+
+Tracks reserve history.
+
+Reserves change over time.
+
+Table
+claim_reserve
+
+Fields
+UUID reserveId
+
+UUID claimId
+
+BigDecimal previousReserve
+
+BigDecimal newReserve
+
+String reserveReason
+
+UUID updatedBy
+
+LocalDateTime createdAt
+
+4.4 PayoutCalculation
+Purpose
+
+Represents settlement calculation.
+
+Table
+payout_calculation
+
+Fields
+UUID payoutCalculationId
+
+UUID claimId
+
+BigDecimal coveredLoss
+
+BigDecimal deductible
+
+BigDecimal policyLimit
+
+BigDecimal payableAmount
+
+String notes
+
+LocalDateTime calculatedAt
+
+
+Formula:
+
+Payable =
+ MIN(coveredLoss - deductible,
+     policyLimit)
+
+4.5 ClaimSettlement
+Purpose
+
+Represents settlement approval and payment.
+
+Table
+claim_settlement
+
+Fields
+UUID settlementId
+
+UUID claimId
+
+BigDecimal approvedAmount
+
+SettlementStatus status
+
+UUID approvedBy
+
+LocalDateTime approvedAt
+
+Boolean paymentCompleted
+
+LocalDateTime paidAt
+
+String paymentReference
+
+LocalDateTime createdAt
+
+4.6 BusinessImpact
+Purpose
+
+Tracks operational impact.
+
+Used for:
+
+Business interruption
+Temporary closure
+Revenue loss
+
+Table
+business_impact
+
+Fields
+UUID impactId
+
+UUID claimId
+
+Integer downtimeDays
+
+BigDecimal revenueImpact
+
+String impactDescription
+
+Boolean recoveryRequired
+
+LocalDateTime createdAt
+
+4.7 ClaimTimelineEvent
+Purpose
+
+Complete claim activity timeline.
+
+Table
+claim_timeline_event
+
+Fields
+UUID eventId
+
+UUID claimId
+
+String eventType
+
+String description
+
+UUID actorId
+
+LocalDateTime occurredAt
+
+
+Examples:
+
+FNOL_RECEIVED
+ADJUSTER_ASSIGNED
+ASSESSMENT_COMPLETED
+RESERVE_UPDATED
+SETTLEMENT_APPROVED
+PAYMENT_COMPLETED
+CLAIM_CLOSED
+
+4.8 RecoveryTrigger
+Purpose
+
+Links a claim to:
+
+Recovery Service
+
+Table
+recovery_trigger
+
+Fields
+UUID recoveryTriggerId
+
+UUID claimId
+
+Boolean recoveryRequired
+
+String recoveryReason
+
+RecoveryStatus status
+
+LocalDateTime createdAt
+
+5. Enums
+ClaimStatus
+public enum ClaimStatus {
+
+    FNOL_RECEIVED,
+
+    OPEN,
+
+    INVESTIGATING,
+
+    COVERAGE_REVIEW,
+
+    RESERVED,
+
+    APPROVED,
+
+    DENIED,
+
+    SETTLED,
+
+    CLOSED
+}
+
+ClaimPriority
+public enum ClaimPriority {
+
+    LOW,
+    MEDIUM,
+    HIGH,
+    CRITICAL
+}
+
+SettlementStatus
+public enum SettlementStatus {
+
+    PENDING,
+
+    APPROVED,
+
+    REJECTED,
+
+    PAID
+}
+
+RecoveryStatus
+public enum RecoveryStatus {
+
+    OPEN,
+
+    IN_PROGRESS,
+
+    COMPLETED
+}
+
+6. Lifecycle
+Claim Lifecycle
+FNOL_RECEIVED
+      ↓
+OPEN
+      ↓
+INVESTIGATING
+      ↓
+COVERAGE_REVIEW
+      ↓
+RESERVED
+      ↓
+APPROVED / DENIED
+
+If APPROVED
+
+APPROVED
+    ↓
+SETTLED
+    ↓
+CLOSED
+
+7. APIs
+FNOL
+Create FNOL
+POST /api/v1/claims
+
+
+Request:
+
+{
+  "customerId":"...",
+  "policyNumber":"POL-2026-0001",
+  "incidentType":"FIRE",
+  "incidentDescription":"Kitchen fire",
+  "incidentDate":"2026-09-25",
+  "incidentLocation":"Hyderabad"
+}
+
+
+Response:
+
+{
+  "claimNumber":"CLM-2026-00001",
+  "status":"FNOL_RECEIVED"
+}
+
+Claim Retrieval
+GET /api/v1/claims/{claimId}
+
+GET /api/v1/claims/number/{claimNumber}
+
+Claim Queue
+GET /api/v1/claims?status=OPEN
+
+Assignment
+Assign Adjuster
+PATCH
+/api/v1/claims/{claimId}/assign-adjuster
+
+
+Request
+
+{
+  "adjusterId":"..."
+}
+
+Assessment
+Create Assessment
+POST
+/api/v1/claims/{claimId}/assessment
+
+Reserve
+Create Reserve Update
+POST
+/api/v1/claims/{claimId}/reserve
+
+Settlement
+Calculate Payout
+POST
+/api/v1/claims/{claimId}/payout
+
+Approve Settlement
+PATCH
+/api/v1/claims/{claimId}/settlement/approve
+
+Record Payment
+PATCH
+/api/v1/claims/{claimId}/payment
+
+Closure
+Close Claim
+PATCH
+/api/v1/claims/{claimId}/close
+
+
+Validation:
+
+Settlement completed
+Payment completed
+Recovery completed (if required)
+
+8. External Integrations
+Customer & Party
+
+Used for:
+
+Customer details
+Contact information
+
+
+Consumes:
+
+GET /api/users/{userId}
+GET /api/customers/{customerId}
+
+Quote & Policy
+
+Critical integration.
+
+Consumes:
+
+GET
+/api/v1/policies/number/{policyNumber}/status
+
+GET
+/api/v1/policies/number/{policyNumber}/coverage-check
+
+
+Used for:
+
+Coverage verification
+Policy validation
+Deductible lookup
+Limit lookup
+
+Vendor & Partner
+
+Consumes:
+
+POST /api/v1/vendor-assignments
+
+
+Used for:
+
+Repairs
+Inspections
+Restoration
+
+Recovery Service
+
+Consumes:
+
+POST /api/v1/recovery-triggers
+
+
+When:
+
+Business interruption
+Subrogation
+Recovery case required
+
+9. RBAC
+POLICYHOLDER
+Create FNOL
+
+View own claims
+
+CLAIMS_ADJUSTER
+View assigned claims
+
+Create assessments
+
+Update reserves
+
+Recommend settlement
+
+CLAIMS_MANAGER
+Approve settlement
+
+Override assignment
+
+Close claims
+
+ADMIN
+All claims operations
+
+10. Events
+
+Publish:
+
+ClaimCreated
+AdjusterAssigned
+AssessmentCompleted
+ReserveUpdated
+CoverageDetermined
+SettlementApproved
+PaymentCompleted
+RecoveryTriggered
+ClaimClosed
+
+
+Consume:
+
+PolicyIssued
+PolicyUpdated
+CustomerUpdated
+VendorAssigned
+RecoveryCompleted
+
+MVP Success Criteria
+
+A complete claim journey should support:
+
+Restaurant Fire Loss
+
+FNOL
+→ Coverage Validation
+→ Adjuster Assignment
+→ Assessment
+→ Reserve
+→ Settlement
+→ Payment
+→ Recovery Trigger
+→ Claim Closure
+
+
+This gives IntelliSure a complete insurance lifecycle:
+
+Customer
+→ Quote
+→ Risk
+→ Policy
+→ Claim
+→ Vendor
+→ Recovery
+→ Closure
+11. Inter-Service Communication Architecture
+Communication Principles
+Synchronous Communication
+
+Used when immediate business validation is required.
+
+Technology:
+
+Spring WebClient
+Reactive WebFlux
+Eureka Discovery
+Load Balanced Calls
+Circuit Breaker
+
+
+Examples:
+
+Claim Creation
+→ Needs Policy Verification
+
+Coverage Evaluation
+→ Needs Coverage Validation
+
+Vendor Assignment
+→ Needs Vendor Lookup
+
+Asynchronous Communication
+
+Used for:
+
+Audit
+Notifications
+Analytics
+Workflow
+Future Event Processing
+
+
+Technology:
+
+Domain Events
+Kafka (future)
+RabbitMQ (future)
+Event DTOs
+
+Claims Service Dependencies
+Claims Service
+│
+├── Quote & Policy Service
+├── Customer & Party Service
+├── Vendor & Partner Service
+├── Recovery Service
+├── Workflow & Notification Service
+├── Document & Audit Service
+└── Analytics & Intelligence Service
+
+11.1 Customer Reports a Loss
+Step 1
+
+Policyholder submits FNOL
+
+POST /api/v1/claims
+
+
+Request:
+
+{
+  "policyNumber": "POL-2026-000001",
+  "incidentDate": "2026-09-25",
+  "incidentType": "FIRE"
+}
+
+Claims Service validates policy
+
+Calls:
+
+GET
+/api/v1/policies/number/{policyNumber}/status
+
+
+Target:
+
+Quote & Policy Service
+
+
+Response:
+
+{
+  "policyStatus": "IN_FORCE",
+  "activeOnRequestedDate": true
+}
+
+
+If:
+
+Policy inactive
+
+
+Claim cannot move to:
+
+COVERAGE_REVIEW
+
+11.2 Coverage Verification
+
+Claims must determine:
+
+Was PROPERTY coverage active?
+
+Was BUSINESS_INCOME coverage active?
+
+Was LIABILITY coverage active?
+
+
+Claims calls:
+
+GET
+/api/v1/policies/number/{policyNumber}/coverage-check
+
+
+Target:
+
+Quote & Policy Service
+
+
+Example:
+
+GET
+/api/v1/policies/number/POL-2026-000001
+/coverage-check
+?coverageCode=PROPERTY
+&requestedDate=2026-09-25
+
+
+Response:
+
+{
+  "coveragePresent": true,
+  "limitAmount": 8000000,
+  "deductibleAmount": 150000
+}
+
+
+Claims never keeps its own policy master.
+
+11.3 Customer Information Lookup
+
+Claims may need:
+
+Customer contact information
+Business details
+Owner information
+
+
+Calls:
+
+GET /api/customers/{customerId}
+
+
+Target:
+
+Customer & Party Service
+
+
+Response:
+
+{
+  "businessName": "Goutham Restaurant",
+  "ownerName": "Goutham"
+}
+
+
+Customer & Party remains source of truth.
+
+11.4 Vendor Assignment
+
+When damage requires services:
+
+Inspection
+Fire Restoration
+Repair
+Cleanup
+
+
+Claims calls:
+
+POST /api/v1/vendor-assignments
+
+
+Target:
+
+Vendor & Partner Service
+
+
+Request:
+
+{
+  "claimId": "CLM-2026-0001",
+  "serviceType": "FIRE_RESTORATION",
+  "location": "Hyderabad"
+}
+
+
+Response:
+
+{
+  "vendorId": "VND-001",
+  "vendorName": "ABC Restoration Services"
+}
+
+
+Claims never owns vendor eligibility.
+
+11.5 Recovery Trigger
+
+Business interruption discovered:
+
+Restaurant cannot operate
+
+
+Claims creates recovery work.
+
+Calls:
+
+POST /api/v1/recovery-triggers
+
+
+Target:
+
+Recovery Service
+
+
+Request:
+
+{
+  "claimId": "CLM-2026-0001",
+  "recoveryReason": "BUSINESS_INTERRUPTION"
+}
+
+
+Response:
+
+{
+  "recoveryTriggerId": "REC-001",
+  "status": "OPEN"
+}
+
+11.6 Workflow Integration
+
+Claims does not own work queues.
+
+Creates:
+
+Adjuster Assignment Task
+Inspection Task
+Settlement Approval Task
+
+
+Calls:
+
+POST /api/v1/workflow/tasks
+
+
+Target:
+
+Workflow & Notification Service
+
+
+Example:
+
+{
+  "entityType": "CLAIM",
+  "entityId": "CLM-001",
+  "taskType": "ADJUSTER_ASSIGNMENT"
+}
+
+11.7 Document Storage
+
+Evidence belongs to:
+
+Document & Audit Service
+
+
+Claims stores only references.
+
+Uploaded document:
+
+KitchenFirePhotos.zip
+
+
+Stored:
+
+{
+  "documentId": "DOC-001"
+}
+
+
+Claims record:
+
+ClaimDocumentReference
+documentId = DOC-001
+
+11.8 Analytics Integration
+
+Claims sends:
+
+Loss patterns
+Reserve movements
+Settlement trends
+Subrogation opportunities
+
+
+To:
+
+Analytics & Intelligence Service
+
+
+Analytics returns:
+
+Claim priority suggestions
+Fraud indicators
+Routing recommendations
+
+
+Claims remains decision authority.
+
+12. End-to-End Data Flow
+Policyholder
+      │
+      ▼
+Claims Service
+      │
+      ├──────────────► Quote & Policy
+      │                 (policy status)
+      │
+      ├──────────────► Quote & Policy
+      │                 (coverage check)
+      │
+      ├──────────────► Customer & Party
+      │                 (customer profile)
+      │
+      ├──────────────► Vendor & Partner
+      │                 (vendor assignment)
+      │
+      ├──────────────► Workflow
+      │                 (tasks)
+      │
+      ├──────────────► Document & Audit
+      │                 (evidence)
+      │
+      ├──────────────► Recovery Service
+      │                 (recovery trigger)
+      │
+      └──────────────► Analytics
+                        (decision support)
+
+13. Service Contracts Required
+
+Before Claims can be fully implemented, these APIs must exist:
+
+Quote & Policy
+GET /api/v1/policies/number/{policyNumber}/status
+
+GET /api/v1/policies/number/{policyNumber}/coverage-check
+
+Customer & Party
+GET /api/customers/{customerId}
+
+GET /api/users/{userId}
+
+Vendor & Partner
+POST /api/v1/vendor-assignments
+
+Workflow
+POST /api/v1/tasks
+
+Recovery
+POST /api/v1/recovery-triggers
+
+
+This inter-service flow gives IntelliSure a complete architecture story:
+
+Customer
+→ Quote
+→ Risk
+→ Policy
+→ Claim
+→ Vendor
+→ Recovery
+→ Closure
+
+
+which is exactly the type of end-to-end journey evaluators usually want to see.

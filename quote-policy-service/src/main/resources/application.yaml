@@ -1,0 +1,103 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: quote-policy-service
+
+  r2dbc:
+    url: r2dbc:mysql://localhost:3306/quote_policy_db
+    username: root
+    password:
+
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+  instance:
+    prefer-ip-address: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    root: INFO
+    com.intellisure.quotepolicyservice: INFO
+
+  file:
+    name: logs/quote-policy-service.log
+
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 15
+      total-size-cap: 100MB
+
+
+
+jwt:
+  secret: VVGF9BeSRx3K2epQp4/DRnq881+8YixWG3KHI4qTl9I=
+
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      riskUnderwritingService:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        permitted-number-of-calls-in-half-open-state: 3
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 50
+        slow-call-duration-threshold: 3s
+        wait-duration-in-open-state: 15s
+        automatic-transition-from-open-to-half-open-enabled: true
+        register-health-indicator: true
+
+        ignore-exceptions:
+          - com.intellisure.quotepolicyservice.exception.ResourceNotFoundException
+          - com.intellisure.quotepolicyservice.exception.BusinessException
+
+  timelimiter:
+    instances:
+      riskUnderwritingService:
+        timeout-duration: 5s
+        cancel-running-future: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info
+          - metrics
+          - circuitbreakers
+          - circuitbreakerevents
+
+  endpoint:
+    health:
+      show-details: always
+
+  health:
+    circuitbreakers:
+      enabled: true
+
+intellisure:
+  underwriting:
+    eligible-underwriter-ids: []
+#      - f41d726d-1678-4774-b501-f846e3228213
+#      - a881932e-54d3-4fcb-b73b-25f90b626962
+#      - 5d946cd5-fe42-420d-a970-39b350308eb5
+  lifecycle:
+    cron:  "*/10 * * * * *"

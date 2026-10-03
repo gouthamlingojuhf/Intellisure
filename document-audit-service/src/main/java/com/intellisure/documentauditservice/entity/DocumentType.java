@@ -1,0 +1,78 @@
+package com.intellisure.documentauditservice.entity;
+
+public enum DocumentType {
+    // Policy Documents
+    POLICY_DECLARATIONS,
+    POLICY_JACKET,
+    ENDORSEMENT,
+    RENEWAL_NOTICE,
+    CANCELLATION_NOTICE,
+    REINSTATEMENT_NOTICE,
+
+    // Quote Documents
+    QUOTE_LETTER,
+    BINDER,
+    SUBJECTIVITY_LETTER,
+
+    // Claims Documents
+    FNOL_REPORT,
+    LOSS_RUN,
+    ADJUSTER_REPORT,
+    MEDICAL_REPORT,
+    POLICE_REPORT,
+    APPRAISAL_REPORT,
+    ESTIMATE,
+    INVOICE,
+    RECEIPT,
+    PHOTOGRAPH,
+    VIDEO,
+    AUDIO_RECORDING,
+    CORRESPONDENCE,
+    LEGAL_DOCUMENT,
+    COURT_FILING,
+    SETTLEMENT_AGREEMENT,
+    RELEASE_FORM,
+
+    // Risk/Underwriting Documents
+    RISK_ASSESSMENT_REPORT,
+    LOSS_CONTROL_REPORT,
+    INSPECTION_REPORT,
+    ENGINEERING_REPORT,
+    APPRAISAL,
+    SURVEY,
+    MAP,
+    DIAGRAM,
+
+    // Financial Documents
+    PREMIUM_AUDIT_REPORT,
+    COMMISSION_STATEMENT,
+    FINANCIAL_STATEMENT,
+    TAX_DOCUMENT,
+    PAYMENT_RECORD,
+    REFUND_RECORD,
+
+    // Vendor/Partner Documents
+    VENDOR_CONTRACT,
+    SERVICE_AGREEMENT,
+    WORK_ORDER,
+    WORK_COMPLETION_CERTIFICATE,
+    LICENSE_CERTIFICATION,
+    INSURANCE_CERTIFICATE,
+
+    // Compliance/Audit Documents
+    AUDIT_REPORT,
+    COMPLIANCE_CERTIFICATE,
+    REGULATORY_FILING,
+    EXAMINATION_REPORT,
+
+    // Identity/Verification Documents
+    ID_DOCUMENT,
+    PROOF_OF_ADDRESS,
+    BUSINESS_REGISTRATION,
+    AUTHORIZATION_LETTER,
+    POWER_OF_ATTORNEY,
+
+    // Other
+    OTHER,
+    UNKNOWN
+}

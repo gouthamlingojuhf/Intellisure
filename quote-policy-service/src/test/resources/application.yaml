@@ -1,0 +1,80 @@
+server:
+  port: 0
+
+spring:
+  application:
+    name: quote-policy-service-test
+
+  main:
+    allow-bean-definition-overriding: true
+
+  r2dbc:
+    url: r2dbc:h2:mem:///quote_policy_test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;NON_KEYWORDS=QUOTE,POLICY
+    username: sa
+    password: ""
+
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema-h2.sql
+
+  cloud:
+    circuitbreaker:
+      enabled: false
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+jwt:
+  secret: VVGF9BeSRx3K2epQp4/DRnq881+8YixWG3KHI4qTl9I=
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      riskUnderwritingService:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        permitted-number-of-calls-in-half-open-state: 3
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 50
+        slow-call-duration-threshold: 3s
+        wait-duration-in-open-state: 15s
+        automatic-transition-from-open-to-half-open-enabled: true
+        register-health-indicator: false
+  timelimiter:
+    instances:
+      riskUnderwritingService:
+        timeout-duration: 5s
+        cancel-running-future: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+  endpoint:
+    health:
+      show-details: always
+
+intellisure:
+  underwriting:
+    eligible-underwriter-ids: []
+  lifecycle:
+    cron: "0 0 0 1 1 *"
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+logging:
+  level:
+    root: WARN
+    com.intellisure.quotepolicyservice: WARN
+    org.springframework.security: TRACE
