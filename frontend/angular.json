@@ -201,6 +201,592 @@
 					}
 				}
 			}
-		}
+    },
+    "claims-mfe": {
+      "projectType": "application",
+      "schematics": {},
+      "root": "projects/claims-mfe",
+      "sourceRoot": "projects/claims-mfe/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "ngx-build-plus:browser",
+          "options": {
+            "outputPath": "dist/claims-mfe",
+            "index": "projects/claims-mfe/src/index.html",
+            "main": "projects/claims-mfe/src/main.ts",
+            "polyfills": [
+              "zone.js"
+            ],
+            "tsConfig": "projects/claims-mfe/tsconfig.app.json",
+            "assets": [
+              "projects/claims-mfe/src/favicon.ico",
+              "projects/claims-mfe/src/assets"
+            ],
+            "styles": [
+              "projects/claims-mfe/src/styles.css"
+            ],
+            "scripts": [],
+            "extraWebpackConfig": "projects/claims-mfe/webpack.config.js",
+            "commonChunk": false
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "all",
+              "extraWebpackConfig": "projects/claims-mfe/webpack.prod.config.js"
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "ngx-build-plus:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "claims-mfe:build:production",
+              "extraWebpackConfig": "projects/claims-mfe/webpack.prod.config.js"
+            },
+            "development": {
+              "buildTarget": "claims-mfe:build:development"
+            }
+          },
+          "defaultConfiguration": "development",
+          "options": {
+            "port": 4202,
+            "publicHost": "http://localhost:4202",
+            "extraWebpackConfig": "projects/claims-mfe/webpack.config.js"
+          }
+        },
+        "extract-i18n": {
+          "builder": "ngx-build-plus:extract-i18n",
+          "options": {
+            "buildTarget": "claims-mfe:build"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
+            "tsConfig": "projects/claims-mfe/tsconfig.spec.json",
+            "assets": [
+              "projects/claims-mfe/src/favicon.ico",
+              "projects/claims-mfe/src/assets"
+            ],
+            "styles": [
+              "projects/claims-mfe/src/styles.css"
+            ],
+            "scripts": []
+          }
+        }
+      }
+    },
+    "intelligence-mfe": {
+      "projectType": "application",
+      "schematics": {},
+      "root": "projects/intelligence-mfe",
+      "sourceRoot": "projects/intelligence-mfe/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "ngx-build-plus:browser",
+          "options": {
+            "outputPath": "dist/intelligence-mfe",
+            "index": "projects/intelligence-mfe/src/index.html",
+            "main": "projects/intelligence-mfe/src/main.ts",
+            "polyfills": [
+              "zone.js"
+            ],
+            "tsConfig": "projects/intelligence-mfe/tsconfig.app.json",
+            "assets": [
+              "projects/intelligence-mfe/src/favicon.ico",
+              "projects/intelligence-mfe/src/assets"
+            ],
+            "styles": [
+              "projects/intelligence-mfe/src/styles.css"
+            ],
+            "scripts": [],
+            "extraWebpackConfig": "projects/intelligence-mfe/webpack.config.js",
+            "commonChunk": false
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "all",
+              "extraWebpackConfig": "projects/intelligence-mfe/webpack.prod.config.js"
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "ngx-build-plus:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "intelligence-mfe:build:production",
+              "extraWebpackConfig": "projects/intelligence-mfe/webpack.prod.config.js"
+            },
+            "development": {
+              "buildTarget": "intelligence-mfe:build:development"
+            }
+          },
+          "defaultConfiguration": "development",
+          "options": {
+            "port": 4203,
+            "publicHost": "http://localhost:4203",
+            "extraWebpackConfig": "projects/intelligence-mfe/webpack.config.js"
+          }
+        },
+        "extract-i18n": {
+          "builder": "ngx-build-plus:extract-i18n",
+          "options": {
+            "buildTarget": "intelligence-mfe:build"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
+            "tsConfig": "projects/intelligence-mfe/tsconfig.spec.json",
+            "assets": [
+              "projects/intelligence-mfe/src/favicon.ico",
+              "projects/intelligence-mfe/src/assets"
+            ],
+            "styles": [
+              "projects/intelligence-mfe/src/styles.css"
+            ],
+            "scripts": []
+          }
+        }
+      }
+    },
+    "claims-mfe": {
+      "projectType": "application",
+      "schematics": {},
+      "root": "projects/claims-mfe",
+      "sourceRoot": "projects/claims-mfe/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "ngx-build-plus:browser",
+          "options": {
+            "outputPath": "dist/claims-mfe",
+            "index": "projects/claims-mfe/src/index.html",
+            "main": "projects/claims-mfe/src/main.ts",
+            "polyfills": [
+              "zone.js"
+            ],
+            "tsConfig": "projects/claims-mfe/tsconfig.app.json",
+            "assets": [
+              "projects/claims-mfe/src/favicon.ico",
+              "projects/claims-mfe/src/assets"
+            ],
+            "styles": [
+              "projects/claims-mfe/src/styles.css"
+            ],
+            "scripts": [],
+            "extraWebpackConfig": "projects/claims-mfe/webpack.config.js",
+            "commonChunk": false
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "all",
+              "extraWebpackConfig": "projects/claims-mfe/webpack.prod.config.js"
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "ngx-build-plus:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "claims-mfe:build:production",
+              "extraWebpackConfig": "projects/claims-mfe/webpack.prod.config.js"
+            },
+            "development": {
+              "buildTarget": "claims-mfe:build:development"
+            }
+          },
+          "defaultConfiguration": "development",
+          "options": {
+            "port": 4203,
+            "publicHost": "http://localhost:4203",
+            "extraWebpackConfig": "projects/claims-mfe/webpack.config.js"
+          }
+        },
+        "extract-i18n": {
+          "builder": "ngx-build-plus:extract-i18n",
+          "options": {
+            "buildTarget": "claims-mfe:build"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
+            "tsConfig": "projects/claims-mfe/tsconfig.spec.json",
+            "assets": [
+              "projects/claims-mfe/src/favicon.ico",
+              "projects/claims-mfe/src/assets"
+            ],
+            "styles": [
+              "projects/claims-mfe/src/styles.css"
+            ],
+            "scripts": []
+          }
+        }
+      }
+    },
+    "vendor-mfe": {
+      "projectType": "application",
+      "schematics": {},
+      "root": "projects/vendor-mfe",
+      "sourceRoot": "projects/vendor-mfe/src",
+      "prefix": "app",
+      "architect": {
+          "build": {
+            "builder": "ngx-build-plus:browser",
+            "options": {
+              "outputPath": "dist/vendor-mfe",
+              "index": "projects/vendor-mfe/src/index.html",
+              "main": "projects/vendor-mfe/src/main.ts",
+              "polyfills": [
+                "zone.js"
+              ],
+              "tsConfig": "projects/vendor-mfe/tsconfig.app.json",
+              "assets": [
+                "projects/vendor-mfe/src/favicon.ico",
+                "projects/vendor-mfe/src/assets"
+              ],
+              "styles": [
+                "projects/vendor-mfe/src/styles.css"
+              ],
+              "scripts": [],
+              "extraWebpackConfig": "projects/vendor-mfe/webpack.config.js",
+              "commonChunk": false
+            },
+            "configurations": {
+              "production": {
+                "budgets": [
+                  {
+                    "type": "initial",
+                    "maximumWarning": "500kb",
+                    "maximumError": "1mb"
+                  },
+                  {
+                    "type": "anyComponentStyle",
+                    "maximumWarning": "2kb",
+                    "maximumError": "4kb"
+                  }
+                ],
+                "outputHashing": "all",
+                "extraWebpackConfig": "projects/vendor-mfe/webpack.prod.config.js"
+              },
+              "development": {
+                "optimization": false,
+                "extractLicenses": false,
+                "sourceMap": true
+              }
+            },
+            "defaultConfiguration": "production"
+          },
+          "serve": {
+            "builder": "ngx-build-plus:dev-server",
+            "configurations": {
+              "production": {
+                "buildTarget": "vendor-mfe:build:production",
+                "extraWebpackConfig": "projects/vendor-mfe/webpack.prod.config.js"
+              },
+              "development": {
+                "buildTarget": "vendor-mfe:build:development"
+              }
+            },
+            "defaultConfiguration": "development",
+            "options": {
+              "port": 4205,
+              "publicHost": "http://localhost:4205",
+              "extraWebpackConfig": "projects/vendor-mfe/webpack.config.js"
+            }
+          },
+          "extract-i18n": {
+            "builder": "ngx-build-plus:extract-i18n",
+            "options": {
+              "buildTarget": "vendor-mfe:build"
+            }
+          },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
+            "tsConfig": "projects/vendor-mfe/tsconfig.spec.json",
+            "assets": [
+              "projects/vendor-mfe/src/favicon.ico",
+              "projects/vendor-mfe/src/assets"
+            ],
+            "styles": [
+              "projects/vendor-mfe/src/styles.css"
+            ],
+            "scripts": []
+          }
+        }
+      }
+    },
+    "shared-models": {
+      "projectType": "library",
+      "root": "libs/shared-models",
+      "sourceRoot": "libs/shared-models/src",
+      "prefix": "intellisure",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "libs/shared-models/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "libs/shared-models/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "libs/shared-models/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "tsConfig": "libs/shared-models/tsconfig.spec.json",
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ]
+          }
+        }
+      }
+    },
+    "ui-core": {
+      "projectType": "library",
+      "root": "libs/ui-core",
+      "sourceRoot": "libs/ui-core/src",
+      "prefix": "intellisure",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "libs/ui-core/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "libs/ui-core/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "libs/ui-core/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "tsConfig": "libs/ui-core/tsconfig.spec.json",
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ]
+          }
+        }
+      }
+    },
+    "data-access": {
+      "projectType": "library",
+      "root": "libs/data-access",
+      "sourceRoot": "libs/data-access/src",
+      "prefix": "intellisure",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "libs/data-access/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "libs/data-access/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "libs/data-access/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "tsConfig": "libs/data-access/tsconfig.spec.json",
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ]
+          }
+        }
+      }
+    },
+    "auth": {
+      "projectType": "library",
+      "root": "libs/auth",
+      "sourceRoot": "libs/auth/src",
+      "prefix": "intellisure",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "libs/auth/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "libs/auth/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "libs/auth/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "tsConfig": "libs/auth/tsconfig.spec.json",
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ]
+          }
+        }
+      }
+    },
+    "store": {
+      "projectType": "library",
+      "root": "libs/store",
+      "sourceRoot": "libs/store/src",
+      "prefix": "intellisure",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "libs/store/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "libs/store/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "libs/store/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "tsConfig": "libs/store/tsconfig.spec.json",
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ]
+          }
+        }
+      }
+    },
+    "charting": {
+      "projectType": "library",
+      "root": "libs/charting",
+      "sourceRoot": "libs/charting/src",
+      "prefix": "intellisure",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "libs/charting/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "libs/charting/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "libs/charting/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "tsConfig": "libs/charting/tsconfig.spec.json",
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ]
+          }
+        }
+      }
+    }
 	}
 }

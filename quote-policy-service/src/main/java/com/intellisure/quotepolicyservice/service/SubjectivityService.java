@@ -106,7 +106,7 @@ public class SubjectivityService {
         return quoteRepository.findById(quoteId)
                 .switchIfEmpty(Mono.error(new ResourceNotFoundException("Quote not found: " + quoteId)))
                 .thenMany(subjectivityRepository.findAllByQuoteId(quoteId)
-                        .map(this::buildSubjectivityResponse));
+                        .flatMap(this::buildSubjectivityResponse));
     }
 
     private Mono<Quote> validateQuoteForSubjectivity(Quote quote) {
@@ -118,11 +118,11 @@ public class SubjectivityService {
         return Mono.just(quote);
     }
 
-    private Mono<Void> validateSubjectivityForAction(Subjectivity subjectivity, SubjectivityStatus requiredStatus) {
+    private Mono<Subjectivity> validateSubjectivityForAction(Subjectivity subjectivity, SubjectivityStatus requiredStatus) {
         if (subjectivity.getStatus() != requiredStatus) {
             return Mono.error(new BusinessException("Subjectivity must be in " + requiredStatus + " status for this action. Current: " + subjectivity.getStatus()));
         }
-        return Mono.empty();
+        return Mono.just(subjectivity);
     }
 
     private Mono<Subjectivity> createSubjectivity(Quote quote, AddSubjectivityRequest request, UUID userId) {

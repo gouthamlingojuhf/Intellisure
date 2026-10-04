@@ -1,0 +1,469 @@
+
+C:\Users\GL13482\codebase\IntelliSure\quote-policy-service>mvnw spring-boot:run
+[INFO] Scanning for projects...
+[INFO]
+[INFO] ----------------< com.intellisure:quote-policy-service >----------------
+[INFO] Building quote-policy-service 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] >>> spring-boot:4.1.1:run (default-cli) > test-compile @ quote-policy-service >>>
+[INFO]
+[INFO] --- jacoco:0.8.15:prepare-agent (prepare-agent) @ quote-policy-service ---
+[INFO] argLine set to -javaagent:C:\\Users\\GL13482\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.15\\org.jacoco.agent-0.8.15-runtime.jar=destfile=C:\\Users\\GL13482\\codebase\\IntelliSure\\quote-policy-service\\target\\jacoco.exec,excludes=**/QuotePolicyServiceApplication.class
+[INFO]
+[INFO] --- resources:3.5.0:resources (default-resources) @ quote-policy-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO]
+[INFO] --- compiler:3.15.0:compile (default-compile) @ quote-policy-service ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 122 source files with javac [debug parameters release 17] to target\classes
+[INFO] Some messages have been simplified; recompile with -Xdiags:verbose to get full output
+[INFO] -------------------------------------------------------------
+[WARNING] COMPILATION WARNING :
+[INFO] -------------------------------------------------------------
+[WARNING] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/mapper/RenewalTransactionMapper.java:[13,32] Unmapped target property: "proposedCoverages".
+[INFO] 1 warning
+[INFO] -------------------------------------------------------------
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR :
+[INFO] -------------------------------------------------------------
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[84,32] cannot find symbol
+  symbol:   method setStatus(com.intellisure.quotepolicyservice.enums.EndorsementStatus)
+  location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[85,32] cannot find symbol
+  symbol:   method setApprovedByUserId(java.util.UUID)
+  location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[86,32] cannot find symbol
+  symbol:   method setApprovedAt(java.time.LocalDateTime)
+  location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[87,32] cannot find symbol
+  symbol:   method setUpdatedAt(java.time.LocalDateTime)
+  location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[90,26] incompatible types: invalid method reference
+    incompatible types: java.lang.Void cannot be converted to com.intellisure.quotepolicyservice.entity.Endorsement
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[110,32] cannot find symbol
+  symbol:   method setStatus(com.intellisure.quotepolicyservice.enums.EndorsementStatus)
+  location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[111,32] cannot find symbol
+  symbol:   method setApprovedByUserId(java.util.UUID)
+  location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[112,32] cannot find symbol
+  symbol:   method setApprovedAt(java.time.LocalDateTime)
+  location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[113,32] cannot find symbol
+  symbol:   method setUpdatedAt(java.time.LocalDateTime)
+  location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[116,26] incompatible types: invalid method reference
+    incompatible types: java.lang.Void cannot be converted to com.intellisure.quotepolicyservice.entity.Endorsement
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[126,32] cannot find symbol
+  symbol:   method setStatus(com.intellisure.quotepolicyservice.enums.EndorsementStatus)
+  location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[127,32] cannot find symbol
+  symbol:   method setUpdatedAt(java.time.LocalDateTime)
+  location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[130,26] incompatible types: invalid method reference
+    incompatible types: java.lang.Void cannot be converted to com.intellisure.quotepolicyservice.entity.Endorsement
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[139,105] cannot find symbol
+  symbol:   method getEndorsementId()
+  location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[141,84] cannot find symbol
+  symbol:   method getPolicyId()
+  location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[142,123] cannot find symbol
+  symbol:   method getPolicyId()
+  location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[143,108] cannot find symbol
+  symbol:   method getEffectiveFrom()
+  location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[143,140] cannot find symbol
+  symbol:   method getEffectiveTo()
+  location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[168,25] incompatible types: inference variable R has incompatible bounds
+    equality constraints: com.intellisure.quotepolicyservice.entity.Endorsement
+    lower bounds: java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[223,22] incompatible types: reactor.core.publisher.Mono<java.lang.Void> cannot be converted to reactor.core.publisher.Mono<com.intellisure.quotepolicyservice.entity.Policy>
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[264,31] incompatible types: reactor.core.publisher.Mono<com.intellisure.quotepolicyservice.entity.PolicyCoverage> cannot be converted to reactor.core.publisher.Mono<java.lang.Void>
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/PremiumAuditService.java:[68,86] cannot find symbol
+  symbol:   method getEstimatedExposure()
+  location: variable audit of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/PremiumAuditService.java:[78,26] cannot find symbol
+  symbol:   method setActualExposure(@jakarta.validation.constraints.NotNull,@jakarta.validation.constraints.PositiveOrZero java.math.BigDecimal)
+  location: variable audit of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/PremiumAuditService.java:[79,26] cannot find symbol
+  symbol:   method setPremiumDelta(java.math.BigDecimal)
+  location: variable audit of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/PremiumAuditService.java:[80,26] cannot find symbol
+  symbol:   method setAdditionalPremium(java.math.BigDecimal)
+  location: variable audit of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/PremiumAuditService.java:[81,26] cannot find symbol
+  symbol:   method setReturnPremium(java.math.BigDecimal)
+  location: variable audit of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/PremiumAuditService.java:[82,26] cannot find symbol
+  symbol:   method setStatus(additional[...]LETED)
+  location: variable audit of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/PremiumAuditService.java:[87,26] cannot find symbol
+  symbol:   method setAuditedByUserId(java.util.UUID)
+  location: variable audit of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/PremiumAuditService.java:[88,26] cannot find symbol
+  symbol:   method setAuditedAt(java.time.LocalDateTime)
+  location: variable audit of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/PremiumAuditService.java:[89,26] cannot find symbol
+  symbol:   method setUpdatedAt(java.time.LocalDateTime)
+  location: variable audit of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/PremiumAuditService.java:[91,43] method save in interface org.springframework.data.repository.reactive.ReactiveCrudRepository<T,ID> cannot be applied to given types;
+  required: S
+  found:    java.lang.Void
+  reason: inference variable S has incompatible bounds
+    lower bounds: com.intellisure.quotepolicyservice.entity.PremiumAudit
+    lower bounds: java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/PremiumAuditService.java:[93,26] incompatible types: invalid method reference
+    incompatible types: java.lang.Object cannot be converted to com.intellisure.quotepolicyservice.entity.PremiumAudit
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/PremiumAuditService.java:[132,36] incompatible types: java.lang.String cannot be converted to java.util.UUID
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/QuoteService.java:[795,9] cannot find symbol
+  symbol:   class QuoteVersion
+  location: class com.intellisure.quotepolicyservice.service.QuoteService
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/QuoteService.java:[795,41] cannot find symbol
+  symbol:   class QuoteVersion
+  location: class com.intellisure.quotepolicyservice.service.QuoteService
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[76,28] cannot find symbol
+  symbol:   method setStatus(com.intellisure.quotepolicyservice.enums.RenewalStatus)
+  location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[77,28] cannot find symbol
+  symbol:   method setDecidedByUserId(java.util.UUID)
+  location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[78,28] cannot find symbol
+  symbol:   method setDecidedAt(java.time.LocalDateTime)
+  location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[79,28] cannot find symbol
+  symbol:   method setDecisionReason(java.lang.String)
+  location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[80,28] cannot find symbol
+  symbol:   method setUpdatedAt(java.time.LocalDateTime)
+  location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[81,45] method save in interface org.springframework.data.repository.reactive.ReactiveCrudRepository<T,ID> cannot be applied to given types;
+  required: S
+  found:    java.lang.Void
+  reason: inference variable S has incompatible bounds
+    lower bounds: com.intellisure.quotepolicyservice.entity.RenewalTransaction
+    lower bounds: java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[83,26] incompatible types: invalid method reference
+    incompatible types: java.lang.Object cannot be converted to com.intellisure.quotepolicyservice.entity.RenewalTransaction
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[102,28] cannot find symbol
+  symbol:   method setStatus(com.intellisure.quotepolicyservice.enums.RenewalStatus)
+  location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[103,28] cannot find symbol
+  symbol:   method setBoundByUserId(java.util.UUID)
+  location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[104,28] cannot find symbol
+  symbol:   method setBoundAt(java.time.LocalDateTime)
+  location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[105,28] cannot find symbol
+  symbol:   method setUpdatedAt(java.time.LocalDateTime)
+  location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[106,45] method save in interface org.springframework.data.repository.reactive.ReactiveCrudRepository<T,ID> cannot be applied to given types;
+  required: S
+  found:    java.lang.Void
+  reason: inference variable S has incompatible bounds
+    lower bounds: com.intellisure.quotepolicyservice.entity.RenewalTransaction
+    lower bounds: java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[108,26] incompatible types: invalid method reference
+    incompatible types: java.lang.Object cannot be converted to com.intellisure.quotepolicyservice.entity.RenewalTransaction
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[118,32] cannot find symbol
+  symbol:   method getStatus()
+  location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[119,124] cannot find symbol
+  symbol:   method getStatus()
+  location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[121,28] cannot find symbol
+  symbol:   method setStatus(com.intellisure.quotepolicyservice.enums.RenewalStatus)
+  location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[122,28] cannot find symbol
+  symbol:   method setIssuedAt(java.time.LocalDateTime)
+  location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[123,28] cannot find symbol
+  symbol:   method setUpdatedAt(java.time.LocalDateTime)
+  location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[124,45] method save in interface org.springframework.data.repository.reactive.ReactiveCrudRepository<T,ID> cannot be applied to given types;
+  required: S
+  found:    java.lang.Void
+  reason: inference variable S has incompatible bounds
+    lower bounds: com.intellisure.quotepolicyservice.entity.RenewalTransaction
+    lower bounds: java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[126,26] incompatible types: invalid method reference
+    incompatible types: java.lang.Object cannot be converted to com.intellisure.quotepolicyservice.entity.RenewalTransaction
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[148,38] incompatible types: java.lang.String cannot be converted to java.util.UUID
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[69,33] cannot find symbol
+  symbol:   method setStatus(com.intellisure.quotepolicyservice.enums.SubjectivityStatus)
+  location: variable subjectivity of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[70,33] cannot find symbol
+  symbol:   method setSatisfiedByUserId(java.util.UUID)
+  location: variable subjectivity of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[71,33] cannot find symbol
+  symbol:   method setSatisfiedAt(java.time.LocalDateTime)
+  location: variable subjectivity of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[72,33] cannot find symbol
+  symbol:   method setEvidenceDocumentIds(java.lang.String)
+  location: variable subjectivity of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[73,33] cannot find symbol
+  symbol:   method setUpdatedAt(java.time.LocalDateTime)
+  location: variable subjectivity of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[74,50] method save in interface org.springframework.data.repository.reactive.ReactiveCrudRepository<T,ID> cannot be applied to given types;
+  required: S
+  found:    java.lang.Void
+  reason: inference variable S has incompatible bounds
+    lower bounds: com.intellisure.quotepolicyservice.entity.Subjectivity
+    lower bounds: java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[76,26] incompatible types: invalid method reference
+    incompatible types: java.lang.Object cannot be converted to com.intellisure.quotepolicyservice.entity.Subjectivity
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[95,33] cannot find symbol
+  symbol:   method setStatus(com.intellisure.quotepolicyservice.enums.SubjectivityStatus)
+  location: variable subjectivity of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[96,33] cannot find symbol
+  symbol:   method setSatisfiedByUserId(java.util.UUID)
+  location: variable subjectivity of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[97,33] cannot find symbol
+  symbol:   method setSatisfiedAt(java.time.LocalDateTime)
+  location: variable subjectivity of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[98,33] cannot find symbol
+  symbol:   method setUpdatedAt(java.time.LocalDateTime)
+  location: variable subjectivity of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[99,50] method save in interface org.springframework.data.repository.reactive.ReactiveCrudRepository<T,ID> cannot be applied to given types;
+  required: S
+  found:    java.lang.Void
+  reason: inference variable S has incompatible bounds
+    lower bounds: com.intellisure.quotepolicyservice.entity.Subjectivity
+    lower bounds: java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[101,26] incompatible types: invalid method reference
+    incompatible types: java.lang.Object cannot be converted to com.intellisure.quotepolicyservice.entity.Subjectivity
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[108,26] incompatible types: inference variable V has incompatible bounds
+    equality constraints: com.intellisure.quotepolicyservice.dto.SubjectivityResponse,V
+    lower bounds: reactor.core.publisher.Mono<com.intellisure.quotepolicyservice.dto.SubjectivityResponse>
+[INFO] 70 errors
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  16.455 s
+[INFO] Finished at: 2026-10-04T16:32:51+05:30
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.15.0:compile (default-compile) on project quote-policy-service: Compilation failure: Compilation failure:
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[84,32] cannot find symbol
+[ERROR]   symbol:   method setStatus(com.intellisure.quotepolicyservice.enums.EndorsementStatus)
+[ERROR]   location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[85,32] cannot find symbol
+[ERROR]   symbol:   method setApprovedByUserId(java.util.UUID)
+[ERROR]   location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[86,32] cannot find symbol
+[ERROR]   symbol:   method setApprovedAt(java.time.LocalDateTime)
+[ERROR]   location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[87,32] cannot find symbol
+[ERROR]   symbol:   method setUpdatedAt(java.time.LocalDateTime)
+[ERROR]   location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[90,26] incompatible types: invalid method reference
+[ERROR]     incompatible types: java.lang.Void cannot be converted to com.intellisure.quotepolicyservice.entity.Endorsement
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[110,32] cannot find symbol
+[ERROR]   symbol:   method setStatus(com.intellisure.quotepolicyservice.enums.EndorsementStatus)
+[ERROR]   location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[111,32] cannot find symbol
+[ERROR]   symbol:   method setApprovedByUserId(java.util.UUID)
+[ERROR]   location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[112,32] cannot find symbol
+[ERROR]   symbol:   method setApprovedAt(java.time.LocalDateTime)
+[ERROR]   location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[113,32] cannot find symbol
+[ERROR]   symbol:   method setUpdatedAt(java.time.LocalDateTime)
+[ERROR]   location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[116,26] incompatible types: invalid method reference
+[ERROR]     incompatible types: java.lang.Void cannot be converted to com.intellisure.quotepolicyservice.entity.Endorsement
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[126,32] cannot find symbol
+[ERROR]   symbol:   method setStatus(com.intellisure.quotepolicyservice.enums.EndorsementStatus)
+[ERROR]   location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[127,32] cannot find symbol
+[ERROR]   symbol:   method setUpdatedAt(java.time.LocalDateTime)
+[ERROR]   location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[130,26] incompatible types: invalid method reference
+[ERROR]     incompatible types: java.lang.Void cannot be converted to com.intellisure.quotepolicyservice.entity.Endorsement
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[139,105] cannot find symbol
+[ERROR]   symbol:   method getEndorsementId()
+[ERROR]   location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[141,84] cannot find symbol
+[ERROR]   symbol:   method getPolicyId()
+[ERROR]   location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[142,123] cannot find symbol
+[ERROR]   symbol:   method getPolicyId()
+[ERROR]   location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[143,108] cannot find symbol
+[ERROR]   symbol:   method getEffectiveFrom()
+[ERROR]   location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[143,140] cannot find symbol
+[ERROR]   symbol:   method getEffectiveTo()
+[ERROR]   location: variable endorsement of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[168,25] incompatible types: inference variable R has incompatible bounds
+[ERROR]     equality constraints: com.intellisure.quotepolicyservice.entity.Endorsement
+[ERROR]     lower bounds: java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[223,22] incompatible types: reactor.core.publisher.Mono<java.lang.Void> cannot be converted to reactor.core.publisher.Mono<com.intellisure.quotepolicyservice.entity.Policy>
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/EndorsementService.java:[264,31] incompatible types: reactor.core.publisher.Mono<com.intellisure.quotepolicyservice.entity.PolicyCoverage> cannot be converted to reactor.core.publisher.Mono<java.lang.Void>
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/PremiumAuditService.java:[68,86] cannot find symbol
+[ERROR]   symbol:   method getEstimatedExposure()
+[ERROR]   location: variable audit of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/PremiumAuditService.java:[78,26] cannot find symbol
+[ERROR]   symbol:   method setActualExposure(@jakarta.validation.constraints.NotNull,@jakarta.validation.constraints.PositiveOrZero java.math.BigDecimal)
+[ERROR]   location: variable audit of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/PremiumAuditService.java:[79,26] cannot find symbol
+[ERROR]   symbol:   method setPremiumDelta(java.math.BigDecimal)
+[ERROR]   location: variable audit of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/PremiumAuditService.java:[80,26] cannot find symbol
+[ERROR]   symbol:   method setAdditionalPremium(java.math.BigDecimal)
+[ERROR]   location: variable audit of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/PremiumAuditService.java:[81,26] cannot find symbol
+[ERROR]   symbol:   method setReturnPremium(java.math.BigDecimal)
+[ERROR]   location: variable audit of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/PremiumAuditService.java:[82,26] cannot find symbol
+[ERROR]   symbol:   method setStatus(additional[...]LETED)
+[ERROR]   location: variable audit of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/PremiumAuditService.java:[87,26] cannot find symbol
+[ERROR]   symbol:   method setAuditedByUserId(java.util.UUID)
+[ERROR]   location: variable audit of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/PremiumAuditService.java:[88,26] cannot find symbol
+[ERROR]   symbol:   method setAuditedAt(java.time.LocalDateTime)
+[ERROR]   location: variable audit of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/PremiumAuditService.java:[89,26] cannot find symbol
+[ERROR]   symbol:   method setUpdatedAt(java.time.LocalDateTime)
+[ERROR]   location: variable audit of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/PremiumAuditService.java:[91,43] method save in interface org.springframework.data.repository.reactive.ReactiveCrudRepository<T,ID> cannot be applied to given types;
+[ERROR]   required: S
+[ERROR]   found:    java.lang.Void
+[ERROR]   reason: inference variable S has incompatible bounds
+[ERROR]     lower bounds: com.intellisure.quotepolicyservice.entity.PremiumAudit
+[ERROR]     lower bounds: java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/PremiumAuditService.java:[93,26] incompatible types: invalid method reference
+[ERROR]     incompatible types: java.lang.Object cannot be converted to com.intellisure.quotepolicyservice.entity.PremiumAudit
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/PremiumAuditService.java:[132,36] incompatible types: java.lang.String cannot be converted to java.util.UUID
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/QuoteService.java:[795,9] cannot find symbol
+[ERROR]   symbol:   class QuoteVersion
+[ERROR]   location: class com.intellisure.quotepolicyservice.service.QuoteService
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/QuoteService.java:[795,41] cannot find symbol
+[ERROR]   symbol:   class QuoteVersion
+[ERROR]   location: class com.intellisure.quotepolicyservice.service.QuoteService
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[76,28] cannot find symbol
+[ERROR]   symbol:   method setStatus(com.intellisure.quotepolicyservice.enums.RenewalStatus)
+[ERROR]   location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[77,28] cannot find symbol
+[ERROR]   symbol:   method setDecidedByUserId(java.util.UUID)
+[ERROR]   location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[78,28] cannot find symbol
+[ERROR]   symbol:   method setDecidedAt(java.time.LocalDateTime)
+[ERROR]   location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[79,28] cannot find symbol
+[ERROR]   symbol:   method setDecisionReason(java.lang.String)
+[ERROR]   location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[80,28] cannot find symbol
+[ERROR]   symbol:   method setUpdatedAt(java.time.LocalDateTime)
+[ERROR]   location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[81,45] method save in interface org.springframework.data.repository.reactive.ReactiveCrudRepository<T,ID> cannot be applied to given types;
+[ERROR]   required: S
+[ERROR]   found:    java.lang.Void
+[ERROR]   reason: inference variable S has incompatible bounds
+[ERROR]     lower bounds: com.intellisure.quotepolicyservice.entity.RenewalTransaction
+[ERROR]     lower bounds: java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[83,26] incompatible types: invalid method reference
+[ERROR]     incompatible types: java.lang.Object cannot be converted to com.intellisure.quotepolicyservice.entity.RenewalTransaction
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[102,28] cannot find symbol
+[ERROR]   symbol:   method setStatus(com.intellisure.quotepolicyservice.enums.RenewalStatus)
+[ERROR]   location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[103,28] cannot find symbol
+[ERROR]   symbol:   method setBoundByUserId(java.util.UUID)
+[ERROR]   location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[104,28] cannot find symbol
+[ERROR]   symbol:   method setBoundAt(java.time.LocalDateTime)
+[ERROR]   location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[105,28] cannot find symbol
+[ERROR]   symbol:   method setUpdatedAt(java.time.LocalDateTime)
+[ERROR]   location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[106,45] method save in interface org.springframework.data.repository.reactive.ReactiveCrudRepository<T,ID> cannot be applied to given types;
+[ERROR]   required: S
+[ERROR]   found:    java.lang.Void
+[ERROR]   reason: inference variable S has incompatible bounds
+[ERROR]     lower bounds: com.intellisure.quotepolicyservice.entity.RenewalTransaction
+[ERROR]     lower bounds: java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[108,26] incompatible types: invalid method reference
+[ERROR]     incompatible types: java.lang.Object cannot be converted to com.intellisure.quotepolicyservice.entity.RenewalTransaction
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[118,32] cannot find symbol
+[ERROR]   symbol:   method getStatus()
+[ERROR]   location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[119,124] cannot find symbol
+[ERROR]   symbol:   method getStatus()
+[ERROR]   location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[121,28] cannot find symbol
+[ERROR]   symbol:   method setStatus(com.intellisure.quotepolicyservice.enums.RenewalStatus)
+[ERROR]   location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[122,28] cannot find symbol
+[ERROR]   symbol:   method setIssuedAt(java.time.LocalDateTime)
+[ERROR]   location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[123,28] cannot find symbol
+[ERROR]   symbol:   method setUpdatedAt(java.time.LocalDateTime)
+[ERROR]   location: variable renewal of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[124,45] method save in interface org.springframework.data.repository.reactive.ReactiveCrudRepository<T,ID> cannot be applied to given types;
+[ERROR]   required: S
+[ERROR]   found:    java.lang.Void
+[ERROR]   reason: inference variable S has incompatible bounds
+[ERROR]     lower bounds: com.intellisure.quotepolicyservice.entity.RenewalTransaction
+[ERROR]     lower bounds: java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[126,26] incompatible types: invalid method reference
+[ERROR]     incompatible types: java.lang.Object cannot be converted to com.intellisure.quotepolicyservice.entity.RenewalTransaction
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/RenewalService.java:[148,38] incompatible types: java.lang.String cannot be converted to java.util.UUID
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[69,33] cannot find symbol
+[ERROR]   symbol:   method setStatus(com.intellisure.quotepolicyservice.enums.SubjectivityStatus)
+[ERROR]   location: variable subjectivity of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[70,33] cannot find symbol
+[ERROR]   symbol:   method setSatisfiedByUserId(java.util.UUID)
+[ERROR]   location: variable subjectivity of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[71,33] cannot find symbol
+[ERROR]   symbol:   method setSatisfiedAt(java.time.LocalDateTime)
+[ERROR]   location: variable subjectivity of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[72,33] cannot find symbol
+[ERROR]   symbol:   method setEvidenceDocumentIds(java.lang.String)
+[ERROR]   location: variable subjectivity of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[73,33] cannot find symbol
+[ERROR]   symbol:   method setUpdatedAt(java.time.LocalDateTime)
+[ERROR]   location: variable subjectivity of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[74,50] method save in interface org.springframework.data.repository.reactive.ReactiveCrudRepository<T,ID> cannot be applied to given types;
+[ERROR]   required: S
+[ERROR]   found:    java.lang.Void
+[ERROR]   reason: inference variable S has incompatible bounds
+[ERROR]     lower bounds: com.intellisure.quotepolicyservice.entity.Subjectivity
+[ERROR]     lower bounds: java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[76,26] incompatible types: invalid method reference
+[ERROR]     incompatible types: java.lang.Object cannot be converted to com.intellisure.quotepolicyservice.entity.Subjectivity
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[95,33] cannot find symbol
+[ERROR]   symbol:   method setStatus(com.intellisure.quotepolicyservice.enums.SubjectivityStatus)
+[ERROR]   location: variable subjectivity of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[96,33] cannot find symbol
+[ERROR]   symbol:   method setSatisfiedByUserId(java.util.UUID)
+[ERROR]   location: variable subjectivity of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[97,33] cannot find symbol
+[ERROR]   symbol:   method setSatisfiedAt(java.time.LocalDateTime)
+[ERROR]   location: variable subjectivity of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[98,33] cannot find symbol
+[ERROR]   symbol:   method setUpdatedAt(java.time.LocalDateTime)
+[ERROR]   location: variable subjectivity of type java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[99,50] method save in interface org.springframework.data.repository.reactive.ReactiveCrudRepository<T,ID> cannot be applied to given types;
+[ERROR]   required: S
+[ERROR]   found:    java.lang.Void
+[ERROR]   reason: inference variable S has incompatible bounds
+[ERROR]     lower bounds: com.intellisure.quotepolicyservice.entity.Subjectivity
+[ERROR]     lower bounds: java.lang.Void
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[101,26] incompatible types: invalid method reference
+[ERROR]     incompatible types: java.lang.Object cannot be converted to com.intellisure.quotepolicyservice.entity.Subjectivity
+[ERROR] /C:/Users/GL13482/codebase/IntelliSure/quote-policy-service/src/main/java/com/intellisure/quotepolicyservice/service/SubjectivityService.java:[108,26] incompatible types: inference variable V has incompatible bounds
+[ERROR]     equality constraints: com.intellisure.quotepolicyservice.dto.SubjectivityResponse,V
+[ERROR]     lower bounds: reactor.core.publisher.Mono<com.intellisure.quotepolicyservice.dto.SubjectivityResponse>
+[ERROR] -> [Help 1]
+[ERROR]
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR]
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

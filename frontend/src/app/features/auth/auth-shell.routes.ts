@@ -4,7 +4,7 @@ import { loadRemoteModule } from '@angular-architects/module-federation';
 /** Shell mounts the authMfe remote (dev: http://localhost:4201/remoteEntry.js). */
 export const AUTH_SHELL_ROUTES: Routes = [
   {
-    path: '**',
+    path: '',
     loadChildren: () =>
       loadRemoteModule({
         type: 'module',

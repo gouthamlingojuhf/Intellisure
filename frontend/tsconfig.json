@@ -13,6 +13,26 @@
     "declaration": false,
     "experimentalDecorators": true,
     "moduleResolution": "node",
+    "paths": {
+      "auth": [
+        "./dist/auth"
+      ],
+      "charting": [
+        "./dist/charting"
+      ],
+      "data-access": [
+        "./dist/data-access"
+      ],
+      "shared-models": [
+        "./dist/shared-models"
+      ],
+      "store": [
+        "./dist/store"
+      ],
+      "ui-core": [
+        "./dist/ui-core"
+      ]
+    },
     "importHelpers": true,
     "target": "ES2022",
     "module": "ES2022",

@@ -6,23 +6,65 @@ import { RouterLink } from '@angular/router';
   standalone: true,
   imports: [RouterLink],
   template: `
-    <section class="card">
-      <h1 class="text-2xl font-bold text-blue-900">IntelliSure Insurance Platform</h1>
-      <p class="mt-2 text-gray-700">
-        End-to-end lifecycle demo: register &rarr; quote &rarr; risk review &rarr; approve &rarr;
-        issue policy &rarr; file claim &rarr; assign vendor &rarr; notify &rarr; audit.
-      </p>
-      <div class="mt-4 flex flex-wrap gap-2">
-        <a routerLink="/auth/login" class="btn-primary">Login</a>
-        <a routerLink="/policy" class="btn-secondary">Quotes &amp; Policies</a>
-        <a routerLink="/claims" class="btn-secondary">Claims</a>
-        <a routerLink="/vendor" class="btn-secondary">Vendors</a>
-        <a routerLink="/analytics" class="btn-secondary">Analytics</a>
+    <section class="brand-home">
+      <div class="hero-panel">
+        <div class="hero-copy">
+          <span class="eyebrow">Insurance platform</span>
+          <h1>Modern protection for every policy lifecycle.</h1>
+          <p>
+            IntelliSure brings quoting, underwriting, claims, recovery, and analytics into a single
+            connected experience built for modern insurance operations.
+          </p>
+          <div class="hero-actions">
+            <a routerLink="/auth" class="brand-primary-btn">Login</a>
+            <a routerLink="/policy" class="brand-secondary-btn">Explore workflows</a>
+          </div>
+        </div>
+
+        <div class="hero-metrics">
+          <div class="metric-card metric-dark">
+            <span>Open quotes</span>
+            <strong>184</strong>
+            <small>+12% vs last week</small>
+          </div>
+          <div class="metric-card metric-claret">
+            <span>Claims in review</span>
+            <strong>39</strong>
+            <small>3 escalations</small>
+          </div>
+          <div class="metric-card metric-fuchsia">
+            <span>Recovery yield</span>
+            <strong>18.4%</strong>
+            <small>Above target</small>
+          </div>
+        </div>
       </div>
-      <p class="mt-4 text-sm text-gray-500">
-        Remote MFEs load here via Module Federation once each remote app is added
-        (auth :4201, policy :4202, underwriting :4203, claims :4204, vendor :4205, analytics :4206).
-      </p>
+
+      <div class="feature-grid">
+        <article class="feature-card highlight-card">
+          <span class="card-tag">Sales</span>
+          <h3>Quotes &amp; policy</h3>
+          <p>Create, price, and bind policies with streamlined underwriting workflows.</p>
+        </article>
+
+        <article class="feature-card">
+          <span class="card-tag">Operations</span>
+          <h3>Claims center</h3>
+          <p>Track FNOLs, reserves, settlements, and recovery actions from one place.</p>
+        </article>
+
+        <article class="feature-card">
+          <span class="card-tag">Risk</span>
+          <h3>Underwriting</h3>
+          <p>Review submissions, flag exceptions, and approve risk decisions faster.</p>
+        </article>
+
+        <article class="feature-card">
+          <span class="card-tag">Insights</span>
+          <h3>Analytics</h3>
+          <p>Monitor loss ratio, recoveries, performance trends, and portfolio health.</p>
+        </article>
+      </div>
     </section>
   `,
 })

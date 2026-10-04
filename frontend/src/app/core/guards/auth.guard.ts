@@ -9,6 +9,6 @@ export const authGuard: CanActivateFn = () => {
   const router = inject(Router);
   return store.select(selectIsAuthenticated).pipe(
     take(1),
-    map((ok) => (ok ? true : router.createUrlTree(['/auth/login'])))
+    map((ok) => (ok ? true : router.createUrlTree(['/auth'])))
   );
 };

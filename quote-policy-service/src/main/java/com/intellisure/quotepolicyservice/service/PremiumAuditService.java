@@ -118,19 +118,19 @@ public class PremiumAuditService {
         return Mono.just(policy);
     }
 
-    private Mono<Void> validateAuditForCompletion(PremiumAudit audit) {
+    private Mono<PremiumAudit> validateAuditForCompletion(PremiumAudit audit) {
         if (audit.getStatus() != AuditStatus.INITIATED && audit.getStatus() != AuditStatus.IN_PROGRESS) {
             return Mono.error(new BusinessException("Audit must be INITIATED or IN_PROGRESS to complete. Current: " + audit.getStatus()));
         }
-        return Mono.empty();
+        return Mono.just(audit);
     }
 
     private Mono<PremiumAudit> createAudit(Policy policy, InitiatePremiumAuditRequest request) {
         LocalDateTime now = LocalDateTime.now();
         PremiumAudit audit = new PremiumAudit(
                 UUID.randomUUID(),
-                generateAuditNumber(),
                 policy.getPolicyId(),
+                generateAuditNumber(),
                 request.auditType(),
                 AuditStatus.INITIATED,
                 request.estimatedExposure(),

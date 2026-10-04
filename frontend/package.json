@@ -6,8 +6,14 @@
     "start": "ng serve shell-app --port 4200",
     "start:shell": "ng serve shell-app --port 4200",
     "start:auth": "ng serve auth-mfe --port 4201",
+    "start:claims": "ng serve claims-mfe --port 4202",
+    "start:intelligence": "ng serve intelligence-mfe --port 4203",
+    "start:vendor": "ng serve vendor-mfe --port 4205",
     "build": "ng build shell-app",
     "build:auth": "ng build auth-mfe",
+    "build:claims": "ng build claims-mfe",
+    "build:intelligence": "ng build intelligence-mfe",
+    "build:vendor": "ng build vendor-mfe",
     "watch": "ng build shell-app --watch --configuration development",
     "test": "ng test",
     "run:all": "node node_modules/@angular-architects/module-federation/src/server/mf-dev-server.js"
@@ -45,6 +51,7 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
+    "ng-packagr": "^17.3.0",
     "ngx-build-plus": "^17.0.0",
     "typescript": "~5.4.2"
   }

@@ -6,6 +6,7 @@ import com.intellisure.quotepolicyservice.dto.request.CreateQuoteRequest;
 import com.intellisure.quotepolicyservice.dto.response.QuoteResponse;
 import com.intellisure.quotepolicyservice.entity.Quote;
 import com.intellisure.quotepolicyservice.entity.QuoteCoverage;
+import com.intellisure.quotepolicyservice.entity.QuoteVersion;
 import com.intellisure.quotepolicyservice.enums.QuoteStatus;
 import com.intellisure.quotepolicyservice.exception.BusinessException;
 import com.intellisure.quotepolicyservice.exception.ResourceNotFoundException;

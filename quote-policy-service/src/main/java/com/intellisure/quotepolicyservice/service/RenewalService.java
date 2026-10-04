@@ -134,19 +134,19 @@ public class RenewalService {
         return Mono.just(policy);
     }
 
-    private Mono<Void> validateRenewalForDecision(RenewalTransaction renewal) {
+    private Mono<RenewalTransaction> validateRenewalForDecision(RenewalTransaction renewal) {
         if (renewal.getStatus() != RenewalStatus.UNDER_REVIEW && renewal.getStatus() != RenewalStatus.QUOTED) {
             return Mono.error(new BusinessException("Renewal must be in UNDER_REVIEW or QUOTED status for decision. Current: " + renewal.getStatus()));
         }
-        return Mono.empty();
+        return Mono.just(renewal);
     }
 
     private Mono<RenewalTransaction> createRenewalTransaction(Policy policy, InitiateRenewalRequest request, UUID userId) {
         LocalDateTime now = LocalDateTime.now();
         RenewalTransaction renewal = new RenewalTransaction(
                 UUID.randomUUID(),
-                generateRenewalNumber(),
                 policy.getPolicyId(),
+                generateRenewalNumber(),
                 RenewalStatus.INITIATED,
                 request.proposedStartDate(),
                 request.proposedEndDate(),

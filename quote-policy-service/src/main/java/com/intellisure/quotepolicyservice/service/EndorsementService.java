@@ -132,7 +132,7 @@ public class EndorsementService {
 
     @PreAuthorize("hasAnyRole('UNDERWRITER', 'SYSTEM_ADMINISTRATOR')")
     @Transactional
-    public Mono<PolicyCoverage> applyEndorsementToPolicy(UUID endorsementId) {
+    public Mono<Endorsement> applyEndorsementToPolicy(UUID endorsementId) {
         return endorsementRepository.findById(endorsementId)
                 .switchIfEmpty(Mono.error(new ResourceNotFoundException("Endorsement not found: " + endorsementId)))
                 .flatMap(endorsement -> validateEndorsementForDecision(endorsement, EndorsementStatus.APPROVED))
@@ -140,8 +140,12 @@ public class EndorsementService {
                         .collectList()
                         .flatMap(coverages -> policyRepository.findById(endorsement.getPolicyId())
                                 .switchIfEmpty(Mono.error(new ResourceNotFoundException("Policy not found: " + endorsement.getPolicyId())))
-                                .flatMap(policy -> applyEndorsementCoverages(policy, coverages, endorsement.getEffectiveFrom(), endorsement.getEffectiveTo()))
-                                .thenReturn(endorsement)));
+                                .flatMap(policy -> applyEndorsementCoverages(
+                                        policy,
+                                        coverages,
+                                        endorsement.getEffectiveFrom(),
+                                        endorsement.getEffectiveTo())
+                                        .thenReturn(endorsement))));
     }
 
     private Mono<Endorsement> createEndorsement(Policy policy, RequestEndorsementRequest request, UUID userId) {
@@ -165,7 +169,7 @@ public class EndorsementService {
         );
 
         return entityTemplate.insert(endorsement)
-                .flatMap(saved -> saveEndorsementCoverages(saved, request.coverages()));
+                .flatMap(saved -> saveEndorsementCoverages(saved, request.coverages()).thenReturn(saved));
     }
 
     private Mono<Void> saveEndorsementCoverages(Endorsement endorsement, List<EndorsementCoverageRequest> coverages) {
@@ -203,14 +207,14 @@ public class EndorsementService {
         return Mono.just(policy);
     }
 
-    private Mono<Void> validateEndorsementForDecision(Endorsement endorsement, EndorsementStatus requiredStatus) {
+    private Mono<Endorsement> validateEndorsementForDecision(Endorsement endorsement, EndorsementStatus requiredStatus) {
         if (endorsement.getStatus() != requiredStatus) {
             return Mono.error(new BusinessException("Endorsement must be in " + requiredStatus + " status for this action. Current: " + endorsement.getStatus()));
         }
-        return Mono.empty();
+        return Mono.just(endorsement);
     }
 
-    private Mono<Policy> applyEndorsementCoverages(Policy policy, List<EndorsementCoverage> endorsementCoverages, LocalDate effectiveFrom, LocalDate effectiveTo) {
+    private Mono<Void> applyEndorsementCoverages(Policy policy, List<EndorsementCoverage> endorsementCoverages, LocalDate effectiveFrom, LocalDate effectiveTo) {
         return Flux.fromIterable(endorsementCoverages)
                 .flatMap(ec -> {
                     EndorsementOperation op = ec.getOperation();
@@ -259,7 +263,7 @@ public class EndorsementService {
                     coverage.setWaitingPeriodDays(ec.getWaitingPeriodDays());
                     coverage.setEffectiveFrom(effectiveFrom);
                     coverage.setEffectiveTo(effectiveTo);
-                    return entityTemplate.update(coverage);
+                    return entityTemplate.update(coverage).then();
                 })
                 .switchIfEmpty(Mono.error(new BusinessException("Coverage not found for modification: " + ec.getCoverageCode())));
     }
