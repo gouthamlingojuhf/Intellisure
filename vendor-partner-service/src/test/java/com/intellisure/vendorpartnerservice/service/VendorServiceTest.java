@@ -87,4 +87,38 @@ class VendorServiceTest {
                 .assertNext(response -> org.junit.jupiter.api.Assertions.assertEquals(1, response.items().size()))
                 .verifyComplete();
     }
+
+    @Test
+    void recommendationDoesNotAutomaticallyCreateAssignment() {
+        Vendor verifiedActive = Vendor.builder()
+                .vendorId(UUID.randomUUID())
+                .legalName("Certified Restoration Co")
+                .displayName("Certified Restoration")
+                .vendorType(VendorType.PROPERTY_RESTORATION)
+                .serviceTypes(List.of("RESTORATION"))
+                .capabilities(List.of("WATER_EXTRACTION"))
+                .serviceAreas(List.of("METRO_AREA"))
+                .contactName("Sarah Agent")
+                .verificationStatus(VendorVerificationStatus.VERIFIED)
+                .activeStatus(VendorActiveStatus.ACTIVE)
+                .build();
+
+        when(vendorRepository.findByServiceTypesContaining("RESTORATION")).thenReturn(Flux.just(verifiedActive));
+
+        // Call recommendation endpoint
+        com.intellisure.vendorpartnerservice.dto.VendorSearchRequest request =
+                new com.intellisure.vendorpartnerservice.dto.VendorSearchRequest(
+                        "RESTORATION", null, null, null, null, 0, 10);
+
+        StepVerifier.create(service.recommendVendors(request))
+                .assertNext(response -> {
+                    org.junit.jupiter.api.Assertions.assertEquals(1, response.items().size());
+                    org.junit.jupiter.api.Assertions.assertEquals("Certified Restoration Co", response.items().get(0).legalName());
+                })
+                .verifyComplete();
+
+        // Vendor repository only read, no mutating calls
+        verify(vendorRepository).findByServiceTypesContaining("RESTORATION");
+        verify(vendorRepository, never()).save(any());
+    }
 }

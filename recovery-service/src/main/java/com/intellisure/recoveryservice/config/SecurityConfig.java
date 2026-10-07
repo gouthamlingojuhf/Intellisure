@@ -53,6 +53,12 @@ public class SecurityConfig {
                         ).permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/recovery/**")
                         .hasAnyRole("POLICYHOLDER", "USER", "CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
+                        .pathMatchers(
+                                "/api/recovery/cases/*/path",
+                                "/api/recovery/cases/*/select-path",
+                                "/api/recovery/cases/*/progress"
+                        )
+                        .hasAnyRole("POLICYHOLDER", "USER", "CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
                         .pathMatchers("/api/recovery/**")
                         .hasAnyRole("CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
                         .pathMatchers("/api/**").authenticated()

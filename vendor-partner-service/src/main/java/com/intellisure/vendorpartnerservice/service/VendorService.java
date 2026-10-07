@@ -27,7 +27,14 @@ public class VendorService {
 
     public Mono<VendorResponse> getVendor(UUID vendorId) {
         return vendorRepository.findById(vendorId)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("Vendor not found: " + vendorId)))
                 .map(this::mapToResponse);
+    }
+
+    public Mono<VendorListResponse> recommendVendors(VendorSearchRequest request) {
+        // Discovery and recommendation: returns eligible candidate vendors matching criteria.
+        // NOTE: Recommendation MUST NOT create an assignment.
+        return searchVendors(request);
     }
 
     public Mono<VendorListResponse> searchVendors(VendorSearchRequest request) {

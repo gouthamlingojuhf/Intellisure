@@ -25,15 +25,15 @@ public class VendorPartnerClient {
                                             String taskDescription, LocalDate dueDate) {
         log.info("Dispatching optional network vendor assignment for vendorId={}, caseId={}", vendorId, recoveryCaseId);
 
-        Map<String, Object> body = Map.of(
-                "vendorId", vendorId,
-                "assignmentType", "RESTORATION",
-                "claimId", claimId != null ? claimId : UUID.randomUUID(),
-                "recoveryCaseId", recoveryCaseId,
-                "taskDescription", taskDescription != null ? taskDescription : "Post-loss business restoration and recovery",
-                "dueDate", dueDate != null ? dueDate.toString() : LocalDate.now().plusWeeks(2).toString(),
-                "priority", "HIGH"
-        );
+        Map<String, Object> body = new java.util.HashMap<>();
+        body.put("vendorId", vendorId);
+        body.put("assignmentType", "RESTORATION");
+        body.put("claimId", claimId != null ? claimId : UUID.randomUUID());
+        body.put("recoveryCaseId", recoveryCaseId);
+        body.put("recoveryPath", "NETWORK_VENDOR");
+        body.put("taskDescription", taskDescription != null ? taskDescription : "Post-loss business restoration and recovery");
+        body.put("dueDate", dueDate != null ? dueDate.toString() : LocalDate.now().plusWeeks(2).toString());
+        body.put("priority", "HIGH");
 
         return webClient.post()
                 .uri("/api/vendor-assignments")

@@ -2,7 +2,9 @@ package com.intellisure.quotepolicyservice.controller;
 
 import com.intellisure.quotepolicyservice.dto.request.AssignUnderwriterRequest;
 import com.intellisure.quotepolicyservice.dto.request.CreateQuoteRequest;
+import com.intellisure.quotepolicyservice.dto.response.PolicyResponse;
 import com.intellisure.quotepolicyservice.dto.response.QuoteResponse;
+import com.intellisure.quotepolicyservice.service.PolicyService;
 import com.intellisure.quotepolicyservice.service.QuoteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
@@ -41,6 +44,7 @@ import java.util.UUID;
 public class QuoteController {
 
     private final QuoteService quoteService;
+    private final PolicyService policyService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -118,7 +122,7 @@ public class QuoteController {
         );
     }
 
-    @PatchMapping("/{quoteId}/submit")
+    @RequestMapping(value = "/{quoteId}/submit", method = {RequestMethod.POST, RequestMethod.PATCH})
     @Operation(
             summary = "Submit a draft quote",
             description = "Changes the quote from DRAFT to SUBMITTED"
@@ -130,7 +134,7 @@ public class QuoteController {
     }
 
 
-    @PatchMapping("/{quoteId}/accept")
+    @RequestMapping(value = "/{quoteId}/accept", method = {RequestMethod.POST, RequestMethod.PATCH})
     @Operation(
             summary = "Accept quoted terms",
             description = """
@@ -138,11 +142,22 @@ public class QuoteController {
                 Changes the quote from QUOTED to ACCEPTED.
                 """
     )
-
     public Mono<QuoteResponse> acceptQuote(
             @PathVariable UUID quoteId
     ) {
         return quoteService.acceptQuote(quoteId);
+    }
+
+    @PostMapping("/{quoteId}/bind")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(
+            summary = "Bind an accepted quote",
+            description = "Binds an accepted quote and creates an immutable policy"
+    )
+    public Mono<PolicyResponse> bindQuote(
+            @PathVariable UUID quoteId
+    ) {
+        return policyService.bindQuote(quoteId);
     }
 
 

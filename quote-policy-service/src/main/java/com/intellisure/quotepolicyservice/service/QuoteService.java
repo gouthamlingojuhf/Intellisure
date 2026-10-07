@@ -418,6 +418,79 @@ public class QuoteService {
 
 
 
+    public void validateStatusTransition(
+            QuoteStatus currentStatus,
+            QuoteStatus targetStatus
+    ) {
+        if (currentStatus == null || targetStatus == null) {
+            throw new BusinessException("Current and target status must not be null");
+        }
+        if (currentStatus == targetStatus) {
+            return;
+        }
+
+        // Terminal states cannot transition
+        if (currentStatus == QuoteStatus.ISSUED
+                || currentStatus == QuoteStatus.DECLINED_BY_INSURER
+                || currentStatus == QuoteStatus.DECLINED_BY_CUSTOMER
+                || currentStatus == QuoteStatus.WITHDRAWN
+                || currentStatus == QuoteStatus.EXPIRED) {
+            throw new BusinessException("Cannot transition a " + currentStatus + " quote to " + targetStatus);
+        }
+
+        // Direct jumps from DRAFT
+        if (currentStatus == QuoteStatus.DRAFT &&
+                (targetStatus == QuoteStatus.ACCEPTED
+                        || targetStatus == QuoteStatus.BOUND
+                        || targetStatus == QuoteStatus.ISSUED
+                        || targetStatus == QuoteStatus.QUOTED)) {
+            throw new BusinessException("Cannot transition directly from DRAFT to " + targetStatus
+                    + " without submission, review, and quote offering");
+        }
+
+        // Direct jumps from SUBMITTED
+        if (currentStatus == QuoteStatus.SUBMITTED &&
+                (targetStatus == QuoteStatus.ACCEPTED
+                        || targetStatus == QuoteStatus.BOUND
+                        || targetStatus == QuoteStatus.ISSUED)) {
+            throw new BusinessException("Cannot transition directly from SUBMITTED to " + targetStatus
+                    + " without underwriting review and quote offering");
+        }
+
+        // Direct jumps from REVIEW states
+        if ((currentStatus == QuoteStatus.IN_REVIEW || currentStatus == QuoteStatus.UNDER_REVIEW) &&
+                (targetStatus == QuoteStatus.ACCEPTED
+                        || targetStatus == QuoteStatus.BOUND
+                        || targetStatus == QuoteStatus.ISSUED)) {
+            throw new BusinessException("Cannot transition directly from review to " + targetStatus
+                    + " without terms being offered first (QUOTED)");
+        }
+
+        // Direct jump from QUOTED to BOUND or ISSUED without acceptance
+        if (currentStatus == QuoteStatus.QUOTED &&
+                (targetStatus == QuoteStatus.BOUND || targetStatus == QuoteStatus.ISSUED)) {
+            throw new BusinessException("A QUOTED quote must be ACCEPTED before it can be bound or issued");
+        }
+
+        // Cannot jump from ACCEPTED to ISSUED without being BOUND
+        if (currentStatus == QuoteStatus.ACCEPTED && targetStatus == QuoteStatus.ISSUED) {
+            throw new BusinessException("An ACCEPTED quote must be BOUND before policy issuance");
+        }
+    }
+
+    public void validateStatusTransition(String currentStatus, String targetStatus) {
+        if (currentStatus == null || targetStatus == null) {
+            throw new BusinessException("Current and target status must not be null");
+        }
+        try {
+            QuoteStatus current = QuoteStatus.valueOf(currentStatus.trim().toUpperCase());
+            QuoteStatus target = QuoteStatus.valueOf(targetStatus.trim().toUpperCase());
+            validateStatusTransition(current, target);
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException("Invalid status provided: " + e.getMessage());
+        }
+    }
+
     private void validateQuoteNotExpired(
             Quote quote
     ) {

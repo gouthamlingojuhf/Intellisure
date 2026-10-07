@@ -1855,4 +1855,66 @@ class QuoteServiceTest {
                     .verify();
         }
     }
+
+    @Nested
+    @DisplayName("quoteLifecycleTransitions")
+    class QuoteLifecycleTransitions {
+
+        @Test
+        @DisplayName("valid transitions succeed")
+        void validTransitionsSucceed() {
+            org.junit.jupiter.api.Assertions.assertDoesNotThrow(() ->
+                    quoteService.validateStatusTransition(QuoteStatus.DRAFT, QuoteStatus.SUBMITTED));
+            org.junit.jupiter.api.Assertions.assertDoesNotThrow(() ->
+                    quoteService.validateStatusTransition(QuoteStatus.SUBMITTED, QuoteStatus.IN_REVIEW));
+            org.junit.jupiter.api.Assertions.assertDoesNotThrow(() ->
+                    quoteService.validateStatusTransition(QuoteStatus.SUBMITTED, QuoteStatus.UNDER_REVIEW));
+            org.junit.jupiter.api.Assertions.assertDoesNotThrow(() ->
+                    quoteService.validateStatusTransition(QuoteStatus.IN_REVIEW, QuoteStatus.QUOTED));
+            org.junit.jupiter.api.Assertions.assertDoesNotThrow(() ->
+                    quoteService.validateStatusTransition(QuoteStatus.UNDER_REVIEW, QuoteStatus.QUOTED));
+            org.junit.jupiter.api.Assertions.assertDoesNotThrow(() ->
+                    quoteService.validateStatusTransition(QuoteStatus.QUOTED, QuoteStatus.ACCEPTED));
+            org.junit.jupiter.api.Assertions.assertDoesNotThrow(() ->
+                    quoteService.validateStatusTransition(QuoteStatus.ACCEPTED, QuoteStatus.BOUND));
+            org.junit.jupiter.api.Assertions.assertDoesNotThrow(() ->
+                    quoteService.validateStatusTransition(QuoteStatus.BOUND, QuoteStatus.ISSUED));
+        }
+
+        @Test
+        @DisplayName("invalid direct transitions are rejected")
+        void invalidTransitionsAreRejected() {
+            // Cannot jump from DRAFT directly to ACCEPTED, BOUND, or ISSUED
+            org.junit.jupiter.api.Assertions.assertThrows(
+                    com.intellisure.quotepolicyservice.exception.BusinessException.class,
+                    () -> quoteService.validateStatusTransition(QuoteStatus.DRAFT, QuoteStatus.ACCEPTED)
+            );
+            org.junit.jupiter.api.Assertions.assertThrows(
+                    com.intellisure.quotepolicyservice.exception.BusinessException.class,
+                    () -> quoteService.validateStatusTransition(QuoteStatus.DRAFT, QuoteStatus.BOUND)
+            );
+            org.junit.jupiter.api.Assertions.assertThrows(
+                    com.intellisure.quotepolicyservice.exception.BusinessException.class,
+                    () -> quoteService.validateStatusTransition(QuoteStatus.DRAFT, QuoteStatus.ISSUED)
+            );
+
+            // Cannot jump from SUBMITTED directly to BOUND or ISSUED
+            org.junit.jupiter.api.Assertions.assertThrows(
+                    com.intellisure.quotepolicyservice.exception.BusinessException.class,
+                    () -> quoteService.validateStatusTransition(QuoteStatus.SUBMITTED, QuoteStatus.BOUND)
+            );
+
+            // Cannot jump from QUOTED directly to BOUND or ISSUED without ACCEPTED
+            org.junit.jupiter.api.Assertions.assertThrows(
+                    com.intellisure.quotepolicyservice.exception.BusinessException.class,
+                    () -> quoteService.validateStatusTransition(QuoteStatus.QUOTED, QuoteStatus.BOUND)
+            );
+
+            // Cannot transition out of terminal state ISSUED
+            org.junit.jupiter.api.Assertions.assertThrows(
+                    com.intellisure.quotepolicyservice.exception.BusinessException.class,
+                    () -> quoteService.validateStatusTransition(QuoteStatus.ISSUED, QuoteStatus.DRAFT)
+            );
+        }
+    }
 }

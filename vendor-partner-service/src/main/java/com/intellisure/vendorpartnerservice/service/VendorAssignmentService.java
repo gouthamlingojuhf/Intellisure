@@ -32,17 +32,31 @@ public class VendorAssignmentService {
     private final VendorRepository vendorRepository;
 
     public Mono<VendorAssignmentResponse> createAssignment(CreateVendorAssignmentRequest request) {
+        if (request.recoveryPath() != null) {
+            String path = request.recoveryPath().trim().toUpperCase();
+            if ("CUSTOMER_VENDOR".equals(path) || "CUSTOMER_MANAGED".equals(path)) {
+                return Mono.error(new IllegalStateException(
+                        "Vendor assignment is not permitted for customer-owned recovery path: " + path));
+            }
+            if (!"NETWORK_VENDOR".equals(path)) {
+                return Mono.error(new IllegalArgumentException("Invalid recovery path: " + request.recoveryPath()));
+            }
+        }
+
         return vendorRepository.findById(request.vendorId())
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("Vendor not found: " + request.vendorId())))
                 .flatMap(vendor -> {
                     if (vendor.getVerificationStatus() != VendorVerificationStatus.VERIFIED ||
                         vendor.getActiveStatus() != VendorActiveStatus.ACTIVE) {
                         return Mono.error(new IllegalStateException("Vendor must be verified and active for assignment"));
                     }
+
+                    AssignmentType type = parseAssignmentType(request.assignmentType());
                     
                     VendorAssignment assignment = VendorAssignment.builder()
                             .assignmentId(UUID.randomUUID())
                             .vendorId(request.vendorId())
-                            .assignmentType(AssignmentType.valueOf(request.assignmentType()))
+                            .assignmentType(type)
                             .claimId(request.claimId())
                             .recoveryCaseId(request.recoveryCaseId())
                             .status(AssignmentStatus.DISPATCHED)
@@ -82,15 +96,18 @@ public class VendorAssignmentService {
 
     public Mono<VendorAssignmentResponse> getAssignment(UUID assignmentId) {
         return assignmentRepository.findById(assignmentId)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("Assignment not found: " + assignmentId)))
                 .map(this::mapToResponse);
     }
 
     public Mono<VendorAssignmentResponse> acceptAssignment(UUID assignmentId, AcceptAssignmentRequest request) {
         return assignmentRepository.findById(assignmentId)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("Assignment not found: " + assignmentId)))
                 .flatMap(assignment -> {
-                    if (assignment.getStatus() != AssignmentStatus.DISPATCHED && 
-                        assignment.getStatus() != AssignmentStatus.OFFERED) {
-                        return Mono.error(new IllegalStateException("Assignment must be in DISPATCHED or OFFERED status to accept"));
+                    try {
+                        validateStatusTransition(assignment.getStatus(), AssignmentStatus.ACCEPTED);
+                    } catch (IllegalStateException | IllegalArgumentException e) {
+                        return Mono.error(e);
                     }
                     assignment.setStatus(AssignmentStatus.ACCEPTED);
                     assignment.setAcceptedAt(LocalDateTime.now());
@@ -103,10 +120,12 @@ public class VendorAssignmentService {
 
     public Mono<VendorAssignmentResponse> declineAssignment(UUID assignmentId, DeclineAssignmentRequest request) {
         return assignmentRepository.findById(assignmentId)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("Assignment not found: " + assignmentId)))
                 .flatMap(assignment -> {
-                    if (assignment.getStatus() != AssignmentStatus.DISPATCHED && 
-                        assignment.getStatus() != AssignmentStatus.OFFERED) {
-                        return Mono.error(new IllegalStateException("Assignment must be in DISPATCHED or OFFERED status to decline"));
+                    try {
+                        validateStatusTransition(assignment.getStatus(), AssignmentStatus.DECLINED);
+                    } catch (IllegalStateException | IllegalArgumentException e) {
+                        return Mono.error(e);
                     }
                     assignment.setStatus(AssignmentStatus.DECLINED);
                     assignment.setUpdatedAt(LocalDateTime.now());
@@ -117,20 +136,29 @@ public class VendorAssignmentService {
     }
 
     public Mono<VendorAssignmentResponse> updateAssignmentStatus(UUID assignmentId, UpdateAssignmentStatusRequest request) {
+        if (request == null || request.status() == null) {
+            return Mono.error(new IllegalArgumentException("Status cannot be null"));
+        }
         return assignmentRepository.findById(assignmentId)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("Assignment not found: " + assignmentId)))
                 .flatMap(assignment -> {
-                    AssignmentStatus newStatus = AssignmentStatus.valueOf(request.status());
+                    AssignmentStatus newStatus;
+                    try {
+                        newStatus = AssignmentStatus.valueOf(request.status().trim().toUpperCase());
+                    } catch (IllegalArgumentException e) {
+                        return Mono.error(new IllegalArgumentException("Invalid assignment status: " + request.status()));
+                    }
+
+                    try {
+                        validateStatusTransition(assignment.getStatus(), newStatus);
+                    } catch (IllegalStateException | IllegalArgumentException e) {
+                        return Mono.error(e);
+                    }
                     
                     if (newStatus == AssignmentStatus.COMPLETED) {
-                        if (assignment.getStatus() != AssignmentStatus.ACCEPTED &&
-                            assignment.getStatus() != AssignmentStatus.IN_PROGRESS) {
-                            return Mono.error(new IllegalStateException("Assignment must be ACCEPTED or IN_PROGRESS to complete"));
-                        }
                         assignment.setCompletedAt(LocalDateTime.now());
-                        assignment.setEvidenceDocumentIds(request.evidenceDocumentIds());
-                    } else if (newStatus == AssignmentStatus.IN_PROGRESS) {
-                        if (assignment.getStatus() != AssignmentStatus.ACCEPTED) {
-                            return Mono.error(new IllegalStateException("Assignment must be ACCEPTED to start work"));
+                        if (request.evidenceDocumentIds() != null) {
+                            assignment.setEvidenceDocumentIds(request.evidenceDocumentIds());
                         }
                     }
                     
@@ -142,14 +170,66 @@ public class VendorAssignmentService {
                 });
     }
 
+    public void validateStatusTransition(AssignmentStatus currentStatus, AssignmentStatus targetStatus) {
+        if (currentStatus == null || targetStatus == null) {
+            throw new IllegalArgumentException("Current and target status must not be null");
+        }
+        if (currentStatus == targetStatus) {
+            return;
+        }
+        if (currentStatus == AssignmentStatus.COMPLETED) {
+            throw new IllegalStateException("Cannot transition a COMPLETED assignment to " + targetStatus);
+        }
+        if (currentStatus == AssignmentStatus.CANCELLED) {
+            throw new IllegalStateException("Cannot transition a CANCELLED assignment to " + targetStatus);
+        }
+        if (currentStatus == AssignmentStatus.DECLINED) {
+            throw new IllegalStateException("Cannot transition a DECLINED assignment to " + targetStatus);
+        }
+        if (targetStatus == AssignmentStatus.IN_PROGRESS && currentStatus != AssignmentStatus.ACCEPTED) {
+            throw new IllegalStateException("Assignment must be ACCEPTED to start work");
+        }
+        if (targetStatus == AssignmentStatus.COMPLETED &&
+                currentStatus != AssignmentStatus.ACCEPTED && currentStatus != AssignmentStatus.IN_PROGRESS) {
+            throw new IllegalStateException("Assignment must be ACCEPTED or IN_PROGRESS to complete");
+        }
+        if (targetStatus == AssignmentStatus.ACCEPTED &&
+                currentStatus != AssignmentStatus.DISPATCHED &&
+                currentStatus != AssignmentStatus.OFFERED &&
+                currentStatus != AssignmentStatus.ASSIGNED &&
+                currentStatus != AssignmentStatus.PENDING &&
+                currentStatus != AssignmentStatus.REQUESTED) {
+            throw new IllegalStateException("Assignment must be in DISPATCHED or OFFERED status to accept");
+        }
+        if (targetStatus == AssignmentStatus.DECLINED &&
+                currentStatus != AssignmentStatus.DISPATCHED &&
+                currentStatus != AssignmentStatus.OFFERED &&
+                currentStatus != AssignmentStatus.ASSIGNED &&
+                currentStatus != AssignmentStatus.PENDING &&
+                currentStatus != AssignmentStatus.REQUESTED) {
+            throw new IllegalStateException("Assignment must be in DISPATCHED or OFFERED status to decline");
+        }
+    }
+
+    private AssignmentType parseAssignmentType(String typeStr) {
+        if (typeStr == null || typeStr.isBlank()) {
+            return AssignmentType.OTHER;
+        }
+        try {
+            return AssignmentType.valueOf(typeStr.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return AssignmentType.OTHER;
+        }
+    }
+
     private VendorAssignmentResponse mapToResponse(VendorAssignment entity) {
         return new VendorAssignmentResponse(
                 entity.getAssignmentId(),
                 entity.getVendorId(),
-                entity.getAssignmentType().name(),
+                entity.getAssignmentType() != null ? entity.getAssignmentType().name() : null,
                 entity.getClaimId(),
                 entity.getRecoveryCaseId(),
-                entity.getStatus().name(),
+                entity.getStatus() != null ? entity.getStatus().name() : null,
                 entity.getTaskDescription(),
                 entity.getDueDate(),
                 entity.getPriority(),

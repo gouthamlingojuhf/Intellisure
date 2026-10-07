@@ -1,4 +1,4 @@
-package com.intellisure.claimsservice.config;
+package com.intellisure.recoveryservice.config;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,7 +30,7 @@ class WebClientTokenPropagationTest {
     private final ExchangeFilterFunction filter = WebClientConfig.bearerTokenPropagationFilter();
 
     @Test
-    @DisplayName("Propagates authenticated Bearer token from ReactiveSecurityContext to outbound WebClient request")
+    @DisplayName("Propagates authenticated Bearer token from ReactiveSecurityContext to outbound WebClient request for Vendor Partner Service call")
     void propagatesBearerTokenFromSecurityContext() {
         AtomicReference<ClientRequest> capturedRequest = new AtomicReference<>();
         ExchangeFunction next = request -> {
@@ -38,11 +38,11 @@ class WebClientTokenPropagationTest {
             return Mono.empty();
         };
 
-        ClientRequest outbound = ClientRequest.create(HttpMethod.GET, URI.create("http://customer-party-service/api/users/role/CLAIMS_ADJUSTER/available"))
+        ClientRequest outbound = ClientRequest.create(HttpMethod.POST, URI.create("http://vendor-partner-service/api/vendor-assignments"))
                 .build();
 
         Jwt jwt = new Jwt(
-                "mock-user-bearer-token",
+                "recovery-bearer-token-12345",
                 Instant.now(),
                 Instant.now().plusSeconds(300),
                 Map.of("alg", "HS256"),
@@ -57,7 +57,7 @@ class WebClientTokenPropagationTest {
         .verifyComplete();
 
         assertEquals(
-                "Bearer mock-user-bearer-token",
+                "Bearer recovery-bearer-token-12345",
                 capturedRequest.get().headers().getFirst(HttpHeaders.AUTHORIZATION)
         );
     }
@@ -71,7 +71,7 @@ class WebClientTokenPropagationTest {
             return Mono.empty();
         };
 
-        ClientRequest outbound = ClientRequest.create(HttpMethod.GET, URI.create("http://customer-party-service/api/users/role/CLAIMS_ADJUSTER/available"))
+        ClientRequest outbound = ClientRequest.create(HttpMethod.POST, URI.create("http://vendor-partner-service/api/vendor-assignments"))
                 .header(HttpHeaders.AUTHORIZATION, "Bearer custom-token")
                 .build();
 
@@ -105,7 +105,7 @@ class WebClientTokenPropagationTest {
             return Mono.empty();
         };
 
-        ClientRequest outbound = ClientRequest.create(HttpMethod.GET, URI.create("http://customer-party-service/api/users/role/CLAIMS_ADJUSTER/available"))
+        ClientRequest outbound = ClientRequest.create(HttpMethod.POST, URI.create("http://vendor-partner-service/api/vendor-assignments"))
                 .build();
 
         StepVerifier.create(filter.filter(outbound, next))

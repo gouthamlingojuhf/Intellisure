@@ -1,4 +1,4 @@
-package com.intellisure.claimsservice.config;
+package com.intellisure.quotepolicyservice.config;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,7 +30,7 @@ class WebClientTokenPropagationTest {
     private final ExchangeFilterFunction filter = WebClientConfig.bearerTokenPropagationFilter();
 
     @Test
-    @DisplayName("Propagates authenticated Bearer token from ReactiveSecurityContext to outbound WebClient request")
+    @DisplayName("Propagates authenticated Bearer token from ReactiveSecurityContext to outbound WebClient request for Risk & Underwriting call")
     void propagatesBearerTokenFromSecurityContext() {
         AtomicReference<ClientRequest> capturedRequest = new AtomicReference<>();
         ExchangeFunction next = request -> {
@@ -38,17 +38,23 @@ class WebClientTokenPropagationTest {
             return Mono.empty();
         };
 
-        ClientRequest outbound = ClientRequest.create(HttpMethod.GET, URI.create("http://customer-party-service/api/users/role/CLAIMS_ADJUSTER/available"))
-                .build();
+        ClientRequest outbound = ClientRequest.create(
+                HttpMethod.GET,
+                URI.create("http://risk-underwriting-service/api/quotes/123/underwriting-result")
+        ).build();
 
         Jwt jwt = new Jwt(
-                "mock-user-bearer-token",
+                "quote-bearer-token-9999",
                 Instant.now(),
                 Instant.now().plusSeconds(300),
                 Map.of("alg", "HS256"),
-                Map.of("sub", "adjuster-id-123", "role", "CLAIMS_ADJUSTER")
+                Map.of("sub", "underwriter-123", "role", "UNDERWRITER")
         );
-        JwtAuthenticationToken auth = new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority("ROLE_CLAIMS_ADJUSTER")), "adjuster-id-123");
+        JwtAuthenticationToken auth = new JwtAuthenticationToken(
+                jwt,
+                List.of(new SimpleGrantedAuthority("ROLE_UNDERWRITER")),
+                "underwriter-123"
+        );
 
         StepVerifier.create(
                 filter.filter(outbound, next)
@@ -57,7 +63,7 @@ class WebClientTokenPropagationTest {
         .verifyComplete();
 
         assertEquals(
-                "Bearer mock-user-bearer-token",
+                "Bearer quote-bearer-token-9999",
                 capturedRequest.get().headers().getFirst(HttpHeaders.AUTHORIZATION)
         );
     }
@@ -71,18 +77,25 @@ class WebClientTokenPropagationTest {
             return Mono.empty();
         };
 
-        ClientRequest outbound = ClientRequest.create(HttpMethod.GET, URI.create("http://customer-party-service/api/users/role/CLAIMS_ADJUSTER/available"))
-                .header(HttpHeaders.AUTHORIZATION, "Bearer custom-token")
-                .build();
+        ClientRequest outbound = ClientRequest.create(
+                HttpMethod.GET,
+                URI.create("http://risk-underwriting-service/api/quotes/123/underwriting-result")
+        )
+        .header(HttpHeaders.AUTHORIZATION, "Bearer custom-token")
+        .build();
 
         Jwt jwt = new Jwt(
                 "security-context-token",
                 Instant.now(),
                 Instant.now().plusSeconds(300),
                 Map.of("alg", "HS256"),
-                Map.of("sub", "adjuster-id-123")
+                Map.of("sub", "underwriter-123")
         );
-        JwtAuthenticationToken auth = new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority("ROLE_CLAIMS_ADJUSTER")), "adjuster-id-123");
+        JwtAuthenticationToken auth = new JwtAuthenticationToken(
+                jwt,
+                List.of(new SimpleGrantedAuthority("ROLE_UNDERWRITER")),
+                "underwriter-123"
+        );
 
         StepVerifier.create(
                 filter.filter(outbound, next)
@@ -105,8 +118,10 @@ class WebClientTokenPropagationTest {
             return Mono.empty();
         };
 
-        ClientRequest outbound = ClientRequest.create(HttpMethod.GET, URI.create("http://customer-party-service/api/users/role/CLAIMS_ADJUSTER/available"))
-                .build();
+        ClientRequest outbound = ClientRequest.create(
+                HttpMethod.GET,
+                URI.create("http://risk-underwriting-service/api/quotes/123/underwriting-result")
+        ).build();
 
         StepVerifier.create(filter.filter(outbound, next))
                 .verifyComplete();

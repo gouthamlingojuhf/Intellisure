@@ -30,6 +30,11 @@ public class UserAccountController {
         return userAccountService.getUserById(userId);
     }
 
+    @GetMapping("/role/CLAIMS_ADJUSTER/available")
+    public Flux<UserResponse> getAvailableClaimsAdjusters() {
+        return userAccountService.getUsersByRole("CLAIMS_ADJUSTER");
+    }
+
     @GetMapping("/role/{role}")
     public Flux<UserResponse> getUsersByRole(@PathVariable String role) {
         return userAccountService.getUsersByRole(role);

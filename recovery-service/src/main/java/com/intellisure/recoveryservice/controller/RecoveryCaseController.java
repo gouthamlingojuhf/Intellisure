@@ -1,14 +1,16 @@
 package com.intellisure.recoveryservice.controller;
 
+import com.intellisure.recoveryservice.dto.CompleteRecoveryCaseRequest;
 import com.intellisure.recoveryservice.dto.CreateRecoveryCaseRequest;
+import com.intellisure.recoveryservice.dto.RecordRecoveryProgressRequest;
 import com.intellisure.recoveryservice.dto.RecoveryCaseFilterRequest;
 import com.intellisure.recoveryservice.dto.RecoveryCaseListResponse;
 import com.intellisure.recoveryservice.dto.RecoveryCaseResponse;
-import com.intellisure.recoveryservice.dto.UpdateRecoveryCaseRequest;
-import com.intellisure.recoveryservice.dto.UpdateRecoveryStatusRequest;
-import com.intellisure.recoveryservice.dto.CompleteRecoveryCaseRequest;
 import com.intellisure.recoveryservice.dto.RecoveryEstimationRequest;
 import com.intellisure.recoveryservice.dto.RecoveryEstimationResponse;
+import com.intellisure.recoveryservice.dto.SelectRecoveryPathRequest;
+import com.intellisure.recoveryservice.dto.UpdateRecoveryCaseRequest;
+import com.intellisure.recoveryservice.dto.UpdateRecoveryStatusRequest;
 import com.intellisure.recoveryservice.entity.RecoveryCaseStatus;
 import com.intellisure.recoveryservice.entity.RecoverySeverity;
 import com.intellisure.recoveryservice.service.RecoveryCaseService;
@@ -38,11 +40,11 @@ public class RecoveryCaseController {
     }
 
     @GetMapping
-    public Mono<com.intellisure.recoveryservice.dto.RecoveryCaseListResponse> getCases(
+    public Mono<RecoveryCaseListResponse> getCases(
             @RequestParam(required = false) UUID customerId,
             @RequestParam(required = false) UUID ownerId,
             @RequestParam(required = false) RecoveryCaseStatus status,
-            @RequestParam(required = false) com.intellisure.recoveryservice.entity.RecoverySeverity severity,
+            @RequestParam(required = false) RecoverySeverity severity,
             @RequestParam(required = false) LocalDate fromDate,
             @RequestParam(required = false) LocalDate toDate,
             @RequestParam(defaultValue = "0") Integer page,
@@ -56,7 +58,7 @@ public class RecoveryCaseController {
     @PutMapping("/{recoveryCaseId}")
     public Mono<RecoveryCaseResponse> updateCase(
             @PathVariable UUID recoveryCaseId,
-            @Valid @RequestBody com.intellisure.recoveryservice.dto.UpdateRecoveryCaseRequest request) {
+            @Valid @RequestBody UpdateRecoveryCaseRequest request) {
         return recoveryCaseService.updateCase(recoveryCaseId, request);
     }
 
@@ -67,6 +69,41 @@ public class RecoveryCaseController {
         return recoveryCaseService.updateStatus(recoveryCaseId, request);
     }
 
+    @PostMapping("/{recoveryCaseId}/path")
+    public Mono<RecoveryCaseResponse> selectRecoveryPath(
+            @PathVariable UUID recoveryCaseId,
+            @Valid @RequestBody SelectRecoveryPathRequest request) {
+        return recoveryCaseService.selectRecoveryPath(recoveryCaseId, request);
+    }
+
+    @PutMapping("/{recoveryCaseId}/path")
+    public Mono<RecoveryCaseResponse> updateRecoveryPath(
+            @PathVariable UUID recoveryCaseId,
+            @Valid @RequestBody SelectRecoveryPathRequest request) {
+        return recoveryCaseService.selectRecoveryPath(recoveryCaseId, request);
+    }
+
+    @PostMapping("/{recoveryCaseId}/select-path")
+    public Mono<RecoveryCaseResponse> selectRecoveryPathAlias(
+            @PathVariable UUID recoveryCaseId,
+            @Valid @RequestBody SelectRecoveryPathRequest request) {
+        return recoveryCaseService.selectRecoveryPath(recoveryCaseId, request);
+    }
+
+    @PostMapping("/{recoveryCaseId}/progress")
+    public Mono<RecoveryCaseResponse> recordProgress(
+            @PathVariable UUID recoveryCaseId,
+            @Valid @RequestBody RecordRecoveryProgressRequest request) {
+        return recoveryCaseService.recordProgress(recoveryCaseId, request);
+    }
+
+    @PatchMapping("/{recoveryCaseId}/progress")
+    public Mono<RecoveryCaseResponse> updateProgress(
+            @PathVariable UUID recoveryCaseId,
+            @Valid @RequestBody RecordRecoveryProgressRequest request) {
+        return recoveryCaseService.recordProgress(recoveryCaseId, request);
+    }
+
     @PostMapping("/{recoveryCaseId}/complete")
     public Mono<RecoveryCaseResponse> completeCase(
             @PathVariable UUID recoveryCaseId,
@@ -75,7 +112,7 @@ public class RecoveryCaseController {
     }
 
     @PostMapping("/{recoveryCaseId}/estimate")
-    public Mono<com.intellisure.recoveryservice.dto.RecoveryEstimationResponse> estimateRecovery(
+    public Mono<RecoveryEstimationResponse> estimateRecovery(
             @PathVariable UUID recoveryCaseId,
             @Valid @RequestBody RecoveryEstimationRequest request) {
         return recoveryCaseService.estimateRecoveryAsync(request);

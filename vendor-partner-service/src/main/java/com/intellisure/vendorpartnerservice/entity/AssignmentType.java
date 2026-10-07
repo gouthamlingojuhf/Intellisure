@@ -12,5 +12,6 @@ public enum AssignmentType {
     RECOVERY_CLEANUP,
     RECOVERY_SECURITY,
     RECOVERY_CONSULTING,
+    RESTORATION,
     OTHER
 }

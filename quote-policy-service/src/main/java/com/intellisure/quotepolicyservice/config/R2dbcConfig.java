@@ -8,6 +8,11 @@ import com.intellisure.quotepolicyservice.entity.PremiumAudit;
 import com.intellisure.quotepolicyservice.entity.QuoteVersion;
 import com.intellisure.quotepolicyservice.entity.RenewalTransaction;
 import com.intellisure.quotepolicyservice.entity.Subjectivity;
+import com.intellisure.quotepolicyservice.entity.Policy;
+import com.intellisure.quotepolicyservice.entity.PolicyCoverage;
+import com.intellisure.quotepolicyservice.entity.Quote;
+import com.intellisure.quotepolicyservice.entity.QuoteCoverage;
+import com.intellisure.quotepolicyservice.entity.UnderwritingDecision;
 import io.r2dbc.spi.ConnectionFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,15 +46,9 @@ public class R2dbcConfig {
     }
 
     @Bean
-    public R2dbcMappingContext r2dbcMappingContext() {
+    public R2dbcMappingContext r2dbcMappingContext(R2dbcCustomConversions r2dbcCustomConversions) {
         R2dbcMappingContext context = new R2dbcMappingContext();
-        // Register new entities explicitly
-        context.getPersistentEntity(Endorsement.class);
-        context.getPersistentEntity(EndorsementCoverage.class);
-        context.getPersistentEntity(QuoteVersion.class);
-        context.getPersistentEntity(RenewalTransaction.class);
-        context.getPersistentEntity(Subjectivity.class);
-        context.getPersistentEntity(PremiumAudit.class);
+        context.setSimpleTypeHolder(r2dbcCustomConversions.getSimpleTypeHolder());
         return context;
     }
 }

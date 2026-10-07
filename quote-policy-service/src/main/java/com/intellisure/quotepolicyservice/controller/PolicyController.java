@@ -53,6 +53,28 @@ public class PolicyController {
         return policyService.bindQuote(quoteId);
     }
 
+    @PostMapping("/{policyId}/issue")
+    @Operation(summary = "Issue a bound policy")
+    public Mono<PolicyResponse> issuePolicy(@PathVariable UUID policyId) {
+        return policyService.issuePolicy(policyId);
+    }
+
+    @PostMapping("/{policyId}/cancel")
+    @Operation(summary = "Cancel an in-force policy")
+    public Mono<PolicyResponse> cancelPolicy(
+            @PathVariable UUID policyId,
+            @RequestParam(required = false) String reason) {
+        return policyService.cancelPolicy(policyId, reason);
+    }
+
+    @PostMapping("/{policyId}/reinstate")
+    @Operation(summary = "Reinstate a cancelled policy")
+    public Mono<PolicyResponse> reinstatePolicy(
+            @PathVariable UUID policyId,
+            @RequestParam(required = false) String reason) {
+        return policyService.reinstatePolicy(policyId, reason);
+    }
+
 
 
     @GetMapping("/number/{policyNumber}/status")

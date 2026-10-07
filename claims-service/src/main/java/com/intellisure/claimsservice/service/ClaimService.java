@@ -9,6 +9,7 @@ import com.intellisure.claimsservice.exception.ResourceNotFoundException;
 import com.intellisure.claimsservice.repository.ClaimRepository;
 import com.intellisure.claimsservice.security.SecurityActorService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -25,6 +26,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ClaimService {
 
     private final ClaimRepository claimRepository;
@@ -318,6 +320,10 @@ public class ClaimService {
         }
 
         return customerPartyAdjusterClient.findAvailableAdjusters()
+                .onErrorResume(err -> {
+                    log.warn("Adjuster lookup failed during auto-assignment: {}", err.getMessage());
+                    return Flux.empty();
+                })
                 .collectList()
                 .flatMap(adjusters -> {
                     if (adjusters == null || adjusters.isEmpty()) {

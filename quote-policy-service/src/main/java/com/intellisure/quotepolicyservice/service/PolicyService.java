@@ -603,6 +603,75 @@ public class PolicyService {
                 );
     }
 
+    @PreAuthorize("hasAnyRole('UNDERWRITER', 'ADMIN')")
+    @Transactional
+    public Mono<PolicyResponse> issuePolicy(UUID policyId) {
+        return policyRepository.findById(policyId)
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException("Policy not found with ID: " + policyId)))
+                .flatMap(policy -> {
+                    if (policy.getStatus() != PolicyStatus.PENDING_ISSUANCE && policy.getStatus() != PolicyStatus.BOUND) {
+                        return Mono.error(new BusinessException(
+                                "Only a PENDING_ISSUANCE or BOUND policy can be issued. Current status: " + policy.getStatus()));
+                    }
+                    LocalDateTime now = LocalDateTime.now();
+                    policy.setStatus(PolicyStatus.IN_FORCE);
+                    policy.setIssuedAt(now);
+                    policy.setUpdatedAt(now);
+                    return entityTemplate.update(policy)
+                            .flatMap(updatedPolicy -> {
+                                if (updatedPolicy.getQuoteId() != null) {
+                                    return quoteRepository.findById(updatedPolicy.getQuoteId())
+                                            .flatMap(quote -> {
+                                                quote.setStatus(QuoteStatus.ISSUED);
+                                                quote.setUpdatedAt(now);
+                                                return entityTemplate.update(quote);
+                                            })
+                                            .thenReturn(updatedPolicy);
+                                }
+                                return Mono.just(updatedPolicy);
+                            });
+                })
+                .flatMap(this::buildPolicyResponse);
+    }
+
+    @PreAuthorize("hasAnyRole('UNDERWRITER', 'ADMIN')")
+    @Transactional
+    public Mono<PolicyResponse> cancelPolicy(UUID policyId, String cancellationReason) {
+        return policyRepository.findById(policyId)
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException("Policy not found with ID: " + policyId)))
+                .flatMap(policy -> {
+                    if (policy.getStatus() == PolicyStatus.CANCELLED) {
+                        return Mono.error(new BusinessException("Policy is already CANCELLED"));
+                    }
+                    if (policy.getStatus() == PolicyStatus.EXPIRED) {
+                        return Mono.error(new BusinessException("Cannot cancel an EXPIRED policy"));
+                    }
+                    LocalDateTime now = LocalDateTime.now();
+                    policy.setStatus(PolicyStatus.CANCELLED);
+                    policy.setUpdatedAt(now);
+                    return entityTemplate.update(policy);
+                })
+                .flatMap(this::buildPolicyResponse);
+    }
+
+    @PreAuthorize("hasAnyRole('UNDERWRITER', 'ADMIN')")
+    @Transactional
+    public Mono<PolicyResponse> reinstatePolicy(UUID policyId, String reinstatementReason) {
+        return policyRepository.findById(policyId)
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException("Policy not found with ID: " + policyId)))
+                .flatMap(policy -> {
+                    if (policy.getStatus() != PolicyStatus.CANCELLED && policy.getStatus() != PolicyStatus.CANCEL_PENDING) {
+                        return Mono.error(new BusinessException(
+                                "Only a CANCELLED or CANCEL_PENDING policy can be reinstated. Current status: " + policy.getStatus()));
+                    }
+                    LocalDateTime now = LocalDateTime.now();
+                    policy.setStatus(PolicyStatus.REINSTATED);
+                    policy.setUpdatedAt(now);
+                    return entityTemplate.update(policy);
+                })
+                .flatMap(this::buildPolicyResponse);
+    }
+
     private String generatePolicyNumber() {
         return "POL-"
                 + Year.now().getValue()

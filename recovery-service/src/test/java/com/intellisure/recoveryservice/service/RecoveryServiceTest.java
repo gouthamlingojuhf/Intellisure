@@ -1,5 +1,6 @@
 package com.intellisure.recoveryservice.service;
 
+import com.intellisure.recoveryservice.client.VendorPartnerClient;
 import com.intellisure.recoveryservice.dto.CreateRecoveryCaseRequest;
 import com.intellisure.recoveryservice.entity.RecoveryCase;
 import com.intellisure.recoveryservice.entity.RecoveryCaseStatus;
@@ -21,6 +22,8 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class RecoveryServiceTest {
     @Mock RecoveryCaseRepository repository;
+    @Mock RecoveryEstimationService estimationService;
+    @Mock VendorPartnerClient vendorPartnerClient;
     @InjectMocks RecoveryCaseService service;
 
     @Test

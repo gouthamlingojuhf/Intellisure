@@ -113,7 +113,6 @@ public class RenewalService {
     public Mono<RenewalTransactionResponse> issueRenewal(UUID renewalId) {
         return renewalRepository.findById(renewalId)
                 .switchIfEmpty(Mono.error(new ResourceNotFoundException("Renewal not found: " + renewalId)))
-                .flatMap(renewal -> validateRenewalForDecision(renewal))
                 .flatMap(renewal -> {
                     if (renewal.getStatus() != RenewalStatus.BOUND) {
                         return Mono.error(new BusinessException("Renewal must be BOUND before issuing. Current: " + renewal.getStatus()));
@@ -165,7 +164,30 @@ public class RenewalService {
     }
 
     private Mono<RenewalTransactionResponse> createRenewalPolicy(RenewalTransactionResponse renewal) {
-        return Mono.just(renewal);
+        return policyRepository.findById(renewal.policyId())
+                .flatMap(origPolicy -> {
+                    UUID newPolicyId = UUID.randomUUID();
+                    LocalDateTime now = LocalDateTime.now();
+                    Policy renewalPolicy = Policy.builder()
+                            .policyId(newPolicyId)
+                            .policyNumber(origPolicy.getPolicyNumber() + "-R01")
+                            .quoteId(origPolicy.getQuoteId())
+                            .customerId(origPolicy.getCustomerId())
+                            .productCode(origPolicy.getProductCode())
+                            .status(PolicyStatus.IN_FORCE)
+                            .startDate(renewal.proposedStartDate())
+                            .endDate(renewal.proposedEndDate())
+                            .totalPremium(renewal.proposedTotalPremium())
+                            .issuedByUserId(renewal.decidedByUserId())
+                            .boundAt(renewal.boundAt() != null ? renewal.boundAt() : now)
+                            .issuedAt(now)
+                            .createdAt(now)
+                            .updatedAt(now)
+                            .build();
+
+                    return policyRepository.save(renewalPolicy).thenReturn(renewal);
+                })
+                .defaultIfEmpty(renewal);
     }
 
     private String generateRenewalNumber() {

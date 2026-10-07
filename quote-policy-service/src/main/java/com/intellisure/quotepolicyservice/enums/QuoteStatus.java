@@ -8,6 +8,8 @@ public enum QuoteStatus {
 
     IN_REVIEW,
 
+    UNDER_REVIEW,
+
     NEEDS_INFORMATION,
 
     RISK_ASSESSMENT,
@@ -17,6 +19,8 @@ public enum QuoteStatus {
     ACCEPTED,
 
     BOUND,
+
+    ISSUED,
 
     DECLINED_BY_INSURER,
 

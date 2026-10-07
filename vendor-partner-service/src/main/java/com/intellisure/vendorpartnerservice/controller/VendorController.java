@@ -40,6 +40,21 @@ public class VendorController {
         return vendorService.searchVendors(request);
     }
 
+    @GetMapping("/recommendations")
+    public Mono<VendorListResponse> getRecommendations(
+            @RequestParam(required = false) String serviceType,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) java.math.BigDecimal radiusKm,
+            @RequestParam(required = false) String capability,
+            @RequestParam(required = false) String availabilityStatus,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "20") Integer size) {
+
+        VendorSearchRequest request = new VendorSearchRequest(
+                serviceType, location, radiusKm, capability, availabilityStatus, page, size);
+        return vendorService.recommendVendors(request);
+    }
+
     @PutMapping("/{vendorId}")
     public Mono<VendorResponse> updateVendor(@PathVariable UUID vendorId, 
                                              @Valid @RequestBody UpdateVendorRequest request) {

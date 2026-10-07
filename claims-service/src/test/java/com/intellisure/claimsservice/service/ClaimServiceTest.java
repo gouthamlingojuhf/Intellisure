@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -49,6 +50,44 @@ class ClaimServiceTest {
             assertEquals(adjuster, r.assignedAdjusterId());
             assertEquals(new BigDecimal("1000"), r.estimatedLoss());
         }).verifyComplete();
+    }
+
+    @Test
+    void filesClaimSuccessfullyWhenAdjusterLookupFails() {
+        UUID policy = UUID.randomUUID(), customer = UUID.randomUUID();
+        when(repository.save(any(Claim.class))).thenAnswer(i -> Mono.just(i.getArgument(0)));
+        when(customerPartyAdjusterClient.findAvailableAdjusters())
+                .thenReturn(Flux.error(new RuntimeException("customer-party-service connection refused")));
+
+        FileClaimRequest request = new FileClaimRequest(policy, LocalDate.of(2026, 1, 2), "loss",
+                new BigDecimal("1000"));
+
+        StepVerifier.create(service.fileClaim(request, customer))
+                .assertNext(response -> {
+                    assertEquals(customer, response.customerId());
+                    assertEquals("FNOL_RECEIVED", response.status());
+                    assertNull(response.assignedAdjusterId());
+                    assertEquals(new BigDecimal("1000"), response.estimatedLoss());
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void filesClaimSuccessfullyWhenAdjusterLookupReturnsEmpty() {
+        UUID policy = UUID.randomUUID(), customer = UUID.randomUUID();
+        when(repository.save(any(Claim.class))).thenAnswer(i -> Mono.just(i.getArgument(0)));
+        when(customerPartyAdjusterClient.findAvailableAdjusters()).thenReturn(Flux.empty());
+
+        FileClaimRequest request = new FileClaimRequest(policy, LocalDate.of(2026, 1, 2), "loss",
+                new BigDecimal("1000"));
+
+        StepVerifier.create(service.fileClaim(request, customer))
+                .assertNext(response -> {
+                    assertEquals(customer, response.customerId());
+                    assertEquals("FNOL_RECEIVED", response.status());
+                    assertNull(response.assignedAdjusterId());
+                })
+                .verifyComplete();
     }
 
     @Test

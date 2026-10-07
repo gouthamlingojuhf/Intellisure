@@ -1082,4 +1082,126 @@ class PolicyServiceTest {
                     .verifyComplete();
         }
     }
+
+    @Nested
+    @DisplayName("policyServicing")
+    class PolicyServicing {
+
+        @Test
+        @DisplayName("issuePolicy transitions PENDING_ISSUANCE to IN_FORCE and sets quote to ISSUED")
+        void issuePolicyTransitionsToInForceAndQuoteToIssued() {
+            UUID policyId = UUID.randomUUID();
+            UUID quoteId = UUID.randomUUID();
+            Policy pendingPolicy = TestFixtures.policy(PolicyStatus.PENDING_ISSUANCE);
+            pendingPolicy.setPolicyId(policyId);
+            pendingPolicy.setQuoteId(quoteId);
+
+            Quote boundQuote = TestFixtures.quote(QuoteStatus.BOUND);
+            boundQuote.setQuoteId(quoteId);
+
+            when(policyRepository.findById(policyId)).thenReturn(Mono.just(pendingPolicy));
+            when(quoteRepository.findById(quoteId)).thenReturn(Mono.just(boundQuote));
+            lenient().when(policyCoverageRepository.findAllByPolicyId(policyId)).thenReturn(Flux.empty());
+
+            StepVerifier.create(policyService.issuePolicy(policyId))
+                    .assertNext(res -> {
+                        org.junit.jupiter.api.Assertions.assertEquals(PolicyStatus.IN_FORCE, res.status());
+                        org.junit.jupiter.api.Assertions.assertNotNull(res.issuedAt());
+                    })
+                    .verifyComplete();
+
+            verify(entityTemplate).update(any(Policy.class));
+            verify(entityTemplate).update(any(Quote.class));
+        }
+
+        @Test
+        @DisplayName("issuePolicy rejects policy that is not PENDING_ISSUANCE or BOUND")
+        void issuePolicyRejectsAlreadyInForce() {
+            UUID policyId = UUID.randomUUID();
+            Policy inForcePolicy = TestFixtures.policy(PolicyStatus.IN_FORCE);
+            inForcePolicy.setPolicyId(policyId);
+
+            when(policyRepository.findById(policyId)).thenReturn(Mono.just(inForcePolicy));
+
+            StepVerifier.create(policyService.issuePolicy(policyId))
+                    .expectError(com.intellisure.quotepolicyservice.exception.BusinessException.class)
+                    .verify();
+        }
+
+        @Test
+        @DisplayName("cancelPolicy transitions IN_FORCE to CANCELLED")
+        void cancelPolicyTransitionsToCancelled() {
+            UUID policyId = UUID.randomUUID();
+            Policy inForcePolicy = TestFixtures.policy(PolicyStatus.IN_FORCE);
+            inForcePolicy.setPolicyId(policyId);
+
+            when(policyRepository.findById(policyId)).thenReturn(Mono.just(inForcePolicy));
+            lenient().when(policyCoverageRepository.findAllByPolicyId(policyId)).thenReturn(Flux.empty());
+
+            StepVerifier.create(policyService.cancelPolicy(policyId, "Customer request"))
+                    .assertNext(res -> org.junit.jupiter.api.Assertions.assertEquals(PolicyStatus.CANCELLED, res.status()))
+                    .verifyComplete();
+
+            verify(entityTemplate).update(any(Policy.class));
+        }
+
+        @Test
+        @DisplayName("cancelPolicy rejects already cancelled policy")
+        void cancelPolicyRejectsAlreadyCancelled() {
+            UUID policyId = UUID.randomUUID();
+            Policy cancelledPolicy = TestFixtures.policy(PolicyStatus.CANCELLED);
+            cancelledPolicy.setPolicyId(policyId);
+
+            when(policyRepository.findById(policyId)).thenReturn(Mono.just(cancelledPolicy));
+
+            StepVerifier.create(policyService.cancelPolicy(policyId, "Reason"))
+                    .expectError(com.intellisure.quotepolicyservice.exception.BusinessException.class)
+                    .verify();
+        }
+
+        @Test
+        @DisplayName("cancelPolicy rejects expired policy")
+        void cancelPolicyRejectsExpired() {
+            UUID policyId = UUID.randomUUID();
+            Policy expiredPolicy = TestFixtures.policy(PolicyStatus.EXPIRED);
+            expiredPolicy.setPolicyId(policyId);
+
+            when(policyRepository.findById(policyId)).thenReturn(Mono.just(expiredPolicy));
+
+            StepVerifier.create(policyService.cancelPolicy(policyId, "Reason"))
+                    .expectError(com.intellisure.quotepolicyservice.exception.BusinessException.class)
+                    .verify();
+        }
+
+        @Test
+        @DisplayName("reinstatePolicy transitions CANCELLED to REINSTATED")
+        void reinstatePolicyTransitionsToReinstated() {
+            UUID policyId = UUID.randomUUID();
+            Policy cancelledPolicy = TestFixtures.policy(PolicyStatus.CANCELLED);
+            cancelledPolicy.setPolicyId(policyId);
+
+            when(policyRepository.findById(policyId)).thenReturn(Mono.just(cancelledPolicy));
+            lenient().when(policyCoverageRepository.findAllByPolicyId(policyId)).thenReturn(Flux.empty());
+
+            StepVerifier.create(policyService.reinstatePolicy(policyId, "Payment received"))
+                    .assertNext(res -> org.junit.jupiter.api.Assertions.assertEquals(PolicyStatus.REINSTATED, res.status()))
+                    .verifyComplete();
+
+            verify(entityTemplate).update(any(Policy.class));
+        }
+
+        @Test
+        @DisplayName("reinstatePolicy rejects policy that is not CANCELLED or CANCEL_PENDING")
+        void reinstatePolicyRejectsInForce() {
+            UUID policyId = UUID.randomUUID();
+            Policy inForcePolicy = TestFixtures.policy(PolicyStatus.IN_FORCE);
+            inForcePolicy.setPolicyId(policyId);
+
+            when(policyRepository.findById(policyId)).thenReturn(Mono.just(inForcePolicy));
+
+            StepVerifier.create(policyService.reinstatePolicy(policyId, "Reason"))
+                    .expectError(com.intellisure.quotepolicyservice.exception.BusinessException.class)
+                    .verify();
+        }
+    }
 }

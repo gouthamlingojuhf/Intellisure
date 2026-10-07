@@ -47,4 +47,16 @@ class UserAccountControllerTest {
                 .expectNext(resp)
                 .verifyComplete();
     }
+
+    @Test
+    void getAvailableClaimsAdjustersDelegatesToService() {
+        UUID adjusterId = UUID.randomUUID();
+        UserResponse resp = new UserResponse(adjusterId, "adj@intellisure.com", "CLAIMS_ADJUSTER", "ACTIVE", "Adjuster One", null, null);
+
+        when(userAccountService.getUsersByRole("CLAIMS_ADJUSTER")).thenReturn(reactor.core.publisher.Flux.just(resp));
+
+        StepVerifier.create(controller.getAvailableClaimsAdjusters())
+                .expectNext(resp)
+                .verifyComplete();
+    }
 }
