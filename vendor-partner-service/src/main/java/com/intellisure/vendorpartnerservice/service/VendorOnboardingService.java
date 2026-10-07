@@ -77,6 +77,7 @@ public class VendorOnboardingService {
     public Mono<VendorOnboardingResponse> verifyVendor(UUID vendorId, VerifyVendorRequest request) {
         return onboardingRepository.findByVendorIdAndStatus(vendorId, OnboardingStatus.SUBMITTED)
                 .flatMap(onboardingRequest -> {
+                    onboardingRequest.setNew(false);
                     if ("APPROVE".equalsIgnoreCase(request.verificationDecision())) {
                         onboardingRequest.setStatus(OnboardingStatus.VERIFIED);
                         onboardingRequest.setReviewedAt(LocalDateTime.now());

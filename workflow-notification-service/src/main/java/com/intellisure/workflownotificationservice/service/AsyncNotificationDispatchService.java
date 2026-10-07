@@ -23,106 +23,98 @@ public class AsyncNotificationDispatchService {
 
     @Async("notificationExecutor")
     public CompletableFuture<Notification> sendEmailAsync(UUID userId, String subject, String body, String referenceType, UUID referenceId) {
-        return CompletableFuture.supplyAsync(() -> {
-            log.info("Sending email to user: {} - Subject: {}", userId, subject);
-            
-            Notification notification = Notification.builder()
-                .notificationId(UUID.randomUUID())
-                .userId(userId)
-                .type(NotificationType.GENERAL_ALERT)
-                .title(subject)
-                .message(body)
-                .referenceType(referenceType)
-                .referenceId(referenceId)
-                .read(false)
-                .channel(NotificationChannel.EMAIL)
-                .createdAt(LocalDateTime.now())
-                .isNew(true)
-                .build();
+        log.info("Sending email to user: {} - Subject: {}", userId, subject);
+        
+        Notification notification = Notification.builder()
+            .notificationId(UUID.randomUUID())
+            .userId(userId)
+            .type(NotificationType.GENERAL_ALERT)
+            .title(subject)
+            .message(body)
+            .referenceType(referenceType)
+            .referenceId(referenceId)
+            .read(false)
+            .channel(NotificationChannel.EMAIL)
+            .createdAt(LocalDateTime.now())
+            .isNew(true)
+            .build();
 
-            return notificationRepository.save(notification)
-                .doOnNext(n -> log.debug("Email notification logged: {}", n.getNotificationId()))
-                .doOnError(e -> log.error("Failed to log email notification: {}", e.getMessage()))
-                .block();
-        });
+        return notificationRepository.save(notification)
+            .doOnNext(n -> log.debug("Email notification logged: {}", n.getNotificationId()))
+            .doOnError(e -> log.error("Failed to log email notification: {}", e.getMessage()))
+            .toFuture();
     }
 
     @Async("notificationExecutor")
     public CompletableFuture<Notification> sendSmsAsync(UUID userId, String message, String referenceType, UUID referenceId) {
-        return CompletableFuture.supplyAsync(() -> {
-            log.info("Sending SMS to user: {}", userId);
-            
-            Notification notification = Notification.builder()
-                .notificationId(UUID.randomUUID())
-                .userId(userId)
-                .type(NotificationType.GENERAL_ALERT)
-                .title("SMS Notification")
-                .message(message)
-                .referenceType(referenceType)
-                .referenceId(referenceId)
-                .read(false)
-                .channel(NotificationChannel.SMS)
-                .createdAt(LocalDateTime.now())
-                .isNew(true)
-                .build();
+        log.info("Sending SMS to user: {}", userId);
+        
+        Notification notification = Notification.builder()
+            .notificationId(UUID.randomUUID())
+            .userId(userId)
+            .type(NotificationType.GENERAL_ALERT)
+            .title("SMS Notification")
+            .message(message)
+            .referenceType(referenceType)
+            .referenceId(referenceId)
+            .read(false)
+            .channel(NotificationChannel.SMS)
+            .createdAt(LocalDateTime.now())
+            .isNew(true)
+            .build();
 
-            return notificationRepository.save(notification)
-                .doOnNext(n -> log.debug("SMS notification logged: {}", n.getNotificationId()))
-                .doOnError(e -> log.error("Failed to log SMS notification: {}", e.getMessage()))
-                .block();
-        });
+        return notificationRepository.save(notification)
+            .doOnNext(n -> log.debug("SMS notification logged: {}", n.getNotificationId()))
+            .doOnError(e -> log.error("Failed to log SMS notification: {}", e.getMessage()))
+            .toFuture();
     }
 
     @Async("notificationExecutor")
     public CompletableFuture<Notification> sendPushAsync(UUID userId, String title, String body, String referenceType, UUID referenceId) {
-        return CompletableFuture.supplyAsync(() -> {
-            log.info("Sending push notification to user: {}", userId);
-            
-            Notification notification = Notification.builder()
-                .notificationId(UUID.randomUUID())
-                .userId(userId)
-                .type(NotificationType.GENERAL_ALERT)
-                .title(title)
-                .message(body)
-                .referenceType(referenceType)
-                .referenceId(referenceId)
-                .read(false)
-                .channel(NotificationChannel.PUSH)
-                .createdAt(LocalDateTime.now())
-                .isNew(true)
-                .build();
+        log.info("Sending push notification to user: {}", userId);
+        
+        Notification notification = Notification.builder()
+            .notificationId(UUID.randomUUID())
+            .userId(userId)
+            .type(NotificationType.GENERAL_ALERT)
+            .title(title)
+            .message(body)
+            .referenceType(referenceType)
+            .referenceId(referenceId)
+            .read(false)
+            .channel(NotificationChannel.PUSH)
+            .createdAt(LocalDateTime.now())
+            .isNew(true)
+            .build();
 
-            return notificationRepository.save(notification)
-                .doOnNext(n -> log.debug("Push notification logged: {}", n.getNotificationId()))
-                .doOnError(e -> log.error("Failed to log push notification: {}", e.getMessage()))
-                .block();
-        });
+        return notificationRepository.save(notification)
+            .doOnNext(n -> log.debug("Push notification logged: {}", n.getNotificationId()))
+            .doOnError(e -> log.error("Failed to log push notification: {}", e.getMessage()))
+            .toFuture();
     }
 
     @Async("notificationExecutor")
     public CompletableFuture<Notification> sendWebhookAsync(UUID userId, String payload, String referenceType, UUID referenceId) {
-        return CompletableFuture.supplyAsync(() -> {
-            log.info("Sending webhook to user: {}", userId);
-            
-            Notification notification = Notification.builder()
-                .notificationId(UUID.randomUUID())
-                .userId(userId)
-                .type(NotificationType.GENERAL_ALERT)
-                .title("Webhook Delivery")
-                .message(payload)
-                .referenceType(referenceType)
-                .referenceId(referenceId)
-                .read(false)
-                .channel(NotificationChannel.WEBHOOK)
-                .createdAt(LocalDateTime.now())
-                .isNew(true)
-                .build();
+        log.info("Sending webhook to user: {}", userId);
+        
+        Notification notification = Notification.builder()
+            .notificationId(UUID.randomUUID())
+            .userId(userId)
+            .type(NotificationType.GENERAL_ALERT)
+            .title("Webhook Delivery")
+            .message(payload)
+            .referenceType(referenceType)
+            .referenceId(referenceId)
+            .read(false)
+            .channel(NotificationChannel.WEBHOOK)
+            .createdAt(LocalDateTime.now())
+            .isNew(true)
+            .build();
 
-            return notificationRepository.save(notification)
-                .doOnNext(n -> log.debug("Webhook notification logged: {}", n.getNotificationId()))
-                .doOnError(e -> log.error("Failed to log webhook notification: {}", e.getMessage()))
-                .block();
-        });
+        return notificationRepository.save(notification)
+            .doOnNext(n -> log.debug("Webhook notification logged: {}", n.getNotificationId()))
+            .doOnError(e -> log.error("Failed to log webhook notification: {}", e.getMessage()))
+            .toFuture();
     }
 
     public Mono<Notification> createInAppNotification(UUID userId, NotificationType type, String title, String message, String referenceType, UUID referenceId) {

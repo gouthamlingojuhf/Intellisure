@@ -7,6 +7,7 @@ import com.intellisure.documentauditservice.entity.DocumentType;
 import com.intellisure.documentauditservice.repository.DocumentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
@@ -44,6 +45,16 @@ public class DocumentService {
                 .build();
 
         return documentRepository.save(document)
+                .map(this::mapToResponse);
+    }
+
+    public Mono<DocumentResponse> getDocument(UUID documentId) {
+        return documentRepository.findById(documentId)
+                .map(this::mapToResponse);
+    }
+
+    public Flux<DocumentResponse> getDocumentsByEntity(UUID entityId, String entityType) {
+        return documentRepository.findByEntityIdAndEntityType(entityId, entityType)
                 .map(this::mapToResponse);
     }
 

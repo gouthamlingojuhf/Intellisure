@@ -26,6 +26,10 @@ management:
 jwt:
   secret: VVGF9BeSRx3K2epQp4/DRnq881+8YixWG3KHI4qTl9I=
 
+logging:
+  file:
+    name: logs/vendor-partner-service.log
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html

@@ -14,6 +14,7 @@ public interface NotificationRepository extends R2dbcRepository<Notification, UU
     Flux<Notification> findByUserIdAndRead(UUID userId, boolean read);
     Flux<Notification> findByReferenceTypeAndReferenceId(String referenceType, UUID referenceId);
     Flux<Notification> findByType(NotificationType type);
+    Flux<Notification> findByUserIdAndTypeAndReferenceTypeAndReferenceId(UUID userId, NotificationType type, String referenceType, UUID referenceId);
     Flux<Notification> findByUserIdAndCreatedAtAfter(UUID userId, LocalDateTime after);
     Mono<Long> countByUserIdAndRead(UUID userId, boolean read);
 }

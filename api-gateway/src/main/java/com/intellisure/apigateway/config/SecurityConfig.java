@@ -147,12 +147,12 @@ public class SecurityConfig {
                         .pathMatchers(
                                 "/api/quotes/**"
                         )
-                        .hasAnyRole("POLICYHOLDER", "UNDERWRITER", "SYSTEM_ADMINISTRATOR")
+                        .hasAnyRole("POLICYHOLDER", "UNDERWRITER", "SYSTEM_ADMINISTRATOR", "ADMIN")
 
                         .pathMatchers(
                                 "/api/policies/**"
                         )
-                        .hasAnyRole("POLICYHOLDER", "UNDERWRITER", "CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "SYSTEM_ADMINISTRATOR")
+                        .hasAnyRole("POLICYHOLDER", "UNDERWRITER", "CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
 
 
                         /*
@@ -169,7 +169,7 @@ public class SecurityConfig {
                                 "/api/decisions/**",
                                 "/api/risk-rules/**"
                         )
-                        .hasAnyRole("UNDERWRITER", "RISK_ENGINEER", "SYSTEM_ADMINISTRATOR")
+                        .hasAnyRole("UNDERWRITER", "RISK_ENGINEER", "SYSTEM_ADMINISTRATOR", "ADMIN")
 
 
                         /*
@@ -207,7 +207,8 @@ public class SecurityConfig {
                         .hasAnyRole(
                                 "CLAIMS_ADJUSTER",
                                 "CLAIMS_MANAGER",
-                                "SYSTEM_ADMINISTRATOR"
+                                "SYSTEM_ADMINISTRATOR",
+                                "ADMIN"
                         )
 
 
@@ -224,7 +225,8 @@ public class SecurityConfig {
                         )
                         .hasAnyRole(
                                 "VENDOR_MANAGER",
-                                "SYSTEM_ADMINISTRATOR"
+                                "SYSTEM_ADMINISTRATOR",
+                                "ADMIN"
                         )
 
 
@@ -282,6 +284,7 @@ public class SecurityConfig {
                         )
                         .hasAnyRole(
                                 "SYSTEM_ADMINISTRATOR",
+                                "ADMIN",
                                 "UNDERWRITER",
                                 "CLAIMS_MANAGER",
                                 "RISK_ENGINEER"

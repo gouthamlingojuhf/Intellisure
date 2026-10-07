@@ -66,4 +66,20 @@ class AuditControllerTest {
                 .verifyComplete();
         verify(auditEventService).getAuditEvents(entityId, "CLAIM");
     }
+
+    @Test
+    void getByIdReturnsSingleAuditEvent() {
+        UUID eventId = UUID.randomUUID();
+        AuditEvent event = AuditEvent.builder().auditEventId(eventId)
+                .serviceName("quote-policy-service").entityId(UUID.randomUUID())
+                .entityType("POLICY").action("POLICY_BOUND").build();
+        when(auditEventService.getAuditEvent(eventId)).thenReturn(Mono.just(event));
+
+        StepVerifier.create(controller.getById(eventId))
+                .assertNext(result -> {
+                    assertEquals(eventId, result.getAuditEventId());
+                    assertEquals("POLICY_BOUND", result.getAction());
+                })
+                .verifyComplete();
+    }
 }

@@ -44,4 +44,8 @@ public class AuditEventService {
     public Flux<AuditEvent> getAuditEvents(UUID entityId, String entityType) {
         return auditEventRepository.findByEntityIdAndEntityType(entityId, entityType);
     }
+
+    public Mono<AuditEvent> getAuditEvent(UUID auditEventId) {
+        return auditEventRepository.findById(auditEventId);
+    }
 }

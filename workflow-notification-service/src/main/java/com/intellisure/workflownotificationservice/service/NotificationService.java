@@ -31,53 +31,68 @@ public class NotificationService {
         NotificationChannel channel = request.channel() != null ? 
             NotificationChannel.valueOf(request.channel().toUpperCase()) : NotificationChannel.IN_APP;
 
-        Notification notification = Notification.builder()
-            .notificationId(UUID.randomUUID())
-            .userId(request.userId())
-            .type(type)
-            .title(request.title())
-            .message(request.message())
-            .referenceType(request.referenceType())
-            .referenceId(request.referenceId())
-            .read(false)
-            .channel(channel)
-            .createdAt(LocalDateTime.now())
-            .isNew(true)
-            .build();
-
-        Mono<NotificationResponse> savedMono = notificationRepository.save(notification)
-            .map(this::mapToResponse);
-
-        if (channel == NotificationChannel.EMAIL) {
-            return savedMono.flatMap(response -> 
-                Mono.fromFuture(asyncDispatchService.sendEmailAsync(
-                    request.userId(), request.title(), request.message(), 
-                    request.referenceType(), request.referenceId()
-                ).thenApply(n -> response))
-            );
-        } else if (channel == NotificationChannel.SMS) {
-            return savedMono.flatMap(response -> 
-                Mono.fromFuture(asyncDispatchService.sendSmsAsync(
-                    request.userId(), request.message(), 
-                    request.referenceType(), request.referenceId()
-                ).thenApply(n -> response))
-            );
-        } else if (channel == NotificationChannel.PUSH) {
-            return savedMono.flatMap(response -> 
-                Mono.fromFuture(asyncDispatchService.sendPushAsync(
-                    request.userId(), request.title(), request.message(), 
-                    request.referenceType(), request.referenceId()
-                ).thenApply(n -> response))
-            );
-        } else if (channel == NotificationChannel.WEBHOOK) {
-            return savedMono.flatMap(response -> 
-                Mono.fromFuture(asyncDispatchService.sendWebhookAsync(
-                    request.userId(), request.message(), 
-                    request.referenceType(), request.referenceId()
-                ).thenApply(n -> response))
-            );
+        Mono<NotificationResponse> findDuplicate = Mono.empty();
+        if (request.referenceType() != null && request.referenceId() != null) {
+            Flux<Notification> existingFlux = notificationRepository
+                .findByUserIdAndTypeAndReferenceTypeAndReferenceId(request.userId(), type, request.referenceType(), request.referenceId());
+            if (existingFlux != null) {
+                findDuplicate = existingFlux.next().map(existing -> {
+                    log.info("Duplicate notification suppressed for userId={}, type={}, referenceId={}",
+                            request.userId(), type, request.referenceId());
+                    return mapToResponse(existing);
+                });
+            }
         }
-        return savedMono;
+
+        return findDuplicate.switchIfEmpty(Mono.defer(() -> {
+            Notification notification = Notification.builder()
+                .notificationId(UUID.randomUUID())
+                .userId(request.userId())
+                .type(type)
+                .title(request.title())
+                .message(request.message())
+                .referenceType(request.referenceType())
+                .referenceId(request.referenceId())
+                .read(false)
+                .channel(channel)
+                .createdAt(LocalDateTime.now())
+                .isNew(true)
+                .build();
+
+            Mono<NotificationResponse> savedMono = notificationRepository.save(notification)
+                .map(this::mapToResponse);
+
+            if (channel == NotificationChannel.EMAIL) {
+                return savedMono.flatMap(response -> 
+                    Mono.fromFuture(asyncDispatchService.sendEmailAsync(
+                        request.userId(), request.title(), request.message(), 
+                        request.referenceType(), request.referenceId()
+                    ).thenApply(n -> response))
+                );
+            } else if (channel == NotificationChannel.SMS) {
+                return savedMono.flatMap(response -> 
+                    Mono.fromFuture(asyncDispatchService.sendSmsAsync(
+                        request.userId(), request.message(), 
+                        request.referenceType(), request.referenceId()
+                    ).thenApply(n -> response))
+                );
+            } else if (channel == NotificationChannel.PUSH) {
+                return savedMono.flatMap(response -> 
+                    Mono.fromFuture(asyncDispatchService.sendPushAsync(
+                        request.userId(), request.title(), request.message(), 
+                        request.referenceType(), request.referenceId()
+                    ).thenApply(n -> response))
+                );
+            } else if (channel == NotificationChannel.WEBHOOK) {
+                return savedMono.flatMap(response -> 
+                    Mono.fromFuture(asyncDispatchService.sendWebhookAsync(
+                        request.userId(), request.message(), 
+                        request.referenceType(), request.referenceId()
+                    ).thenApply(n -> response))
+                );
+            }
+            return savedMono;
+        }));
     }
 
     public Mono<NotificationResponse> markRead(MarkNotificationReadRequest request) {

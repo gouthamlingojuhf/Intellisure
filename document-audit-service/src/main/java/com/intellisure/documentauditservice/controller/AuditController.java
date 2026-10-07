@@ -26,4 +26,9 @@ public class AuditController {
     public Flux<AuditEvent> list(@RequestParam UUID entityId, @RequestParam String entityType) {
         return auditEventService.getAuditEvents(entityId, entityType);
     }
+
+    @GetMapping("/{auditEventId}")
+    public Mono<AuditEvent> getById(@PathVariable UUID auditEventId) {
+        return auditEventService.getAuditEvent(auditEventId);
+    }
 }

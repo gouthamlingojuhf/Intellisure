@@ -54,7 +54,7 @@ public class SecurityConfig {
                         .pathMatchers("/api/notifications/**")
                         .authenticated()
                         .pathMatchers("/api/workflows/**")
-                        .hasAnyRole("UNDERWRITER", "CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
+                        .hasAnyRole("UNDERWRITER", "RISK_ENGINEER", "CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "VENDOR_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
                         .pathMatchers("/api/**").authenticated()
                         .anyExchange().authenticated()
                 )

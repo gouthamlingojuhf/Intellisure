@@ -44,4 +44,36 @@ class DocumentServiceTest {
         org.junit.jupiter.api.Assertions.assertEquals(uploader, persisted.getUploadedBy());
         org.junit.jupiter.api.Assertions.assertTrue(persisted.isNew());
     }
+
+    @Test
+    void getDocumentReturnsMappedResponse() {
+        UUID docId = UUID.randomUUID();
+        Document saved = Document.builder().documentId(docId).entityId(UUID.randomUUID())
+                .entityType("QUOTE").documentType(DocumentType.QUOTE_LETTER).fileName("quote.pdf").fileSize(2048L)
+                .contentType("application/pdf").storagePath("quotes/quote.pdf").sha256Hash("hash123").version(1)
+                .uploadedBy(UUID.randomUUID()).build();
+        when(repository.findById(docId)).thenReturn(Mono.just(saved));
+
+        StepVerifier.create(service.getDocument(docId))
+                .assertNext(res -> {
+                    org.junit.jupiter.api.Assertions.assertEquals(docId, res.documentId());
+                    org.junit.jupiter.api.Assertions.assertEquals("quote.pdf", res.fileName());
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    void getDocumentsByEntityFiltersCorrectly() {
+        UUID entityId = UUID.randomUUID();
+        Document doc1 = Document.builder().documentId(UUID.randomUUID()).entityId(entityId)
+                .entityType("POLICY").documentType(DocumentType.POLICY_DECLARATIONS).fileName("dec.pdf")
+                .fileSize(4096L).contentType("application/pdf").storagePath("policies/dec.pdf").build();
+
+        when(repository.findByEntityIdAndEntityType(entityId, "POLICY"))
+                .thenReturn(reactor.core.publisher.Flux.just(doc1));
+
+        StepVerifier.create(service.getDocumentsByEntity(entityId, "POLICY"))
+                .assertNext(res -> org.junit.jupiter.api.Assertions.assertEquals("dec.pdf", res.fileName()))
+                .verifyComplete();
+    }
 }

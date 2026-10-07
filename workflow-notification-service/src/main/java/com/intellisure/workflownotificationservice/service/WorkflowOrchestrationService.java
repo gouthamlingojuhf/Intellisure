@@ -2,6 +2,7 @@ package com.intellisure.workflownotificationservice.service;
 
 import com.intellisure.workflownotificationservice.dto.CompleteWorkflowTaskRequest;
 import com.intellisure.workflownotificationservice.dto.CreateWorkflowRequest;
+import com.intellisure.workflownotificationservice.dto.CreateWorkflowTaskRequest;
 import com.intellisure.workflownotificationservice.dto.TaskFilterRequest;
 import com.intellisure.workflownotificationservice.dto.WorkflowListResponse;
 import com.intellisure.workflownotificationservice.dto.WorkflowResponse;
@@ -70,21 +71,49 @@ public class WorkflowOrchestrationService {
                 createTask(workflow, "RISK_ASSESSMENT", "Risk engineer assessment"),
                 createTask(workflow, "QUOTE_APPROVAL", "Underwriter approval decision")
             );
+            case "UNDERWRITING_REFERRAL" -> List.of(
+                createTask(workflow, "REFERRAL_REVIEW", "Senior underwriter review of referral"),
+                createTask(workflow, "REFERRAL_RESOLUTION", "Resolve underwriting referral with rationale")
+            );
             case "CLAIM_PROCESSING" -> List.of(
                 createTask(workflow, "FNOL_REVIEW", "Initial FNOL review and triage"),
                 createTask(workflow, "ADJUSTER_ASSIGNMENT", "Assign claim to adjuster"),
                 createTask(workflow, "INVESTIGATION", "Claim investigation and assessment"),
                 createTask(workflow, "SETTLEMENT_APPROVAL", "Settlement approval")
             );
+            case "CLAIM_INVESTIGATION" -> List.of(
+                createTask(workflow, "EVIDENCE_COLLECTION", "Collect photographs and loss documentation"),
+                createTask(workflow, "COVERAGE_VERIFICATION", "Verify policy coverage limits and deductible"),
+                createTask(workflow, "ADJUSTER_REPORT", "Submit initial adjuster assessment report")
+            );
+            case "CLAIM_ASSESSMENT" -> List.of(
+                createTask(workflow, "DAMAGE_EVALUATION", "Evaluate loss estimates and repair costs"),
+                createTask(workflow, "RESERVE_RECOMMENDATION", "Recommend financial reserve updates"),
+                createTask(workflow, "PAYOUT_CALCULATION", "Calculate final payout and deductible offset")
+            );
             case "POLICY_ISSUANCE" -> List.of(
                 createTask(workflow, "QUOTE_ACCEPTANCE", "Customer acceptance of quote"),
                 createTask(workflow, "BIND_COVERAGE", "Bind coverage"),
                 createTask(workflow, "ISSUE_POLICY", "Issue policy documents")
             );
+            case "POLICY_SERVICING" -> List.of(
+                createTask(workflow, "ENDORSEMENT_REVIEW", "Review requested policy endorsement"),
+                createTask(workflow, "SERVICING_DECISION", "Approve and apply endorsement to in-force policy")
+            );
+            case "RECOVERY_COORDINATION" -> List.of(
+                createTask(workflow, "RECOVERY_PLANNING", "Formulate business continuity and restoration plan"),
+                createTask(workflow, "PATH_SELECTION", "Customer path selection (NETWORK, CUSTOMER_VENDOR, MANAGED)"),
+                createTask(workflow, "RESTORATION_TRACKING", "Track milestone progression toward 100% restoration"),
+                createTask(workflow, "RECOVERY_COMPLETION", "Validate business restoration and complete recovery case")
+            );
             case "VENDOR_ASSIGNMENT" -> List.of(
                 createTask(workflow, "VENDOR_MATCHING", "Match eligible vendor"),
                 createTask(workflow, "DISPATCH_WORK_ORDER", "Dispatch work order to vendor"),
                 createTask(workflow, "VENDOR_COMPLETION", "Vendor completes work")
+            );
+            case "DOCUMENT_EVIDENCE_REVIEW" -> List.of(
+                createTask(workflow, "EVIDENCE_VERIFICATION", "Verify submitted evidence documents"),
+                createTask(workflow, "COMPLIANCE_CHECK", "Compliance and audit verification")
             );
             case "RENEWAL_PROCESSING" -> List.of(
                 createTask(workflow, "RENEWAL_INITIATION", "Initiate renewal process"),
@@ -139,8 +168,72 @@ public class WorkflowOrchestrationService {
             .map(list -> new WorkflowListResponse(list, page, size, (long) list.size()));
     }
 
+    public Mono<WorkflowTaskResponse> createTask(CreateWorkflowTaskRequest request) {
+        WorkflowTask task = WorkflowTask.builder()
+            .taskId(UUID.randomUUID())
+            .workflowId(request.workflowId())
+            .taskType(request.taskType())
+            .assigneeUserId(request.assigneeUserId())
+            .status(request.assigneeUserId() != null ? WorkflowTaskStatus.ASSIGNED : WorkflowTaskStatus.PENDING)
+            .dueAt(request.dueAt() != null ? request.dueAt() : LocalDateTime.now().plusDays(7))
+            .completionNote(request.completionNote())
+            .createdAt(LocalDateTime.now())
+            .updatedAt(LocalDateTime.now())
+            .isNew(true)
+            .build();
+
+        return taskRepository.save(task)
+            .flatMap(saved -> {
+                if (saved.getAssigneeUserId() != null) {
+                    return asyncDispatchService.createInAppNotification(
+                        saved.getAssigneeUserId(),
+                        com.intellisure.workflownotificationservice.entity.NotificationType.TASK_ASSIGNED,
+                        "New Task Assigned: " + saved.getTaskType(),
+                        "You have been assigned a new task: " + saved.getTaskType(),
+                        "WORKFLOW_TASK",
+                        saved.getTaskId()
+                    ).thenReturn(saved);
+                }
+                return Mono.just(saved);
+            })
+            .map(this::mapTaskToResponse);
+    }
+
+    public Mono<WorkflowTaskResponse> escalateTask(UUID taskId, String reason) {
+        return taskRepository.findById(taskId)
+            .switchIfEmpty(Mono.error(new IllegalArgumentException("Task not found: " + taskId)))
+            .flatMap(task -> {
+                task.setStatus(WorkflowTaskStatus.ESCALATED);
+                task.setOutcome("ESCALATED");
+                task.setCompletionNote(reason);
+                task.setUpdatedAt(LocalDateTime.now());
+                task.setNew(false);
+
+                return taskRepository.save(task)
+                    .flatMap(saved -> {
+                        if (saved.getAssigneeUserId() != null) {
+                            return asyncDispatchService.createInAppNotification(
+                                saved.getAssigneeUserId(),
+                                com.intellisure.workflownotificationservice.entity.NotificationType.WORKFLOW_ESCALATED,
+                                "Task Escalated: " + saved.getTaskType(),
+                                "Task " + saved.getTaskId() + " has been escalated: " + reason,
+                                "WORKFLOW_TASK",
+                                saved.getTaskId()
+                            ).thenReturn(saved);
+                        }
+                        return Mono.just(saved);
+                    });
+            })
+            .map(this::mapTaskToResponse);
+    }
+
     public Mono<WorkflowTaskResponse> completeTask(CompleteWorkflowTaskRequest request) {
-        return taskRepository.findByTaskIdAndWorkflowId(request.taskId(), request.workflowId())
+        Mono<WorkflowTask> findTask = request.workflowId() != null
+            ? taskRepository.findByTaskIdAndWorkflowId(request.taskId(), request.workflowId())
+            : taskRepository.findById(request.taskId());
+
+        return findTask
+            .switchIfEmpty(Mono.error(new IllegalArgumentException("Task not found: " + request.taskId())))
             .flatMap(task -> {
                 task.setStatus(WorkflowTaskStatus.COMPLETED);
                 task.setOutcome(request.outcome());
@@ -151,7 +244,7 @@ public class WorkflowOrchestrationService {
                 
                 return taskRepository.save(task)
                     .flatMap(saved -> 
-                        checkAndUpdateWorkflowStatus(request.workflowId())
+                        checkAndUpdateWorkflowStatus(task.getWorkflowId())
                             .thenReturn(saved)
                     );
             })

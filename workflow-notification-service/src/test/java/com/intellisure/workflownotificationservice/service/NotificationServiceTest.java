@@ -69,4 +69,29 @@ class NotificationServiceTest {
                 .verifyComplete();
         verify(repository).findByUserIdAndRead(recipient, false);
     }
+
+    @Test
+    void duplicateNotificationRequestSuppressesDuplicateAndReturnsExisting() {
+        UUID recipient = UUID.randomUUID();
+        UUID referenceId = UUID.randomUUID();
+        Notification existing = Notification.builder().notificationId(UUID.randomUUID()).userId(recipient)
+                .title("Quote ready").message("Review your quote").channel(NotificationChannel.IN_APP)
+                .type(NotificationType.QUOTE_SUBMITTED).referenceType("QUOTE").referenceId(referenceId)
+                .read(false).createdAt(java.time.LocalDateTime.now()).isNew(false).build();
+
+        when(repository.findByUserIdAndTypeAndReferenceTypeAndReferenceId(recipient, NotificationType.QUOTE_SUBMITTED, "QUOTE", referenceId))
+                .thenReturn(reactor.core.publisher.Flux.just(existing));
+
+        CreateNotificationRequest request = new CreateNotificationRequest(
+                recipient, "QUOTE_SUBMITTED", "Quote ready", "Review your quote", "QUOTE", referenceId, "IN_APP");
+
+        StepVerifier.create(service.createNotification(request))
+                .assertNext(result -> {
+                    org.junit.jupiter.api.Assertions.assertEquals(existing.getNotificationId(), result.notificationId());
+                    org.junit.jupiter.api.Assertions.assertEquals(recipient, result.userId());
+                })
+                .verifyComplete();
+
+        verify(repository, never()).save(any(Notification.class));
+    }
 }
