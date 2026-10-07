@@ -26,7 +26,7 @@ import reactor.core.publisher.Mono;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/risk-assessments")
+@RequestMapping("/api/risk-assessments")
 @RequiredArgsConstructor
 @Tag(
         name = "Risk Assessments",

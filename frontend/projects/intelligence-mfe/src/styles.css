@@ -1,24 +1,73 @@
-/* intelligence-mfe global styles */
+/* intelligence-mfe global styles - Hartford Design System */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 :root {
+  --claret: #75013F;
+  --claret-hover: #8f1750;
+  --claret-soft: #fde8ed;
+  --fuchsia: #FE3082;
+  --fuchsia-hover: #ff5aa8;
+  --warm: #EAE5DF;
+  --warm-light: #F7F5F3;
+  --ink: #000000;
+  --muted: #6F6A6D;
+  --success: #176B45;
+  --success-light: #EAF6F0;
+  --success-bg: #DCFCE7;
+  --warning: #9A5B00;
+  --warning-light: #FFF5DC;
+  --warning-bg: #FEF3C7;
+  --danger: #A32120;
+  --danger-light: #FDECEA;
+  --danger-bg: #FEE2E2;
+  --border: #EAE5DF;
+  --surface: #FFFFFF;
+  --surface-hover: #FAF9F8;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(117, 30, 63, 0.16);
+  --shadow-lg: 0 14px 34px rgba(0, 0, 0, 0.08);
+  --focus-ring: 0 0 0 3px rgba(117, 30, 63, 0.08);
   color-scheme: light;
-  font-family: Inter, 'Segoe UI', sans-serif;
+  font-family: Inter, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
 }
 
-body {
+html, body {
   margin: 0;
-  background: #f8fafc;
-  color: #0f172a;
+  min-height: 100%;
+  background: var(--warm-light);
+  color: var(--ink);
 }
 
-* {
-  box-sizing: border-box;
+* { box-sizing: border-box; }
+
+button, input, select, textarea { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+a { color: inherit; }
+
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 3px solid rgba(254, 48, 130, 0.38);
+  outline-offset: 2px;
 }
 
+button:disabled { cursor: not-allowed; opacity: 0.55; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* Hartford Components */
 .card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  box-shadow: var(--shadow);
   padding: 1.25rem;
 }
 
@@ -26,25 +75,42 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
-  background: #1d4ed8;
-  color: white;
-  font-weight: 600;
-  padding: 0.7rem 1.1rem;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 15px;
+  border: 1px solid var(--claret);
+  border-radius: 6px;
+  background: var(--claret);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
   text-decoration: none;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: background 0.15s ease, transform 0.15s ease;
 }
+
+.btn-primary:hover { background: var(--claret-hover); transform: translateY(-1px); }
 
 .btn-secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
-  background: #e2e8f0;
-  color: #0f172a;
-  font-weight: 600;
-  padding: 0.7rem 1.1rem;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 15px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: #272427;
+  font-size: 11px;
+  font-weight: 700;
   text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
+
+.btn-secondary:hover { border-color: #c9c1bc; background: var(--warm-light); }
 
 .grid {
   display: grid;
@@ -60,29 +126,22 @@ body {
 .kpi-value {
   font-size: 2rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--ink);
 }
 
 .badge {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   border-radius: 999px;
-  padding: 0.35rem 0.65rem;
+  padding: 0.25rem 0.6rem;
   font-size: 0.72rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.badge-success {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.badge-warning {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.badge-danger {
-  background: #fee2e2;
-  color: #b91c1c;
-}
+.badge-success { background: var(--success-light); color: var(--success); }
+.badge-warning { background: var(--warning-light); color: var(--warning); }
+.badge-danger { background: var(--danger-light); color: var(--danger); }
+.badge-info { background: var(--claret-soft); color: var(--claret); }

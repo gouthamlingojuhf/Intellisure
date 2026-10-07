@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping({"/api/claims", "/api/v1/claims"})
+@RequestMapping("/api/claims")
 @RequiredArgsConstructor
 public class ClaimController {
 
@@ -22,27 +22,19 @@ public class ClaimController {
 
     @PostMapping
     public Mono<ClaimResponse> fileClaim(
-            @RequestHeader(value = "X-User-Id", required = false) UUID userId,
             @Valid @RequestBody FileClaimRequest request) {
-        if (userId == null) {
-            userId = UUID.randomUUID();
-        }
-        return claimService.fileClaim(request, userId);
+        return claimService.fileClaim(request);
     }
 
     @PostMapping("/fnol")
-    public Mono<ClaimResponse> fnol(@RequestHeader(value = "X-User-Id", required = false) UUID userId,
-                                    @Valid @RequestBody FileClaimRequest request) {
-        return fileClaim(userId, request);
+    public Mono<ClaimResponse> fnol(@Valid @RequestBody FileClaimRequest request) {
+        return fileClaim(request);
     }
 
     @GetMapping
     public Flux<ClaimResponse> claims(@RequestParam(required = false) UUID customerId,
                                      @RequestParam(required = false) String status) {
-        if (status != null && !status.isBlank()) {
-            return claimService.getClaimsByStatus(status);
-        }
-        return claimService.getClaims(customerId);
+        return claimService.getClaimsForCaller(customerId, status);
     }
 
     @GetMapping("/{claimId}")
@@ -106,6 +98,14 @@ public class ClaimController {
         return claimService.calculatePayout(claimId, coveredLoss, deductible, policyLimit);
     }
 
+    @PostMapping("/{claimId}/decision")
+    public Mono<ClaimResponse> recordDecision(@PathVariable UUID claimId,
+                                            @RequestParam String decision,
+                                            @RequestParam(required = false) String reason,
+                                            @RequestParam(required = false) UUID decidedBy) {
+        return claimService.recordClaimDecision(claimId, decision, reason, decidedBy == null ? UUID.randomUUID() : decidedBy);
+    }
+
     @PatchMapping("/{claimId}/settlement/approve")
     public Mono<ClaimResponse> approveSettlement(@PathVariable UUID claimId,
                                                @RequestParam UUID approvedBy,
@@ -122,6 +122,12 @@ public class ClaimController {
     @PatchMapping("/{claimId}/close")
     public Mono<ClaimResponse> closeClaim(@PathVariable UUID claimId,
                                         @RequestParam String reason) {
+        return claimService.closeClaim(claimId, reason);
+    }
+
+    @PostMapping("/{claimId}/close")
+    public Mono<ClaimResponse> closeClaimPost(@PathVariable UUID claimId,
+                                            @RequestParam String reason) {
         return claimService.closeClaim(claimId, reason);
     }
 }

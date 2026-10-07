@@ -62,8 +62,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @DisplayName("Quote & Policy API (full stack integration)")
 class QuotePolicyServiceIntegrationTest {
 
-    private static final String QUOTES = "/api/v1/quotes";
-    private static final String POLICIES = "/api/v1/policies";
+    private static final String QUOTES = "/api/quotes";
+    private static final String POLICIES = "/api/policies";
 
     @LocalServerPort
     private int port;
@@ -363,7 +363,7 @@ class QuotePolicyServiceIntegrationTest {
     }
 
     @Nested
-    @DisplayName("POST /api/v1/quotes")
+    @DisplayName("POST /api/quotes")
     class CreateQuote {
 
         @Test
@@ -1424,7 +1424,7 @@ class QuotePolicyServiceIntegrationTest {
     }
 
     @Nested
-    @DisplayName("PATCH /api/v1/quotes/{id}/import-underwriting-result")
+    @DisplayName("PATCH /api/quotes/{id}/import-underwriting-result")
     class UnderwritingImport {
 
         @Test

@@ -26,8 +26,11 @@ public class RecoveryCase implements Persistable<UUID> {
     private UUID customerId;
     private RecoverySeverity severity;
     private RecoveryCaseStatus status;
+    private RecoveryPath recoveryPath;
     private String recoveryObjective;
+    private String recoveryNotes;
     private LocalDate targetRestoreDate;
+    private LocalDate actualRestorationDate;
     private BigDecimal currentRestorePercent;
     private UUID ownerId;
 
@@ -47,7 +50,10 @@ public class RecoveryCase implements Persistable<UUID> {
     public RecoveryCase severity(RecoverySeverity severity) { this.severity = severity; return this; }
     public RecoveryCase status(RecoveryCaseStatus status) { this.status = status; return this; }
     public RecoveryCase recoveryObjective(String recoveryObjective) { this.recoveryObjective = recoveryObjective; return this; }
+    public RecoveryCase recoveryPath(RecoveryPath recoveryPath) { this.recoveryPath = recoveryPath; return this; }
+    public RecoveryCase recoveryNotes(String recoveryNotes) { this.recoveryNotes = recoveryNotes; return this; }
     public RecoveryCase targetRestoreDate(LocalDate targetRestoreDate) { this.targetRestoreDate = targetRestoreDate; return this; }
+    public RecoveryCase actualRestorationDate(LocalDate actualRestorationDate) { this.actualRestorationDate = actualRestorationDate; return this; }
     public RecoveryCase currentRestorePercent(BigDecimal currentRestorePercent) { this.currentRestorePercent = currentRestorePercent; return this; }
     public RecoveryCase ownerId(UUID ownerId) { this.ownerId = ownerId; return this; }
     public RecoveryCase createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
@@ -77,8 +83,14 @@ public class RecoveryCase implements Persistable<UUID> {
     public void setStatus(RecoveryCaseStatus status) { this.status = status; }
     public String getRecoveryObjective() { return recoveryObjective; }
     public void setRecoveryObjective(String recoveryObjective) { this.recoveryObjective = recoveryObjective; }
+    public RecoveryPath getRecoveryPath() { return recoveryPath; }
+    public void setRecoveryPath(RecoveryPath recoveryPath) { this.recoveryPath = recoveryPath; }
+    public String getRecoveryNotes() { return recoveryNotes; }
+    public void setRecoveryNotes(String recoveryNotes) { this.recoveryNotes = recoveryNotes; }
     public LocalDate getTargetRestoreDate() { return targetRestoreDate; }
     public void setTargetRestoreDate(LocalDate targetRestoreDate) { this.targetRestoreDate = targetRestoreDate; }
+    public LocalDate getActualRestorationDate() { return actualRestorationDate; }
+    public void setActualRestorationDate(LocalDate actualRestorationDate) { this.actualRestorationDate = actualRestorationDate; }
     public BigDecimal getCurrentRestorePercent() { return currentRestorePercent; }
     public void setCurrentRestorePercent(BigDecimal currentRestorePercent) { this.currentRestorePercent = currentRestorePercent; }
     public UUID getOwnerId() { return ownerId; }

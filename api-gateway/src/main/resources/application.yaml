@@ -7,6 +7,31 @@ spring:
 
   cloud:
     gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:4200"
+              - "http://localhost:4201"
+              - "http://localhost:4202"
+              - "http://localhost:4203"
+              - "http://localhost:4205"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowedHeaders:
+              - Authorization
+              - Content-Type
+              - X-Correlation-ID
+              - X-User-Id
+              - Accept
+              - Origin
+            allowCredentials: true
+            maxAge: 3600
       server:
         webflux:
           routes:
@@ -19,42 +44,42 @@ spring:
             - id: quote-policy-service
               uri: lb://quote-policy-service
               predicates:
-                - Path=/api/v1/quotes/**,/api/v1/policies/**
+                - Path=/api/quotes/**,/api/policies/**
 
             - id: risk-underwriting-service
               uri: lb://risk-underwriting-service
               predicates:
-                - Path=/api/v1/risk-assessments/**,/api/v1/referrals/**,/api/v1/subjectivities/**
+                - Path=/api/risk-assessments/**,/api/referrals/**,/api/subjectivities/**,/api/decisions/**,/api/risk-rules/**
 
             - id: claims-service
               uri: lb://claims-service
               predicates:
-                - Path=/api/v1/claims/**
+                - Path=/api/claims/**
 
             - id: vendor-partner-service
               uri: lb://vendor-partner-service
               predicates:
-                - Path=/api/vendors/**,/api/vendor-assignments/**
+                - Path=/api/vendors/**,/api/vendor-assignments/**,/api/partners/**
 
             - id: workflow-notification-service
               uri: lb://workflow-notification-service
               predicates:
-                - Path=/api/workflows/**,/api/notifications/**,/api/tasks/**
+                - Path=/api/workflows/**,/api/notifications/**
 
             - id: recovery-service
               uri: lb://recovery-service
               predicates:
-                - Path=/api/recovery/cases/**,/api/recovery/**
+                - Path=/api/recovery/**,/api/business-continuity/**
 
             - id: document-audit-service
               uri: lb://document-audit-service
               predicates:
-                - Path=/api/documents/**,/api/audit-events/**
+                - Path=/api/documents/**,/api/audit/**,/api/audit-events/**
 
             - id: analytics-intelligence-service
               uri: lb://analytics-intelligence-service
               predicates:
-                - Path=/api/analytics/**
+                - Path=/api/analytics/**,/api/intelligence/**
 
 eureka:
   client:

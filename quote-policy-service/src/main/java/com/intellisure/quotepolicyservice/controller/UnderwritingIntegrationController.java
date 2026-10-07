@@ -16,7 +16,7 @@ import reactor.core.publisher.Mono;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/quotes")
+@RequestMapping("/api/quotes")
 @RequiredArgsConstructor
 @Tag(
         name = "Underwriting Integration",

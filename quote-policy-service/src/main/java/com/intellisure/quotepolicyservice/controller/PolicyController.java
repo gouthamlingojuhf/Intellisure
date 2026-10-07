@@ -28,7 +28,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/policies")
+@RequestMapping("/api/policies")
 @RequiredArgsConstructor
 @Tag(
         name = "Policy Management",

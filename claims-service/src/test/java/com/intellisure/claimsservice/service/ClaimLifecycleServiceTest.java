@@ -3,6 +3,7 @@ package com.intellisure.claimsservice.service;
 import com.intellisure.claimsservice.dto.FileClaimRequest;
 import com.intellisure.claimsservice.entity.Claim;
 import com.intellisure.claimsservice.repository.ClaimRepository;
+import com.intellisure.claimsservice.security.SecurityActorService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,6 +20,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ClaimLifecycleServiceTest {
     @Mock ClaimRepository repository;
+    @Mock SecurityActorService securityActorService;
     @InjectMocks ClaimService service;
 
     @Test

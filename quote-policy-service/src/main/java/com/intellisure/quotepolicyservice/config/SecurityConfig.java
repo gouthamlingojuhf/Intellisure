@@ -43,8 +43,8 @@ public class SecurityConfig {
                         ).permitAll()
 
                         .pathMatchers(
-                                "/api/v1/policies/number/*/status",
-                                "/api/v1/policies/number/*/coverage-check"
+                                "/api/policies/number/*/status",
+                                "/api/policies/number/*/coverage-check"
                         ).hasAnyRole(
                                 "CLAIMS_ADJUSTER",
                                 "CLAIMS_MANAGER",

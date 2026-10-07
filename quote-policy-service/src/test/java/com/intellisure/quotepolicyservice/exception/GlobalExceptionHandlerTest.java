@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @DisplayName("GlobalExceptionHandler")
 class GlobalExceptionHandlerTest {
 
-    private static final String PATH = "/api/v1/quotes";
+    private static final String PATH = "/api/quotes";
 
     private GlobalExceptionHandler handler;
     private ServerWebExchange exchange;

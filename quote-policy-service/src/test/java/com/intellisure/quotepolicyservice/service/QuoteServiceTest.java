@@ -18,8 +18,11 @@ import com.intellisure.quotepolicyservice.exception.ResourceNotFoundException;
 import com.intellisure.quotepolicyservice.mapper.QuoteMapper;
 import com.intellisure.quotepolicyservice.repository.QuoteCoverageRepository;
 import com.intellisure.quotepolicyservice.repository.QuoteRepository;
+import com.intellisure.quotepolicyservice.repository.QuoteVersionRepository;
+import com.intellisure.quotepolicyservice.repository.SubjectivityRepository;
 import com.intellisure.quotepolicyservice.repository.UnderwritingDecisionRepository;
 import com.intellisure.quotepolicyservice.security.SecurityActorService;
+import com.intellisure.quotepolicyservice.service.RatingService;
 import com.intellisure.quotepolicyservice.service.assignment.UnderwriterAssignmentService;
 import com.intellisure.quotepolicyservice.testsupport.EntityTemplateStubber;
 import com.intellisure.quotepolicyservice.testsupport.TestAssertions;
@@ -64,6 +67,9 @@ class QuoteServiceTest {
     private UnderwriterAssignmentService underwriterAssignmentService;
     private UnderwritingDecisionRepository underwritingDecisionRepository;
     private SecurityActorService securityActorService;
+    private QuoteVersionRepository quoteVersionRepository;
+    private SubjectivityRepository subjectivityRepository;
+    private RatingService ratingService;
 
     private QuoteService quoteService;
 
@@ -79,6 +85,9 @@ class QuoteServiceTest {
                 UnderwritingDecisionRepository.class
         );
         securityActorService = mock(SecurityActorService.class);
+        quoteVersionRepository = mock(QuoteVersionRepository.class);
+        subjectivityRepository = mock(SubjectivityRepository.class);
+        ratingService = mock(RatingService.class);
 
         quoteService = new QuoteService(
                 quoteRepository,
@@ -87,7 +96,22 @@ class QuoteServiceTest {
                 new QuoteMapper(),
                 underwriterAssignmentService,
                 underwritingDecisionRepository,
-                securityActorService
+                securityActorService,
+                quoteVersionRepository,
+                subjectivityRepository,
+                ratingService
+        );
+
+        lenient().when(
+                quoteVersionRepository.save(any())
+        ).thenAnswer(
+                invocation -> Mono.just(invocation.getArgument(0))
+        );
+
+        lenient().when(
+                subjectivityRepository.save(any())
+        ).thenAnswer(
+                invocation -> Mono.just(invocation.getArgument(0))
         );
 
         lenient().when(

@@ -4,6 +4,7 @@ import com.intellisure.claimsservice.client.CustomerPartyAdjusterClient;
 import com.intellisure.claimsservice.dto.FileClaimRequest;
 import com.intellisure.claimsservice.entity.Claim;
 import com.intellisure.claimsservice.repository.ClaimRepository;
+import com.intellisure.claimsservice.security.SecurityActorService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -21,6 +22,7 @@ import static org.mockito.Mockito.*;
 class ClaimServiceTest {
     @Mock ClaimRepository repository;
     @Mock CustomerPartyAdjusterClient customerPartyAdjusterClient;
+    @Mock SecurityActorService securityActorService;
     @InjectMocks ClaimService service;
 
     @Test

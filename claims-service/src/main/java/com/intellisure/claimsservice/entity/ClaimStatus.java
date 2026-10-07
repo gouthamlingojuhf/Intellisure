@@ -5,9 +5,13 @@ public enum ClaimStatus {
     OPEN,
     INVESTIGATING,
     COVERAGE_REVIEW,
+    ASSESSMENT,
     RESERVED,
+    DECISION_PENDING,
     APPROVED,
     DENIED,
+    RECOVERY,
     SETTLED,
+    PAID,
     CLOSED
 }

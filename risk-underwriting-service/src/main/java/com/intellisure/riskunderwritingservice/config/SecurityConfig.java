@@ -54,7 +54,7 @@ public class SecurityConfig {
                          * service-to-service tokens.
                          */
                         .pathMatchers(
-                                "/api/v1/quotes/*/underwriting-result"
+                                "/api/quotes/*/underwriting-result"
                         )
                         .hasAnyRole(
                                 "UNDERWRITER",
@@ -66,7 +66,7 @@ public class SecurityConfig {
                          * Rules governance is administrative.
                          */
                         .pathMatchers(
-                                "/api/v1/risk-rules/**"
+                                "/api/risk-rules/**"
                         )
                         .hasRole("ADMIN")
 
@@ -74,7 +74,7 @@ public class SecurityConfig {
                          * Referrals are handled by underwriting.
                          */
                         .pathMatchers(
-                                "/api/v1/referrals/**"
+                                "/api/referrals/**"
                         )
                         .hasAnyRole(
                                 "UNDERWRITER",
@@ -86,7 +86,7 @@ public class SecurityConfig {
                          * underwriting and risk engineering.
                          */
                         .pathMatchers(
-                                "/api/v1/subjectivities/**"
+                                "/api/subjectivities/**"
                         )
                         .hasAnyRole(
                                 "UNDERWRITER",
@@ -99,7 +99,7 @@ public class SecurityConfig {
                          * through method-level authorization.
                          */
                         .pathMatchers(
-                                "/api/v1/risk-assessments/**"
+                                "/api/risk-assessments/**"
                         )
                         .hasAnyRole(
                                 "UNDERWRITER",

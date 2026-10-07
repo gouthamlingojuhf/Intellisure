@@ -34,16 +34,14 @@ class JwtAuthenticationConverterTest {
                 Instant.now(),
                 Instant.now().plusSeconds(300),
                 Map.of("alg", "HS256"),
-                Map.of()
+                Map.of("sub", "test-user-id")
         );
 
         JwtAuthenticationToken authentication = converter.convert(jwt).block();
 
         assertThat(authentication).isNotNull();
         assertThat(authentication.getToken()).isSameAs(jwt);
-        assertThat(authentication.getAuthorities())
-                .extracting("authority")
-                .containsExactly("ROLE_null");
+        assertThat(authentication.getAuthorities()).isEmpty();
     }
 
     private Jwt jwtWithRole(String role) {

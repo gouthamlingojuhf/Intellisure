@@ -216,7 +216,7 @@ class RiskUnderwritingClientTest {
                     .block();
 
             assertEquals(
-                    "/api/v1/quotes/" + QUOTE_ID
+                    "/api/quotes/" + QUOTE_ID
                             + "/underwriting-result",
                     capturedRequest.get().url().getPath()
             );

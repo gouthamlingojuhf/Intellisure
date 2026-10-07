@@ -1,27 +1,230 @@
 <section class="brand-home">
-  <div class="hero-panel">
+  <!-- Hero Section -->
+  <div class="hero-panel" aria-labelledby="hero-title">
     <div class="hero-copy">
-      <span class="eyebrow">Commercial insurance intelligence</span>
-      <h1>One trusted workspace for every policy lifecycle.</h1>
-      <p>Connect quoting, risk, underwriting, claims, recovery, and portfolio intelligence in a single enterprise workflow designed for decisive operations.</p>
-      <div class="hero-actions"><a routerLink="/auth" class="primary-button">Sign in to workspace <span aria-hidden="true">→</span></a><a routerLink="/policy" class="secondary-button">Explore workflows</a></div>
-      <div class="trust-row"><span><i></i> SOC-ready architecture</span><span><i></i> Role-based access</span><span><i></i> Audit trails</span></div>
+      <span class="eyebrow">Commercial Insurance Intelligence Platform</span>
+      <h1 id="hero-title">One trusted workspace for every policy lifecycle.</h1>
+      <p class="hero-description">Connect quoting, risk, underwriting, claims, recovery, and portfolio intelligence in a single enterprise workflow designed for decisive operations.</p>
+      
+      <div class="hero-actions">
+        <is-button variant="primary" size="lg" routerLink="/auth">
+          Sign in to workspace
+          <span aria-hidden="true">→</span>
+        </is-button>
+        <is-button variant="secondary" size="lg" routerLink="/policy">
+          Explore workflows
+        </is-button>
+      </div>
+      
+      <div class="trust-row">
+        <span><i class="trust-icon" aria-hidden="true">🛡️</i> SOC-ready architecture</span>
+        <span><i class="trust-icon" aria-hidden="true">👥</i> Role-based access</span>
+        <span><i class="trust-icon" aria-hidden="true">📋</i> Full audit trails</span>
+        <span><i class="trust-icon" aria-hidden="true">⚡</i> Real-time intelligence</span>
+      </div>
     </div>
+    
     <div class="hero-visual" aria-label="Insurance portfolio overview">
-      <div class="visual-header"><div><span>Portfolio health</span><strong>Strong</strong></div><span class="live-chip"><i></i> Live</span></div>
-      <div class="visual-score"><div class="score-ring"><span>92</span><small>/100</small></div><div><strong>Operational confidence</strong><p>Across risk, policy, and claims controls.</p></div></div>
-      <div class="visual-chart"><span style="height: 38%"></span><span style="height: 52%"></span><span style="height: 45%"></span><span style="height: 69%"></span><span style="height: 61%"></span><span style="height: 84%"></span><span style="height: 76%"></span><span style="height: 93%"></span></div>
-      <div class="visual-footer"><span><i class="green"></i> 18 active policies</span><span><i class="claret"></i> 3 priority reviews</span></div>
+      <div class="visual-header">
+        <div>
+          <span class="visual-label">Portfolio health</span>
+          <strong class="visual-value">Strong</strong>
+        </div>
+        <span class="live-chip">
+          <i class="live-dot" aria-hidden="true"></i>
+          <span>Live</span>
+        </span>
+      </div>
+      
+      <div class="visual-score">
+        <div class="score-ring" role="img" aria-label="Operational confidence score 92 out of 100">
+          <svg viewBox="0 0 120 120" class="score-svg">
+            <circle class="score-bg" cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="10"/>
+            <circle class="score-progress" cx="60" cy="60" r="50" fill="none" stroke="var(--fuchsia)" stroke-width="10" stroke-dasharray="314" stroke-dashoffset="25" stroke-linecap="round" transform="rotate(-90 60 60)"/>
+          </svg>
+          <span class="score-text">92<small>/100</small></span>
+        </div>
+        <div class="score-details">
+          <strong>Operational confidence</strong>
+          <p>Across risk, policy, and claims controls.</p>
+        </div>
+      </div>
+      
+      <div class="visual-chart" role="img" aria-label="Weekly portfolio activity chart">
+        <span style="height: 38%" aria-label="Monday 38%"></span>
+        <span style="height: 52%" aria-label="Tuesday 52%"></span>
+        <span style="height: 45%" aria-label="Wednesday 45%"></span>
+        <span style="height: 69%" aria-label="Thursday 69%"></span>
+        <span style="height: 61%" aria-label="Friday 61%"></span>
+        <span style="height: 84%" aria-label="Saturday 84%"></span>
+        <span style="height: 76%" aria-label="Sunday 76%"></span>
+        <span style="height: 93%" aria-label="Monday 93%"></span>
+      </div>
+      
+      <div class="visual-footer">
+        <span><i class="footer-dot green" aria-hidden="true"></i> 18 active policies</span>
+        <span><i class="footer-dot claret" aria-hidden="true"></i> 3 priority reviews</span>
+        <span><i class="footer-dot amber" aria-hidden="true"></i> 7 pending tasks</span>
+      </div>
     </div>
   </div>
 
-  <div class="section-heading"><div><p class="section-kicker">Connected operations</p><h2>Built for the full insurance journey.</h2><p>Move from customer intent to resolved loss with clear authority, traceable decisions, and live operational context.</p></div></div>
-  <div class="feature-grid">
-    <article class="feature-card"><span class="feature-number">01</span><div class="feature-icon">Q</div><h3>Quote &amp; policy</h3><p>Build, price, bind, and renew commercial coverage with controlled workflows and policy-level visibility.</p><a routerLink="/policy">Open quote workspace <span>→</span></a></article>
-    <article class="feature-card"><span class="feature-number">02</span><div class="feature-icon">R</div><h3>Risk &amp; underwriting</h3><p>Review submissions, assess exposure, and route exceptions with role-aware decision authority.</p><a routerLink="/underwriting">Open risk desk <span>→</span></a></article>
-    <article class="feature-card"><span class="feature-number">03</span><div class="feature-icon">C</div><h3>Claims operations</h3><p>Coordinate FNOL, reserves, investigations, settlements, and recoveries from one accountable queue.</p><a routerLink="/claims">Open claims center <span>→</span></a></article>
-    <article class="feature-card"><span class="feature-number">04</span><div class="feature-icon">A</div><h3>Analytics &amp; intelligence</h3><p>Surface portfolio trends, loss signals, and service health through executive-ready insight.</p><a routerLink="/analytics">Open intelligence <span>→</span></a></article>
+  <!-- Section: Connected Operations -->
+  <div class="section-heading">
+    <div>
+      <p class="section-kicker">Connected Operations</p>
+      <h2>Built for the full insurance journey.</h2>
+      <p>Move from customer intent to resolved loss with clear authority, traceable decisions, and live operational context.</p>
+    </div>
   </div>
 
-  <div class="lifecycle-strip"><div><span>Customer</span><i>→</i><strong>Quote</strong></div><div><span>Risk</span><i>→</i><strong>Underwrite</strong></div><div><span>Policy</span><i>→</i><strong>Claim</strong></div><div><span>Recovery</span><i>→</i><strong>Closure</strong></div></div>
+  <!-- Feature Grid -->
+  <div class="feature-grid" role="list" aria-label="Platform capabilities">
+    <article class="feature-card" role="listitem">
+      <span class="feature-number">01</span>
+      <div class="feature-icon" aria-hidden="true">Q</div>
+      <h3>Quote & Policy</h3>
+      <p>Build, price, bind, and renew commercial coverage with controlled workflows and policy-level visibility.</p>
+      <is-button variant="ghost" size="sm" routerLink="/policy">
+        Open quote workspace
+        <span aria-hidden="true">→</span>
+      </is-button>
+    </article>
+    
+    <article class="feature-card" role="listitem">
+      <span class="feature-number">02</span>
+      <div class="feature-icon" aria-hidden="true">R</div>
+      <h3>Risk & Underwriting</h3>
+      <p>Review submissions, assess exposure, and route exceptions with role-aware decision authority.</p>
+      <is-button variant="ghost" size="sm" routerLink="/underwriting">
+        Open risk desk
+        <span aria-hidden="true">→</span>
+      </is-button>
+    </article>
+    
+    <article class="feature-card" role="listitem">
+      <span class="feature-number">03</span>
+      <div class="feature-icon" aria-hidden="true">C</div>
+      <h3>Claims Operations</h3>
+      <p>Coordinate FNOL, reserves, investigations, settlements, and recoveries from one accountable queue.</p>
+      <is-button variant="ghost" size="sm" routerLink="/claims">
+        Open claims center
+        <span aria-hidden="true">→</span>
+      </is-button>
+    </article>
+    
+    <article class="feature-card" role="listitem">
+      <span class="feature-number">04</span>
+      <div class="feature-icon" aria-hidden="true">A</div>
+      <h3>Analytics & Intelligence</h3>
+      <p>Surface portfolio trends, loss signals, and service health through executive-ready insight.</p>
+      <is-button variant="ghost" size="sm" routerLink="/analytics">
+        Open intelligence
+        <span aria-hidden="true">→</span>
+      </is-button>
+    </article>
+  </div>
+
+  <!-- Lifecycle Strip -->
+  <div class="lifecycle-strip" role="list" aria-label="Insurance lifecycle stages">
+    <div role="listitem">
+      <span class="lifecycle-label">Customer</span>
+      <i class="lifecycle-arrow" aria-hidden="true">→</i>
+      <strong class="lifecycle-stage">Quote</strong>
+    </div>
+    <div role="listitem">
+      <span class="lifecycle-label">Risk</span>
+      <i class="lifecycle-arrow" aria-hidden="true">→</i>
+      <strong class="lifecycle-stage">Underwrite</strong>
+    </div>
+    <div role="listitem">
+      <span class="lifecycle-label">Policy</span>
+      <i class="lifecycle-arrow" aria-hidden="true">→</i>
+      <strong class="lifecycle-stage">Claim</strong>
+    </div>
+    <div role="listitem">
+      <span class="lifecycle-label">Recovery</span>
+      <i class="lifecycle-arrow" aria-hidden="true">→</i>
+      <strong class="lifecycle-stage">Closure</strong>
+    </div>
+  </div>
+
+  <!-- Dashboard Preview Section -->
+  <div class="section-heading" style="margin-top: 48px;">
+    <div>
+      <p class="section-kicker">Role-Based Dashboards</p>
+      <h2>Tailored workspaces for every stakeholder.</h2>
+      <p>Each role gets a focused operational view with the metrics, queues, and actions that matter most.</p>
+    </div>
+  </div>
+
+  <div class="dashboard-preview-grid">
+    <article class="dashboard-preview-card">
+      <div class="dashboard-preview-header">
+        <span class="dashboard-preview-badge">Underwriter</span>
+        <h3>Underwriting Desk</h3>
+      </div>
+      <ul class="dashboard-preview-metrics">
+        <li><strong>143</strong> Applications <span class="trend positive">+8%</span></li>
+        <li><strong>91</strong> Approved <span class="trend positive">+6%</span></li>
+        <li><strong>12</strong> Manual review <span class="trend warning">+2%</span></li>
+        <li><strong>4</strong> Exceptions <span class="trend negative">-1%</span></li>
+      </ul>
+      <is-button variant="ghost" size="sm" routerLink="/underwriting">Open workspace →</is-button>
+    </article>
+    
+    <article class="dashboard-preview-card">
+      <div class="dashboard-preview-header">
+        <span class="dashboard-preview-badge">Risk Engineer</span>
+        <h3>Risk Assessment</h3>
+      </div>
+      <ul class="dashboard-preview-metrics">
+        <li><strong>28</strong> Assigned assessments</li>
+        <li><strong>7</strong> Open findings</li>
+        <li><strong>3</strong> Recommendations pending</li>
+        <li><strong>12</strong> Inspection tasks</li>
+      </ul>
+      <is-button variant="ghost" size="sm" routerLink="/underwriting">Open workspace →</is-button>
+    </article>
+    
+    <article class="dashboard-preview-card">
+      <div class="dashboard-preview-header">
+        <span class="dashboard-preview-badge">Claims Adjuster</span>
+        <h3>Claims Center</h3>
+      </div>
+      <ul class="dashboard-preview-metrics">
+        <li><strong>5</strong> FNOL today</li>
+        <li><strong>87</strong> Open claims</li>
+        <li><strong>14</strong> Investigation queue</li>
+        <li><strong>$2.4M</strong> Reserve exposure</li>
+      </ul>
+      <is-button variant="ghost" size="sm" routerLink="/claims">Open workspace →</is-button>
+    </article>
+    
+    <article class="dashboard-preview-card">
+      <div class="dashboard-preview-header">
+        <span class="dashboard-preview-badge">Admin</span>
+        <h3>Platform Health</h3>
+      </div>
+      <ul class="dashboard-preview-metrics">
+        <li><strong>247</strong> Active users</li>
+        <li><strong>1,420</strong> Policies</li>
+        <li><strong>99.9%</strong> Service health</li>
+        <li><strong>42</strong> Workflow metrics</li>
+      </ul>
+      <is-button variant="ghost" size="sm" routerLink="/docs">Open workspace →</is-button>
+    </article>
+  </div>
+
+  <!-- CTA Section -->
+  <div class="cta-section" style="margin-top: 64px;">
+    <div class="cta-card">
+      <h2>Ready to transform your insurance operations?</h2>
+      <p>Join leading carriers modernizing their commercial lines with IntelliSure's unified platform.</p>
+      <div class="cta-actions">
+        <is-button variant="primary" size="lg" routerLink="/auth">Start free trial</is-button>
+        <is-button variant="secondary" size="lg" routerLink="/docs">View documentation</is-button>
+      </div>
+    </div>
+  </div>
 </section>

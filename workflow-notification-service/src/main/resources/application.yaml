@@ -23,6 +23,9 @@ management:
       exposure:
         include: health,info
 
+jwt:
+  secret: VVGF9BeSRx3K2epQp4/DRnq881+8YixWG3KHI4qTl9I=
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html

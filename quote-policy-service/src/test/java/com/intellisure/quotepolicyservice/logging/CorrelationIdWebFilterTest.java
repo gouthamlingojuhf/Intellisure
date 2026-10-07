@@ -48,7 +48,7 @@ class CorrelationIdWebFilterTest {
     @DisplayName("reuses an inbound correlation id")
     void reusesInboundCorrelationId() {
         MockServerWebExchange exchange = MockServerWebExchange.from(
-                MockServerHttpRequest.get("/api/v1/quotes")
+                MockServerHttpRequest.get("/api/quotes")
                         .header(
                                 CorrelationConstants.HEADER,
                                 "corr-123"
@@ -77,7 +77,7 @@ class CorrelationIdWebFilterTest {
     @DisplayName("generates a correlation id when the header is absent")
     void generatesCorrelationId() {
         MockServerWebExchange exchange = MockServerWebExchange.from(
-                MockServerHttpRequest.get("/api/v1/quotes")
+                MockServerHttpRequest.get("/api/quotes")
         );
 
         StepVerifier.create(filter.filter(exchange, chain))
@@ -102,7 +102,7 @@ class CorrelationIdWebFilterTest {
     @DisplayName("generates a correlation id when the header is blank")
     void generatesCorrelationIdForBlankHeader() {
         MockServerWebExchange exchange = MockServerWebExchange.from(
-                MockServerHttpRequest.get("/api/v1/quotes")
+                MockServerHttpRequest.get("/api/quotes")
                         .header(CorrelationConstants.HEADER, "   ")
         );
 
@@ -132,7 +132,7 @@ class CorrelationIdWebFilterTest {
 
     private String captureGeneratedId() {
         MockServerWebExchange exchange = MockServerWebExchange.from(
-                MockServerHttpRequest.get("/api/v1/quotes")
+                MockServerHttpRequest.get("/api/quotes")
         );
 
         StepVerifier.create(filter.filter(exchange, chain))
@@ -147,7 +147,7 @@ class CorrelationIdWebFilterTest {
     @DisplayName("publishes the correlation id into the reactor context")
     void publishesContextValue() {
         MockServerWebExchange exchange = MockServerWebExchange.from(
-                MockServerHttpRequest.get("/api/v1/quotes")
+                MockServerHttpRequest.get("/api/quotes")
                         .header(CorrelationConstants.HEADER, "ctx-1")
         );
 
@@ -200,7 +200,7 @@ class CorrelationIdWebFilterTest {
     @DisplayName("propagates downstream errors unchanged")
     void propagatesErrors() {
         MockServerWebExchange exchange = MockServerWebExchange.from(
-                MockServerHttpRequest.get("/api/v1/quotes")
+                MockServerHttpRequest.get("/api/quotes")
         );
 
         when(chain.filter(any(ServerWebExchange.class))).thenReturn(
@@ -222,7 +222,7 @@ class CorrelationIdWebFilterTest {
     @DisplayName("does not mutate the original exchange request")
     void leavesOriginalRequestUntouched() {
         var request = MockServerHttpRequest
-                .get("/api/v1/quotes")
+                .get("/api/quotes")
                 .header(HttpHeaders.ACCEPT, "application/json");
 
         MockServerWebExchange exchange = MockServerWebExchange.from(

@@ -75,7 +75,7 @@ public class RiskUnderwritingClient {
                 webClient
                         .get()
                         .uri(
-                                "/api/v1/quotes/{quoteId}"
+                                "/api/quotes/{quoteId}"
                                         + "/underwriting-result",
                                 quoteId
                         );

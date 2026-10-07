@@ -1,104 +1,49 @@
 <div class="app-shell" [class.app-shell-mobile-open]="mobileSidebarOpen" [class.app-shell-sidebar-collapsed]="sidebarCollapsed">
-  <aside class="app-sidebar" aria-label="Primary navigation">
-    <div class="sidebar-brand">
-      <a routerLink="/" class="sidebar-logo" aria-label="IntelliSure home">
-        <span class="logo-mark" aria-hidden="true">I</span>
-        <span class="logo-wordmark">IntelliSure</span>
-      </a>
-      <button class="icon-button sidebar-collapse" type="button" (click)="toggleSidebar()" [attr.aria-label]="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'" aria-expanded="!sidebarCollapsed">
-        <span aria-hidden="true">‹</span>
-      </button>
-    </div>
+  <is-sidebar
+    [collapsed]="sidebarCollapsed"
+    [mobileOpen]="mobileSidebarOpen"
+    [brandName]="'IntelliSure'"
+    [brandIcon]="'I'"
+    [brandLabel]="'IntelliSure home'"
+    [navigationSections]="[{ title: 'Workspace', items: visibleNavigation }]"
+    [currentPath]="currentPath"
+    (toggleSidebar)="onToggleSidebar()"
+    (closeMobile)="onCloseMobileSidebar()"
+  />
 
-    <nav class="sidebar-nav">
-      <p class="sidebar-label">Workspace</p>
-      @for (item of visibleNavigation; track item.path) {
-        <a
-          class="sidebar-link"
-          [routerLink]="item.path"
-          [class.active]="currentPath === item.path || currentPath.startsWith(item.path + '/')"
-          [attr.aria-current]="currentPath === item.path || currentPath.startsWith(item.path + '/') ? 'page' : null"
-          (click)="closeMobileSidebar()"
-        >
-          <span class="nav-icon" aria-hidden="true">{{ item.label.charAt(0) }}</span>
-          <span class="nav-label">{{ item.label }}</span>
-        </a>
-      }
-    </nav>
+  <is-topbar
+    [breadcrumbs]="breadcrumbs"
+    [(searchTerm)]="searchTerm"
+    [searchPlaceholder]="'Search policies, claims, vendors…'"
+    [userName]="'IntelliSure User'"
+    [userRole]="userRoleLabel"
+    [userInitial]="userInitial"
+    [notifications]="notifications"
+    [unreadCount]="unreadCount"
+    [notificationsOpen]="notificationOpen"
+    [userMenuOpen]="userMenuOpen"
+    [userMenuItems]="userMenuItems"
+    [mobile]="false"
+    (search)="search()"
+    (toggleSidebar)="onCloseMobileSidebar()"
+    (toggleNotifications)="onToggleNotifications()"
+    (toggleUserMenu)="onToggleUserMenu()"
+    (markAllRead)="onMarkAllRead()"
+  />
 
-    <div class="sidebar-footer">
-      <div class="system-status"><span class="status-dot"></span><span>All systems operational</span></div>
-      <div class="sidebar-help"><span aria-hidden="true">?</span><span>Help center</span></div>
-    </div>
-  </aside>
-
-  <div class="sidebar-backdrop" (click)="closeMobileSidebar()" aria-hidden="true"></div>
-
-  <div class="app-main">
-    <header class="topbar">
-      <div class="topbar-left">
-        <button class="icon-button mobile-menu" type="button" (click)="mobileSidebarOpen = true" aria-label="Open navigation" aria-expanded="true">☰</button>
-        <nav class="breadcrumbs" aria-label="Breadcrumb">
-          <a routerLink="/">IntelliSure</a>
-          @for (segment of breadcrumbs; track segment; let index = $index) {
-            <span class="breadcrumb-separator" aria-hidden="true">/</span>
-            <span [class.breadcrumb-current]="index === breadcrumbs.length - 1">{{ segment }}</span>
-          }
-        </nav>
+  <main class="workspace-main">
+    @if (loading$ | async) {
+      <div class="loading-state" role="status" aria-live="polite">
+        <is-skeleton variant="text" width="38%" height="38px" />
+        <is-skeleton variant="text" width="62%" height="16px" />
+        <is-skeleton variant="card" />
       </div>
-
-      <div class="topbar-search">
-        <span aria-hidden="true">⌕</span>
-        <input type="search" [(ngModel)]="searchTerm" (keyup.enter)="search()" aria-label="Search workspace" placeholder="Search policies, claims, vendors…" />
-        <kbd>⌘ K</kbd>
-      </div>
-
-      <div class="topbar-actions">
-        <button class="icon-button notification-button" type="button" (click)="toggleMenu('notifications')" aria-label="Open notifications" aria-expanded="notificationOpen">
-          <span aria-hidden="true">◌</span>
-          <span class="notification-dot" aria-label="3 unread notifications"></span>
-        </button>
-        <button class="user-menu-button" type="button" (click)="toggleMenu('user')" aria-expanded="userMenuOpen" aria-haspopup="menu">
-          <span class="user-avatar">{{ (role$ | async)?.charAt(0) ?? 'U' }}</span>
-          <span class="user-copy"><strong>{{ (role$ | async) ?? 'User' }}</strong><small>Enterprise workspace</small></span>
-          <span aria-hidden="true">⌄</span>
-        </button>
-      </div>
-
-      @if (notificationOpen) {
-        <div class="popover notification-popover" role="dialog" aria-label="Notifications">
-          <div class="popover-heading"><strong>Notifications</strong><button type="button">Mark all read</button></div>
-          <div class="notification-item"><span class="notification-icon success">✓</span><div><strong>Policy review complete</strong><p>Commercial auto renewal is ready for binding.</p><small>5 minutes ago</small></div></div>
-          <div class="notification-item"><span class="notification-icon warning">!</span><div><strong>Review due soon</strong><p>One risk submission exceeds the standard SLA.</p><small>18 minutes ago</small></div></div>
-          <a routerLink="/analytics" class="popover-link">View all notifications</a>
-        </div>
-      }
-
-      @if (userMenuOpen) {
-        <div class="popover user-popover" role="menu" aria-label="User menu">
-          <div class="user-popover-profile"><span class="user-avatar large">{{ (role$ | async)?.charAt(0) ?? 'U' }}</span><div><strong>IntelliSure User</strong><small>{{ (role$ | async) ?? 'User role' }}</small></div></div>
-          <a routerLink="/docs" role="menuitem">Workspace settings</a>
-          <a routerLink="/docs" role="menuitem">Security &amp; access</a>
-          <button type="button" role="menuitem" (click)="logout()">Sign out</button>
-        </div>
-      }
-    </header>
-
-    <main class="workspace-main">
-      @if (loading$ | async) {
-        <div class="loading-state" role="status" aria-live="polite"><span class="skeleton skeleton-title"></span><span class="skeleton skeleton-copy"></span><span class="skeleton skeleton-grid"></span></div>
-      }
-      <router-outlet />
-    </main>
-  </div>
+    }
+    <router-outlet />
+  </main>
 </div>
 
-<div class="toast-stack" aria-live="polite" aria-atomic="true">
-  @for (t of toasts$ | async; track t.id) {
-    <div class="toast-item" [class.toast-success]="t.kind === 'success'" [class.toast-error]="t.kind === 'error'" [class.toast-info]="t.kind === 'info'">
-      <span class="toast-icon" aria-hidden="true">{{ t.kind === 'success' ? '✓' : t.kind === 'error' ? '!' : 'i' }}</span>
-      <span>{{ t.message }}</span>
-      <button type="button" (click)="dismiss(t.id)" aria-label="Dismiss notification">×</button>
-    </div>
-  }
-</div>
+<is-toast-stack
+  [toasts]="(toasts$ | async) ?? []"
+  (dismiss)="onDismissToast($event)"
+/>

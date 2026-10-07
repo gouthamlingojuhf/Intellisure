@@ -1,6 +1,7 @@
 package com.intellisure.recoveryservice.dto;
 
 import com.intellisure.recoveryservice.entity.RecoveryCaseStatus;
+import com.intellisure.recoveryservice.entity.RecoveryPath;
 import com.intellisure.recoveryservice.entity.RecoverySeverity;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -13,8 +14,11 @@ public record RecoveryCaseResponse(
         UUID customerId,
         RecoverySeverity severity,
         RecoveryCaseStatus status,
+        RecoveryPath recoveryPath,
         String recoveryObjective,
+        String recoveryNotes,
         LocalDate targetRestoreDate,
+        LocalDate actualRestorationDate,
         BigDecimal currentRestorePercent,
         UUID ownerId,
         LocalDateTime createdAt,

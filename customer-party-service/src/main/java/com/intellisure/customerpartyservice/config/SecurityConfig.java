@@ -80,7 +80,10 @@ public class SecurityConfig {
                                         "/v3/api-docs/**"
                                 )
                                 .permitAll()
-
+                                .pathMatchers("/api/admin/**")
+                                .hasAnyRole("SYSTEM_ADMINISTRATOR", "ADMIN")
+                                .pathMatchers("/api/users/role/**")
+                                .hasAnyRole("CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "UNDERWRITER", "SYSTEM_ADMINISTRATOR", "ADMIN")
                                 .anyExchange()
                                 .authenticated()
                 )

@@ -32,7 +32,7 @@ import com.intellisure.quotepolicyservice.dto.request.DeclineQuoteRequest;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/quotes")
+@RequestMapping("/api/quotes")
 @RequiredArgsConstructor
 @Tag(
         name = "Quote Management",

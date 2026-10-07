@@ -4,7 +4,10 @@ import com.intellisure.claimsservice.client.CustomerPartyAdjusterClient;
 import com.intellisure.claimsservice.dto.ClaimResponse;
 import com.intellisure.claimsservice.dto.FileClaimRequest;
 import com.intellisure.claimsservice.entity.Claim;
+import com.intellisure.claimsservice.exception.BusinessException;
+import com.intellisure.claimsservice.exception.ResourceNotFoundException;
 import com.intellisure.claimsservice.repository.ClaimRepository;
+import com.intellisure.claimsservice.security.SecurityActorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -26,6 +29,7 @@ public class ClaimService {
 
     private final ClaimRepository claimRepository;
     private final CustomerPartyAdjusterClient customerPartyAdjusterClient;
+    private final SecurityActorService securityActorService;
 
     public Flux<ClaimResponse> getClaims(UUID customerId) {
         Flux<Claim> claims = customerId == null ? claimRepository.findAll() : claimRepository.findByCustomerId(customerId);
@@ -36,25 +40,87 @@ public class ClaimService {
         return claimRepository.findByStatus(normalizeStatus(status)).map(this::mapToResponse);
     }
 
+    public Flux<ClaimResponse> getClaimsForCaller(UUID requestedCustomerId, String status) {
+        if (securityActorService == null) {
+            if (status != null && !status.isBlank()) {
+                return getClaimsByStatus(status);
+            }
+            return getClaims(requestedCustomerId);
+        }
+        return securityActorService.hasAnyRole("CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
+                .flatMapMany(isStaff -> {
+                    if (Boolean.TRUE.equals(isStaff)) {
+                        if (status != null && !status.isBlank()) {
+                            return getClaimsByStatus(status);
+                        }
+                        return getClaims(requestedCustomerId);
+                    }
+                    return securityActorService.currentCustomerId()
+                            .flatMapMany(myCustomerId -> {
+                                if (status != null && !status.isBlank()) {
+                                    return claimRepository.findByCustomerId(myCustomerId)
+                                            .filter(c -> normalizeStatus(status).equals(c.getStatus()))
+                                            .map(this::mapToResponse);
+                                }
+                                return getClaims(myCustomerId);
+                            });
+                });
+    }
+
     public Mono<ClaimResponse> getClaim(UUID id) {
-        return claimRepository.findById(id).map(this::mapToResponse)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("Claim not found: " + id)));
+        return claimRepository.findById(id)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("Claim not found: " + id)))
+                .flatMap(claim -> {
+                    if (securityActorService != null) {
+                        return securityActorService.assertClaimAccess(claim).thenReturn(claim);
+                    }
+                    return Mono.just(claim);
+                })
+                .map(this::mapToResponse);
     }
 
     public Mono<ClaimResponse> getClaimByNumber(String claimNumber) {
-        return claimRepository.findByClaimNumber(claimNumber).map(this::mapToResponse)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("Claim not found: " + claimNumber)));
+        return claimRepository.findByClaimNumber(claimNumber)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("Claim not found: " + claimNumber)))
+                .flatMap(claim -> {
+                    if (securityActorService != null) {
+                        return securityActorService.assertClaimAccess(claim).thenReturn(claim);
+                    }
+                    return Mono.just(claim);
+                })
+                .map(this::mapToResponse);
     }
 
     public Mono<ClaimResponse> updateStatus(UUID id, String status) {
         return claimRepository.findById(id)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException("Claim not found: " + id)))
                 .flatMap(claim -> {
-                    claim.setStatus(normalizeStatus(status));
+                    String target = normalizeStatus(status);
+                    validateStatusTransition(claim.getStatus(), target);
+                    claim.setStatus(target);
                     claim.setUpdatedAt(LocalDateTime.now());
                     claim.setNew(false);
                     return claimRepository.save(claim);
                 }).map(this::mapToResponse);
+    }
+
+    public void validateStatusTransition(String currentStatus, String targetStatus) {
+        if (currentStatus == null || targetStatus == null) {
+            return;
+        }
+        if (currentStatus.equalsIgnoreCase(targetStatus)) {
+            return;
+        }
+        if ("CLOSED".equalsIgnoreCase(currentStatus)) {
+            throw new BusinessException("Cannot transition a CLOSED claim to " + targetStatus);
+        }
+        if ("DENIED".equalsIgnoreCase(currentStatus) && !"CLOSED".equalsIgnoreCase(targetStatus)) {
+            throw new BusinessException("A DENIED claim can only transition to CLOSED");
+        }
+        if ("FNOL_RECEIVED".equalsIgnoreCase(currentStatus) &&
+                ("SETTLED".equalsIgnoreCase(targetStatus) || "PAID".equalsIgnoreCase(targetStatus) || "CLOSED".equalsIgnoreCase(targetStatus))) {
+            throw new BusinessException("Cannot transition directly from " + currentStatus + " to " + targetStatus + " without investigation and decision");
+        }
     }
 
     public Mono<ClaimResponse> assignAdjuster(UUID claimId, UUID adjusterId) {
@@ -165,16 +231,51 @@ public class ClaimService {
                 }).map(this::mapToResponse);
     }
 
+    public Mono<ClaimResponse> recordClaimDecision(UUID claimId, String decision, String reason, UUID decidedBy) {
+        return claimRepository.findById(claimId)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("Claim not found: " + claimId)))
+                .flatMap(claim -> {
+                    String normalizedDecision = decision.trim().toUpperCase();
+                    if (!"APPROVED".equals(normalizedDecision) && !"DENIED".equals(normalizedDecision)) {
+                        return Mono.error(new BusinessException("Claim decision must be APPROVED or DENIED"));
+                    }
+                    claim.setCoverageDecision(normalizedDecision);
+                    claim.setCoverageDecisionReason(reason);
+                    claim.setCoverageConfirmed("APPROVED".equals(normalizedDecision));
+                    claim.setStatus(normalizeStatus(normalizedDecision));
+                    claim.setUpdatedAt(LocalDateTime.now());
+                    claim.setNew(false);
+                    return claimRepository.save(claim);
+                }).map(this::mapToResponse);
+    }
+
     public Mono<ClaimResponse> closeClaim(UUID claimId, String closureReason) {
         return claimRepository.findById(claimId)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException("Claim not found: " + claimId)))
                 .flatMap(claim -> {
+                    if (claim.getCoverageDecision() == null && !"DENIED".equalsIgnoreCase(claim.getStatus())) {
+                        return Mono.error(new BusinessException("Cannot close claim without a coverage or claim decision"));
+                    }
+                    if ("APPROVED".equalsIgnoreCase(claim.getCoverageDecision())
+                            && !"SETTLED".equalsIgnoreCase(claim.getStatus())
+                            && !"PAID".equalsIgnoreCase(claim.getStatus())
+                            && !"RECOVERY".equalsIgnoreCase(claim.getStatus())) {
+                        return Mono.error(new BusinessException("Cannot close an approved claim until settlement, payment, or recovery is completed"));
+                    }
                     claim.setStatus(normalizeStatus("CLOSED"));
                     claim.setClosureReason(closureReason == null ? "Closed" : closureReason);
                     claim.setUpdatedAt(LocalDateTime.now());
                     claim.setNew(false);
                     return claimRepository.save(claim);
                 }).map(this::mapToResponse);
+    }
+
+    public Mono<ClaimResponse> fileClaim(FileClaimRequest request) {
+        if (securityActorService != null) {
+            return securityActorService.currentCustomerId()
+                    .flatMap(customerId -> fileClaim(request, customerId));
+        }
+        return fileClaim(request, UUID.randomUUID());
     }
 
     public Mono<ClaimResponse> fileClaim(FileClaimRequest request, UUID customerId) {

@@ -1,38 +1,111 @@
-/* claims-mfe global styles */
+/* claims-mfe global styles - Hartford Design System */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 :root {
-  --claims-bg: #f5f3f2;
-  --claims-dark: #111827;
-  --claims-blue: #1e3a8a;
-  --claims-emerald: #059669;
-  --claims-amber: #d97706;
-  --claims-rose: #e11d48;
-  --claims-slate: #64748b;
+  --claret: #75013F;
+  --claret-hover: #8f1750;
+  --claret-soft: #fde8ed;
+  --fuchsia: #FE3082;
+  --fuchsia-hover: #ff5aa8;
+  --warm: #EAE5DF;
+  --warm-light: #F7F5F3;
+  --ink: #000000;
+  --muted: #6F6A6D;
+  --success: #176B45;
+  --success-light: #EAF6F0;
+  --success-bg: #DCFCE7;
+  --warning: #9A5B00;
+  --warning-light: #FFF5DC;
+  --warning-bg: #FEF3C7;
+  --danger: #A32120;
+  --danger-light: #FDECEA;
+  --danger-bg: #FEE2E2;
+  --border: #EAE5DF;
+  --surface: #FFFFFF;
+  --surface-hover: #FAF9F8;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(117, 30, 63, 0.16);
+  --shadow-lg: 0 14px 34px rgba(0, 0, 0, 0.08);
+  --focus-ring: 0 0 0 3px rgba(117, 30, 63, 0.08);
+  color-scheme: light;
+  font-family: Inter, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
 }
 
 html, body {
   margin: 0;
   min-height: 100%;
-  background: var(--claims-bg);
-  color: var(--claims-dark);
-  font-family: "Segoe UI", Arial, sans-serif;
+  background: var(--warm-light);
+  color: var(--ink);
 }
 
 * { box-sizing: border-box; }
 
-.card {
-  @apply bg-white shadow rounded-xl p-5 border border-slate-200;
+button, input, select, textarea { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+a { color: inherit; }
+
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 3px solid rgba(254, 48, 130, 0.38);
+  outline-offset: 2px;
 }
 
-.btn-primary { @apply bg-blue-900 text-white font-semibold py-2 px-4 rounded hover:bg-blue-800; }
-.btn-secondary { @apply bg-white text-blue-900 border border-blue-900 font-semibold py-2 px-4 rounded hover:bg-blue-50; }
-.badge-success { @apply bg-emerald-600 text-white text-xs font-semibold px-2 py-1 rounded-full; }
-.badge-warning { @apply bg-amber-500 text-white text-xs font-semibold px-2 py-1 rounded-full; }
-.badge-danger { @apply bg-rose-600 text-white text-xs font-semibold px-2 py-1 rounded-full; }
-.badge-slate { @apply bg-slate-500 text-white text-xs font-semibold px-2 py-1 rounded-full; }
-.input-field { @apply border border-slate-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-900; }
+button:disabled { cursor: not-allowed; opacity: 0.55; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* Hartford Component Overrides for Tailwind */
+.card {
+  @apply bg-white shadow rounded-xl p-5 border border-slate-200;
+  border-color: var(--border);
+  border-radius: 9px;
+  box-shadow: var(--shadow);
+}
+
+.btn-primary { 
+  @apply font-semibold py-2 px-4 rounded hover:bg-blue-800;
+  background: var(--claret) !important;
+  border-color: var(--claret) !important;
+  color: #fff !important;
+  box-shadow: var(--shadow-md);
+}
+.btn-primary:hover { background: var(--claret-hover) !important; }
+
+.btn-secondary { 
+  @apply font-semibold py-2 px-4 rounded hover:bg-blue-50;
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: #272427 !important;
+}
+.btn-secondary:hover { background: var(--warm-light) !important; border-color: #c9c1bc !important; }
+
+.badge-success { @apply text-white text-xs font-semibold px-2 py-1 rounded-full; background: var(--success) !important; }
+.badge-warning { @apply text-white text-xs font-semibold px-2 py-1 rounded-full; background: var(--warning) !important; }
+.badge-danger { @apply text-white text-xs font-semibold px-2 py-1 rounded-full; background: var(--danger) !important; }
+.badge-slate { @apply text-white text-xs font-semibold px-2 py-1 rounded-full; background: var(--muted) !important; }
+
+.input-field { 
+  @apply border border-slate-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2;
+  border-color: var(--warm) !important;
+  border-radius: 6px !important;
+  background: var(--surface) !important;
+}
+.input-field:focus { border-color: var(--claret) !important; box-shadow: var(--focus-ring) !important; }
+
 .table { @apply w-full text-left text-sm; }
-.table th, .table td { @apply border-b border-slate-200 py-3 pr-3; }
+.table th, .table td { @apply border-b border-slate-200 py-3 pr-3; border-color: var(--border) !important; }
+.table th { background: var(--surface-hover); color: #777174; font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.table td { color: #625c60; height: 51px; }
+.table tbody tr:hover { background: #fcfbfa; }
