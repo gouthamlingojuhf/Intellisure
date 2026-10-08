@@ -1,7 +1,7 @@
 ﻿import { CurrencyPipe } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { ClaimRecord } from '../../models/claim.models';
+import { Component, OnInit, inject } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { ClaimResponse } from '../../models/claim.models';
 import { ClaimsService } from '../../services/claims.service';
 
 // ui-core imports
@@ -26,24 +26,42 @@ import { CardComponent, ButtonComponent, BadgeComponent, TableComponent, TableCo
         <div>
           <p class="page-eyebrow">Claims Operations</p>
           <h1>Claim queue</h1>
-          <p class="page-description">Manage and track all claims across the portfolio with real-time status updates.</p>
+          <p class="page-description">Manage and track all claims across the portfolio with real-time status updates from the gateway.</p>
         </div>
         <is-button variant="primary" routerLink="new">
           File new claim
-          <span aria-hidden="true">→</span>
+          <span aria-hidden="true">&rarr;</span>
         </is-button>
       </header>
 
       <div class="command-bar" aria-label="Claim queue controls">
         <div class="period-control">
-          <span>Filter</span>
-          <strong>All statuses</strong>
+          <span>Status Filter</span>
+          <select class="filter-select" (change)="onStatusChange($event)">
+            <option value="">All statuses</option>
+            <option value="FNOL_RECEIVED">FNOL Received</option>
+            <option value="OPEN">Open</option>
+            <option value="COVERAGE_REVIEW">Coverage Review</option>
+            <option value="RESERVED">Reserved</option>
+            <option value="APPROVED">Approved</option>
+            <option value="SETTLED">Settled</option>
+            <option value="CLOSED">Closed</option>
+          </select>
         </div>
         <div class="command-actions">
-          <is-button variant="secondary" size="sm">Export</is-button>
-          <is-button variant="secondary" size="sm">Filters</is-button>
+          <is-button variant="secondary" size="sm" (click)="loadClaims()">Refresh</is-button>
         </div>
       </div>
+
+      @if (error) {
+        <div class="error-banner" role="alert">
+          <div>
+            <strong>Error loading claims:</strong>
+            <p>{{ error }}</p>
+          </div>
+          <is-button variant="secondary" size="sm" (click)="loadClaims()">Try again</is-button>
+        </div>
+      }
 
       @if (loading) {
         <div class="loading-state" role="status" aria-live="polite">
@@ -53,6 +71,13 @@ import { CardComponent, ButtonComponent, BadgeComponent, TableComponent, TableCo
           <is-skeleton variant="table-row" />
           <is-skeleton variant="table-row" />
         </div>
+      } @else if (claims.length === 0 && !error) {
+        <is-empty-state
+          title="No claims found"
+          description="There are currently no claims matching your selection."
+          actionLabel="File new claim"
+          (action)="goToFileClaim()"
+        />
       } @else {
         <is-table
           [columns]="columns"
@@ -87,7 +112,7 @@ import { CardComponent, ButtonComponent, BadgeComponent, TableComponent, TableCo
     
     .page-eyebrow {
       margin: 0 0 7px;
-      color: var(--claret);
+      color: var(--claret, #75013f);
       font-size: 9px;
       font-weight: 700;
       letter-spacing: 0.14em;
@@ -96,7 +121,7 @@ import { CardComponent, ButtonComponent, BadgeComponent, TableComponent, TableCo
     
     .page-header h1 {
       margin: 0;
-      color: var(--ink);
+      color: var(--ink, #000000);
       font-size: clamp(25px, 2.5vw, 34px);
       line-height: 1.08;
       letter-spacing: -0.045em;
@@ -105,7 +130,7 @@ import { CardComponent, ButtonComponent, BadgeComponent, TableComponent, TableCo
     .page-description {
       max-width: 730px;
       margin: 9px 0 0;
-      color: var(--muted);
+      color: var(--muted, #6f6a6d);
       font-size: 12px;
       line-height: 1.6;
     }
@@ -117,9 +142,9 @@ import { CardComponent, ButtonComponent, BadgeComponent, TableComponent, TableCo
       justify-content: space-between;
       gap: 16px;
       padding: 7px 12px;
-      border: 1px solid var(--border);
+      border: 1px solid var(--border, #eae5df);
       border-radius: 8px;
-      background: var(--surface);
+      background: var(--surface, #ffffff);
       box-shadow: var(--shadow);
     }
     
@@ -130,10 +155,19 @@ import { CardComponent, ButtonComponent, BadgeComponent, TableComponent, TableCo
       color: #817b7f;
       font-size: 10px;
     }
-    
-    .period-control strong {
-      color: #333033;
-      font-size: 10px;
+
+    .filter-select {
+      height: 32px;
+      padding: 0 8px;
+      border: 1px solid var(--border, #eae5df);
+      border-radius: 5px;
+      background: #ffffff;
+      font-size: 11px;
+      color: #272427;
+      outline: none;
+    }
+    .filter-select:focus {
+      border-color: var(--claret, #75013f);
     }
     
     .command-actions {
@@ -146,55 +180,103 @@ import { CardComponent, ButtonComponent, BadgeComponent, TableComponent, TableCo
       display: grid;
       gap: 12px;
     }
+
+    .error-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 18px;
+      background: #fde8e8;
+      border: 1px solid #f8b4b4;
+      border-radius: 8px;
+      color: #9b1c1c;
+      font-size: 12px;
+    }
+    .error-banner p {
+      margin: 2px 0 0;
+    }
   `],
 })
 export class ClaimListComponent implements OnInit {
-  claims: ClaimRecord[] = [];
-  loading = false;
+  private readonly claimsService = inject(ClaimsService);
+  private readonly router = inject(Router);
 
-  columns: TableColumn<ClaimRecord>[] = [
-    { key: 'claimId', header: 'Claim', width: '140px' },
-    { key: 'policyNumber', header: 'Policy', width: '140px' },
-    { key: 'claimantName', header: 'Claimant', width: '180px' },
-    { key: 'claimType', header: 'Type', width: '140px' },
-    { key: 'status', header: 'Status', width: '120px', render: this.renderStatus.bind(this) },
-    { key: 'claimedAmount', header: 'Amount', width: '130px', align: 'right', render: this.renderAmount.bind(this) },
+  claims: ClaimResponse[] = [];
+  loading = false;
+  error: string | null = null;
+  selectedStatus = '';
+
+  columns: TableColumn<ClaimResponse>[] = [
+    { key: 'claimNumber', header: 'Claim #', width: '150px' },
+    { key: 'policyId', header: 'Policy ID', width: '170px' },
+    { key: 'status', header: 'Status', width: '130px', render: this.renderStatus.bind(this) },
+    { key: 'estimatedLoss', header: 'Estimated Loss', width: '130px', align: 'right', render: this.renderAmount.bind(this) },
+    { key: 'incidentDate', header: 'Incident Date', width: '120px' },
     { key: 'reportedDate', header: 'Reported', width: '120px' },
   ];
 
-  actions: TableAction<ClaimRecord>[] = [
-    { label: 'Open', variant: 'text', handler: (row) => {} },
+  actions: TableAction<ClaimResponse>[] = [
+    {
+      label: 'Open',
+      variant: 'text',
+      handler: (row) => this.router.navigate(['/claims', row.claimId]),
+    },
   ];
 
-  constructor(private readonly claimsService: ClaimsService) {}
-
   ngOnInit(): void {
-    this.loading = true;
-    setTimeout(() => {
-      this.claims = this.claimsService.getClaims();
-      this.loading = false;
-    }, 300);
+    this.loadClaims();
   }
 
-  trackByClaimId(index: number, item: ClaimRecord): string {
+  loadClaims(): void {
+    this.loading = true;
+    this.error = null;
+    this.claimsService.getClaims(this.selectedStatus).subscribe({
+      next: (data) => {
+        this.claims = data || [];
+        this.loading = false;
+      },
+      error: (err) => {
+        this.error = err?.error?.message || err?.message || 'Failed to load claims from backend.';
+        this.loading = false;
+      },
+    });
+  }
+
+  onStatusChange(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    this.selectedStatus = select?.value || '';
+    this.loadClaims();
+  }
+
+  goToFileClaim(): void {
+    this.router.navigate(['/claims', 'new']);
+  }
+
+  trackByClaimId(index: number, item: ClaimResponse): string {
     return item.claimId;
   }
 
-  renderStatus(row: ClaimRecord, value: string): string {
+  renderStatus(row: ClaimResponse, value: string): string {
+    const val = (value || '').toUpperCase();
     const statusMap: Record<string, 'success' | 'warning' | 'danger' | 'info' | 'neutral'> = {
-      'Open': 'info',
-      'In Review': 'warning',
-      'Investigating': 'warning',
-      'Approved': 'success',
-      'Denied': 'danger',
-      'Closed': 'neutral',
-      'Settled': 'success',
+      'OPEN': 'info',
+      'FNOL_RECEIVED': 'info',
+      'COVERAGE_REVIEW': 'warning',
+      'RESERVED': 'warning',
+      'APPROVED': 'success',
+      'SETTLED': 'success',
+      'PAID': 'success',
+      'DENIED': 'danger',
+      'CLOSED': 'neutral',
     };
-    const variant = statusMap[value] || 'neutral';
-    return `<is-badge variant="${variant}" size="sm">${value}</is-badge>`;
+    const variant = statusMap[val] || 'neutral';
+    const label = val.replace(/_/g, ' ');
+    return `<is-badge variant="${variant}" size="sm">${label}</is-badge>`;
   }
 
-  renderAmount(row: ClaimRecord, value: number): string {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+  renderAmount(row: ClaimResponse, value: number): string {
+    const amount = typeof value === 'number' ? value : 0;
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
   }
 }

@@ -1,82 +1,78 @@
-import { Injectable } from '@angular/core';
-import { ClaimRecord } from '../models/claim.models';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
+import { ClaimResponse, FileClaimRequest } from '../models/claim.models';
+
+const CORRELATION_ID_HEADER = 'X-Correlation-ID';
+
+function correlationId(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+  });
+}
+
+function authHeaders(): Record<string, string> {
+  const headers: Record<string, string> = { [CORRELATION_ID_HEADER]: correlationId() };
+  if (typeof localStorage !== 'undefined') {
+    const token = localStorage.getItem('is_token');
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
 
 @Injectable({ providedIn: 'root' })
 export class ClaimsService {
-  private readonly claims: ClaimRecord[] = [
-    {
-      claimId: 'CLM-1001',
-      policyNumber: 'POL-4421',
-      claimantName: 'Ava Thompson',
-      claimType: 'AUTO_COLLISION',
-      lossDate: '2026-09-18',
-      claimedAmount: 18450,
-      status: 'UNDER_REVIEW',
-      adjuster: 'M. Romero',
-      reserveAmount: 15000,
-      description: 'Rear-end collision with structural damage and towing service required.',
-    },
-    {
-      claimId: 'CLM-1002',
-      policyNumber: 'POL-8037',
-      claimantName: 'Marcus Hill',
-      claimType: 'PROPERTY_DAMAGE',
-      lossDate: '2026-09-22',
-      claimedAmount: 32000,
-      status: 'APPROVED',
-      adjuster: 'J. Patel',
-      reserveAmount: 27000,
-      description: 'Storm damage to roof and exterior siding with temporary mitigation.'
-    },
-    {
-      claimId: 'CLM-1003',
-      policyNumber: 'POL-1189',
-      claimantName: 'Noah Patel',
-      claimType: 'MEDICAL',
-      lossDate: '2026-09-10',
-      claimedAmount: 9600,
-      status: 'FILED',
-      adjuster: 'S. Park',
-      reserveAmount: 8200,
-      description: 'Emergency treatment following a slip and fall at insured property.',
-    },
-    {
-      claimId: 'CLM-1004',
-      policyNumber: 'POL-7710',
-      claimantName: 'Elena Garcia',
-      claimType: 'AUTO_THEFT',
-      lossDate: '2026-08-30',
-      claimedAmount: 23840,
-      status: 'SETTLED',
-      adjuster: 'R. Khan',
-      reserveAmount: 23840,
-      description: 'Recovered vehicle total loss settlement with finance balance offset.',
-    },
-  ];
+  private readonly http = inject(HttpClient);
+  private readonly base = environment.apiBaseUrl;
 
-  getClaims(): ClaimRecord[] {
-    return [...this.claims];
+  /**
+   * GET /api/claims (optionally filtered by status or customerId).
+   * For policyholders, the backend automatically scopes to the caller's customer ID from the JWT.
+   */
+  getClaims(status?: string, customerId?: string): Observable<ClaimResponse[]> {
+    let params = new HttpParams();
+    if (status && status.trim() !== '') params = params.set('status', status.trim());
+    if (customerId && customerId.trim() !== '') params = params.set('customerId', customerId.trim());
+
+    return this.http.get<ClaimResponse[]>(`${this.base}/api/claims`, {
+      headers: authHeaders(),
+      params,
+    });
   }
 
-  getClaim(claimId: string): ClaimRecord | undefined {
-    return this.claims.find((claim) => claim.claimId === claimId);
+  /**
+   * GET /api/claims/${claimId}
+   */
+  getClaim(claimId: string): Observable<ClaimResponse> {
+    return this.http.get<ClaimResponse>(`${this.base}/api/claims/${claimId}`, {
+      headers: authHeaders(),
+    });
   }
 
-  addClaim(payload: Omit<ClaimRecord, 'claimId' | 'status' | 'adjuster' | 'reserveAmount'>): ClaimRecord {
-    const nextId = `CLM-${String(this.claims.length + 1000)}`;
-    const newClaim: ClaimRecord = {
-      claimId: nextId,
-      policyNumber: payload.policyNumber,
-      claimantName: payload.claimantName,
-      claimType: payload.claimType,
-      lossDate: payload.lossDate,
-      claimedAmount: payload.claimedAmount,
-      status: 'FILED',
-      adjuster: 'Unassigned',
-      reserveAmount: Math.round(payload.claimedAmount * 0.8),
-      description: payload.description,
-    };
-    this.claims.unshift(newClaim);
-    return newClaim;
+  /**
+   * POST /api/claims
+   */
+  fileClaim(request: FileClaimRequest): Observable<ClaimResponse> {
+    return this.http.post<ClaimResponse>(`${this.base}/api/claims`, request, {
+      headers: authHeaders(),
+    });
+  }
+
+  /**
+   * PATCH /api/claims/${claimId}/status?value=${status}
+   */
+  updateStatus(claimId: string, status: string): Observable<ClaimResponse> {
+    const params = new HttpParams().set('value', status);
+    return this.http.patch<ClaimResponse>(
+      `${this.base}/api/claims/${claimId}/status`,
+      {},
+      {
+        headers: authHeaders(),
+        params,
+      }
+    );
   }
 }

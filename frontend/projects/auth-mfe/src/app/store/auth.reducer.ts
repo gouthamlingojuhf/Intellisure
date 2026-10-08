@@ -24,7 +24,7 @@ export const authRemoteReducer = createReducer(
   on(authRemoteActions.loginSuccess, (s, { response }) => ({
     ...s,
     loading: false,
-    token: response.token,
+    token: response.accessToken ?? response.token ?? null,
     error: null,
   })),
   on(authRemoteActions.loginFailure, (s, { error }) => ({ ...s, loading: false, error })),

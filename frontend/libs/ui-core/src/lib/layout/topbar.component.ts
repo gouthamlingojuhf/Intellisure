@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, HostListener } from '@angular/core';
+import { Component, Input, Output, EventEmitter, HostListener, ElementRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -378,13 +378,14 @@ export interface UserMenuItem {
       padding: 8px;
       border: 1px solid var(--border);
       border-radius: 10px;
-      background: var(--surface);
-      box-shadow: var(--shadow);
-      z-index: 60;
+      background: #ffffff;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      z-index: 70;
     }
     
     .notification-popover {
       right: 86px;
+      background: #ffffff;
     }
     
     .popover-header {
@@ -393,6 +394,7 @@ export interface UserMenuItem {
       justify-content: space-between;
       padding: 10px 10px 12px;
       border-bottom: 1px solid var(--border);
+      background: #ffffff;
     }
     
     .popover-header strong {
@@ -402,6 +404,7 @@ export interface UserMenuItem {
     .notification-list {
       max-height: 300px;
       overflow-y: auto;
+      background: #ffffff;
     }
     
     .notification-item {
@@ -409,6 +412,7 @@ export interface UserMenuItem {
       gap: 11px;
       padding: 13px 10px;
       border-bottom: 1px solid var(--warm-light);
+      background: #ffffff;
     }
     
     .notification-item.unread {
@@ -473,6 +477,7 @@ export interface UserMenuItem {
       text-align: center;
       color: var(--muted);
       font-size: 11px;
+      background: #ffffff;
     }
     
     .popover-link {
@@ -483,10 +488,14 @@ export interface UserMenuItem {
       font-weight: 600;
       text-align: center;
       text-decoration: none;
+      background: #ffffff;
     }
     
     .user-popover {
-      width: 230px;
+      width: 240px;
+      background: #ffffff;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      z-index: 70;
     }
     
     .user-popover-profile {
@@ -495,6 +504,7 @@ export interface UserMenuItem {
       align-items: center;
       padding: 10px 8px 14px;
       border-bottom: 1px solid var(--border);
+      background: #ffffff;
     }
     
     .user-popover-profile div {
@@ -623,6 +633,8 @@ export interface UserMenuItem {
   `],
 })
 export class TopbarComponent {
+  private readonly elementRef = inject(ElementRef);
+
   @Input() breadcrumbs: BreadcrumbItem[] = [];
   @Input() searchTerm = '';
   @Input() searchPlaceholder = 'Search policies, claims, vendors…';
@@ -644,6 +656,18 @@ export class TopbarComponent {
   @Output() markAllRead = new EventEmitter<void>();
 
   searchFocused = false;
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.elementRef.nativeElement.contains(event.target)) {
+      if (this.userMenuOpen) {
+        this.closeUserMenu();
+      }
+      if (this.notificationsOpen) {
+        this.toggleNotifications.emit();
+      }
+    }
+  }
 
   onSearch(): void {
     this.search.emit(this.searchTerm);

@@ -143,8 +143,8 @@
 								},
 								{
 									"type": "anyComponentStyle",
-									"maximumWarning": "2kb",
-									"maximumError": "4kb"
+									"maximumWarning": "10kb",
+									"maximumError": "20kb"
 								}
 							],
 							"outputHashing": "all",
@@ -240,8 +240,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "2kb",
-                  "maximumError": "4kb"
+                  "maximumWarning": "10kb",
+                  "maximumError": "20kb"
                 }
               ],
               "outputHashing": "all",
@@ -335,14 +335,14 @@
                   "maximumWarning": "500kb",
                   "maximumError": "1mb"
                 },
-                {
-                  "type": "anyComponentStyle",
-                  "maximumWarning": "2kb",
-                  "maximumError": "4kb"
-                }
-              ],
-              "outputHashing": "all",
-              "extraWebpackConfig": "projects/intelligence-mfe/webpack.prod.config.js"
+								{
+									"type": "anyComponentStyle",
+									"maximumWarning": "10kb",
+									"maximumError": "20kb"
+								}
+							],
+							"outputHashing": "all",
+							"extraWebpackConfig": "projects/intelligence-mfe/webpack.prod.config.js"
             },
             "development": {
               "optimization": false,

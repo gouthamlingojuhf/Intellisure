@@ -1,47 +1,55 @@
-<div class="app-shell" [class.app-shell-mobile-open]="mobileSidebarOpen" [class.app-shell-sidebar-collapsed]="sidebarCollapsed">
-  <is-sidebar
-    [collapsed]="sidebarCollapsed"
-    [mobileOpen]="mobileSidebarOpen"
-    [brandName]="'IntelliSure'"
-    [brandIcon]="'I'"
-    [brandLabel]="'IntelliSure home'"
-    [navigationSections]="[{ title: 'Workspace', items: visibleNavigation }]"
-    [currentPath]="currentPath"
-    (toggleSidebar)="onToggleSidebar()"
-    (closeMobile)="onCloseMobileSidebar()"
-  />
+@if (isWorkspaceRoute) {
+  <div class="app-shell" [class.app-shell-mobile-open]="mobileSidebarOpen" [class.app-shell-sidebar-collapsed]="sidebarCollapsed">
+    <is-sidebar
+      [collapsed]="sidebarCollapsed"
+      [mobileOpen]="mobileSidebarOpen"
+      [brandName]="'IntelliSure'"
+      [brandIcon]="'I'"
+      [brandLabel]="'IntelliSure home'"
+      [navigationSections]="[{ title: 'Workspace', items: visibleNavigation }]"
+      [currentPath]="currentPath"
+      (toggleSidebar)="onToggleSidebar()"
+      (closeMobile)="onCloseMobileSidebar()"
+    />
 
-  <is-topbar
-    [breadcrumbs]="breadcrumbs"
-    [(searchTerm)]="searchTerm"
-    [searchPlaceholder]="'Search policies, claims, vendors…'"
-    [userName]="'IntelliSure User'"
-    [userRole]="userRoleLabel"
-    [userInitial]="userInitial"
-    [notifications]="notifications"
-    [unreadCount]="unreadCount"
-    [notificationsOpen]="notificationOpen"
-    [userMenuOpen]="userMenuOpen"
-    [userMenuItems]="userMenuItems"
-    [mobile]="false"
-    (search)="search()"
-    (toggleSidebar)="onCloseMobileSidebar()"
-    (toggleNotifications)="onToggleNotifications()"
-    (toggleUserMenu)="onToggleUserMenu()"
-    (markAllRead)="onMarkAllRead()"
-  />
+    <div class="app-main">
+      <is-topbar
+        [breadcrumbs]="breadcrumbs"
+        [(searchTerm)]="searchTerm"
+        [searchPlaceholder]="'Search policies, claims, vendors…'"
+        [userName]="'IntelliSure User'"
+        [userRole]="userRoleLabel"
+        [userInitial]="userInitial"
+        [notifications]="notifications"
+        [unreadCount]="unreadCount"
+        [notificationsOpen]="notificationOpen"
+        [userMenuOpen]="userMenuOpen"
+        [userMenuItems]="userMenuItems"
+        [mobile]="false"
+        (search)="search()"
+        (toggleSidebar)="onCloseMobileSidebar()"
+        (toggleNotifications)="onToggleNotifications()"
+        (toggleUserMenu)="onToggleUserMenu()"
+        (markAllRead)="onMarkAllRead()"
+      />
 
-  <main class="workspace-main">
-    @if (loading$ | async) {
-      <div class="loading-state" role="status" aria-live="polite">
-        <is-skeleton variant="text" width="38%" height="38px" />
-        <is-skeleton variant="text" width="62%" height="16px" />
-        <is-skeleton variant="card" />
-      </div>
-    }
+      <main class="workspace-main">
+        @if (loading$ | async) {
+          <div class="loading-state" role="status" aria-live="polite">
+            <is-skeleton variant="text" width="38%" height="38px" />
+            <is-skeleton variant="text" width="62%" height="16px" />
+            <is-skeleton variant="card" />
+          </div>
+        }
+        <router-outlet />
+      </main>
+    </div>
+  </div>
+} @else {
+  <div class="public-layout">
     <router-outlet />
-  </main>
-</div>
+  </div>
+}
 
 <is-toast-stack
   [toasts]="(toasts$ | async) ?? []"

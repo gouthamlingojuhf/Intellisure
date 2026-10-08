@@ -25,7 +25,6 @@ export class AuthApiService {
   }
 
   login(request: LoginRequest): Observable<LoginResponse> {
-    alert('login request: ' + JSON.stringify(request));
     return this.http.post<LoginResponse>(`${this.base}/api/auth/login`, request, {
       headers: this.headers(),
     });

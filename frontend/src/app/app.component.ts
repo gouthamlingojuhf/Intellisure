@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, inject, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -34,19 +34,21 @@ interface NavigationItem {
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
-export class AppComponent implements OnDestroy {
+export class AppComponent implements OnInit, OnDestroy {
   private readonly store = inject(Store);
   private readonly router = inject(Router);
   
   readonly navigationItems: NavigationItem[] = [
     { label: 'Overview', path: '/', icon: '🏠' },
-    { label: 'Quotes & Policies', path: '/policy', icon: '📋', roles: ['Admin', 'Underwriter', 'Policyholder'] },
-    { label: 'Underwriting', path: '/underwriting', icon: '🔍', roles: ['Admin', 'Underwriter', 'Risk Engineer'] },
-    { label: 'Claims', path: '/claims', icon: '📄', roles: ['Admin', 'Claims Adjuster', 'Claims Manager'] },
-    { label: 'Vendors', path: '/vendor', icon: '🏢', roles: ['Admin', 'Claims Manager'] },
-    { label: 'Analytics', path: '/analytics', icon: '📊', roles: ['Admin', 'Underwriter', 'Risk Engineer'] },
-    { label: 'Recovery', path: '/recovery', icon: '💰', roles: ['Admin', 'Claims Adjuster', 'Claims Manager'] },
-    { label: 'Documents', path: '/docs', icon: '📁', roles: ['Admin', 'Policyholder'] },
+    { label: 'Dashboard', path: '/dashboard', icon: '📊', roles: ['Admin', 'ADMIN', 'SYSTEM_ADMINISTRATOR', 'Policyholder', 'POLICYHOLDER'] },
+    { label: 'Business Profile', path: '/profile', icon: '🏢', roles: ['Admin', 'ADMIN', 'SYSTEM_ADMINISTRATOR', 'Policyholder', 'POLICYHOLDER'] },
+    { label: 'Quotes & Policies', path: '/policy', icon: '📋', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Policyholder', 'POLICYHOLDER'] },
+    { label: 'Underwriting', path: '/underwriting', icon: '🔍', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Risk Engineer'] },
+    { label: 'Claims', path: '/claims', icon: '📄', roles: ['Admin', 'ADMIN', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Policyholder', 'POLICYHOLDER'] },
+    { label: 'Vendors', path: '/vendor', icon: '🏢', roles: ['Admin', 'ADMIN', 'Claims Manager', 'VENDOR_MANAGER'] },
+    { label: 'Analytics', path: '/analytics', icon: '📊', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Risk Engineer'] },
+    { label: 'Recovery', path: '/recovery', icon: '💰', roles: ['Admin', 'ADMIN', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Policyholder', 'POLICYHOLDER'] },
+    { label: 'Documents', path: '/docs', icon: '📁', roles: ['Admin', 'ADMIN', 'Policyholder', 'POLICYHOLDER'] },
   ];
 
   readonly isAuthenticated$ = this.store.select(selectIsAuthenticated);
@@ -71,7 +73,10 @@ export class AppComponent implements OnDestroy {
   readonly title = 'IntelliSure Shell';
 
   get visibleNavigation(): NavigationItem[] {
-    return this.navigationItems.filter((item) => !item.roles || item.roles.includes(this.role ?? ''));
+    const currentRole = (this.role ?? '').toUpperCase();
+    return this.navigationItems.filter((item) =>
+      !item.roles || item.roles.some((r) => r.toUpperCase() === currentRole)
+    );
   }
 
   get userInitial(): string {
@@ -96,10 +101,61 @@ export class AppComponent implements OnDestroy {
 
   get userMenuItems(): Array<{ label: string; link?: string; action?: () => void; icon?: string; variant?: 'default' | 'danger' }> {
     return [
-      { label: 'Workspace settings', link: '/docs', icon: '⚙️' },
-      { label: 'Security & access', link: '/docs', icon: '🔐' },
+      { label: 'Dashboard', link: '/dashboard', icon: '📊' },
+      { label: 'Business profile', link: '/profile', icon: '🏢' },
+      { label: 'Quotes & Policies', link: '/policy', icon: '📋' },
       { label: 'Sign out', action: () => this.logout(), icon: '🚪', variant: 'danger' },
     ];
+  }
+
+  get isWorkspaceRoute(): boolean {
+    const path = (this.currentPath || '').split('?')[0].split('#')[0];
+    return path !== '/' && !path.startsWith('/auth');
+  }
+
+  ngOnInit(): void {
+    this.restoreUserSession();
+    this.updateNavigation(this.router.url);
+  }
+
+  private restoreUserSession(): void {
+    if (typeof localStorage !== 'undefined') {
+      const token = localStorage.getItem('is_token');
+      if (!token) return;
+
+      let role = localStorage.getItem('is_role');
+      let userId = localStorage.getItem('is_user_id');
+      let customerId = localStorage.getItem('is_customer_id');
+      let email = localStorage.getItem('is_email');
+
+      if (!role || !userId) {
+        try {
+          const base64Url = token.split('.')[1];
+          if (base64Url) {
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(
+              atob(base64)
+                .split('')
+                .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                .join('')
+            );
+            const payload = JSON.parse(jsonPayload);
+            userId = userId ?? payload.sub ?? payload.userId;
+            role = role ?? payload.role ?? (Array.isArray(payload.roles) ? payload.roles[0] : null);
+            customerId = customerId ?? payload.customerId;
+            email = email ?? payload.email;
+
+            if (customerId && !localStorage.getItem('is_customer_id')) {
+              localStorage.setItem('is_customer_id', customerId);
+            }
+          }
+        } catch {
+          // Safe fallback if JWT payload cannot be parsed
+        }
+      }
+
+      this.store.dispatch(authActions.restoreSession({ token, role, email, userId, customerId }));
+    }
   }
 
   ngOnDestroy(): void {

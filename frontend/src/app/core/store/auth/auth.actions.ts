@@ -8,6 +8,6 @@ export const authActions = createActionGroup({
     loginSuccess: props<{ response: LoginResponse }>(),
     loginFailure: props<{ error: string }>(),
     logout: emptyProps(),
-    restoreSession: props<{ token: string }>(),
+    restoreSession: props<{ token: string; role?: string | null; email?: string | null; userId?: string | null; customerId?: string | null }>(),
   },
 });

@@ -22,12 +22,19 @@ import { CardComponent, ButtonComponent, InputComponent, SelectComponent, Textar
   ],
   template: `
     <div class="form-workflow">
-      <is-card title="File a new claim" subtitle="Complete each section to submit a new claim for processing.">
+      <is-card title="File a new claim (FNOL)" subtitle="Submit first notice of loss to initialize automated claims processing and adjuster assignment.">
+        @if (error) {
+          <div class="error-banner" role="alert">
+            <strong>Submission error:</strong>
+            <p>{{ error }}</p>
+          </div>
+        }
+
         <is-stepper
           [steps]="steps"
           [currentStep]="currentStep"
           [orientation]="'horizontal'"
-          [submitLabel]="'Submit claim'"
+          [submitLabel]="submitting ? 'Submitting…' : 'Submit claim'"
           (currentStepChange)="currentStep = $event"
           (next)="onNext()"
           (previous)="onPrevious()"
@@ -45,66 +52,42 @@ import { CardComponent, ButtonComponent, InputComponent, SelectComponent, Textar
     </div>
 
     <ng-template #policySection>
-      <div class="form-grid">
-        <is-input
-          label="Policy number"
-          placeholder="POL-XXXX"
-          formControlName="policyNumber"
-          [error]="getError('policyNumber')"
-        />
-        <is-input
-          label="Claimant"
-          placeholder="Full name"
-          formControlName="claimantName"
-          [error]="getError('claimantName')"
-        />
-        <is-select
-          label="Claim type"
-          placeholder="Select claim type"
-          formControlName="claimType"
-          [options]="claimTypes"
-          [error]="getError('claimType')"
-        />
-        <is-input
-          label="Loss date"
-          type="date"
-          formControlName="lossDate"
-          [error]="getError('lossDate')"
-        />
+      <div class="form-grid" [formGroup]="claimForm">
         <div class="md:col-span-2">
           <is-input
-            label="Claim amount (USD)"
-            type="number"
-            placeholder="0.00"
-            formControlName="claimedAmount"
-            [error]="getError('claimedAmount')"
+            label="Policy ID (UUID)"
+            placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
+            formControlName="policyId"
+            [error]="getError('policyId')"
           />
         </div>
+        <is-input
+          label="Incident date"
+          type="date"
+          formControlName="incidentDate"
+          [error]="getError('incidentDate')"
+        />
+        <is-input
+          label="Estimated loss (USD)"
+          type="number"
+          placeholder="0.00"
+          formControlName="estimatedLoss"
+          [error]="getError('estimatedLoss')"
+        />
       </div>
     </ng-template>
 
     <ng-template #detailsSection>
-      <div class="form-grid">
+      <div class="form-grid" [formGroup]="claimForm">
         <div class="md:col-span-2">
           <is-textarea
-            label="Description"
-            placeholder="Describe the incident, damage, and circumstances..."
+            label="Incident description"
+            placeholder="Describe the incident, damage details, and circumstances..."
             formControlName="description"
             [rows]="5"
             [error]="getError('description')"
           />
         </div>
-        <is-select
-          label="Priority"
-          placeholder="Select priority"
-          formControlName="priority"
-          [options]="priorityOptions"
-        />
-        <is-input
-          label="Adjuster assigned"
-          placeholder="Auto-assigned or manual"
-          formControlName="assignedAdjuster"
-        />
       </div>
     </ng-template>
 
@@ -112,16 +95,12 @@ import { CardComponent, ButtonComponent, InputComponent, SelectComponent, Textar
       <div class="review-summary">
         <h4>Review your submission</h4>
         <dl class="review-grid">
-          <dt>Policy number</dt>
-          <dd>{{ claimForm.get('policyNumber')?.value }}</dd>
-          <dt>Claimant</dt>
-          <dd>{{ claimForm.get('claimantName')?.value }}</dd>
-          <dt>Claim type</dt>
-          <dd>{{ getClaimTypeLabel(claimForm.get('claimType')?.value ?? '') }}</dd>
-          <dt>Loss date</dt>
-          <dd>{{ claimForm.get('lossDate')?.value }}</dd>
-          <dt>Claim amount</dt>
-          <dd>{{ claimForm.get('claimedAmount')?.value | currency:'USD':'symbol':'1.0-0' }}</dd>
+          <dt>Policy ID</dt>
+          <dd>{{ claimForm.get('policyId')?.value }}</dd>
+          <dt>Incident date</dt>
+          <dd>{{ claimForm.get('incidentDate')?.value }}</dd>
+          <dt>Estimated loss</dt>
+          <dd>{{ claimForm.get('estimatedLoss')?.value | currency:'USD':'symbol':'1.0-0' }}</dd>
           <dt>Description</dt>
           <dd>{{ claimForm.get('description')?.value }}</dd>
         </dl>
@@ -139,6 +118,19 @@ import { CardComponent, ButtonComponent, InputComponent, SelectComponent, Textar
       gap: 18px;
       max-width: 800px;
       margin: 0 auto;
+    }
+
+    .error-banner {
+      margin-bottom: 16px;
+      padding: 12px 16px;
+      background: #fde8e8;
+      border: 1px solid #f8b4b4;
+      border-radius: 8px;
+      color: #9b1c1c;
+      font-size: 12px;
+    }
+    .error-banner p {
+      margin: 2px 0 0;
     }
     
     .form-grid {
@@ -160,7 +152,7 @@ import { CardComponent, ButtonComponent, InputComponent, SelectComponent, Textar
       margin: 0 0 16px;
       font-size: 14px;
       font-weight: 600;
-      color: var(--ink);
+      color: var(--ink, #000000);
     }
     
     .review-grid {
@@ -171,14 +163,15 @@ import { CardComponent, ButtonComponent, InputComponent, SelectComponent, Textar
     }
     
     .review-grid dt {
-      color: var(--muted);
+      color: var(--muted, #6f6a6d);
       font-weight: 500;
     }
     
     .review-grid dd {
       margin: 0;
-      color: var(--ink);
+      color: var(--ink, #000000);
       font-weight: 500;
+      word-break: break-all;
     }
     
     @media (max-width: 700px) {
@@ -197,73 +190,65 @@ import { CardComponent, ButtonComponent, InputComponent, SelectComponent, Textar
 export class ClaimCreateComponent {
   private readonly fb = new FormBuilder();
   private readonly router = inject(Router);
+  private readonly claimsService = inject(ClaimsService);
 
   readonly steps: StepperStep[] = [
-    { label: 'Policy & Claimant', description: 'Basic policy and claimant information' },
-    { label: 'Claim Details', description: 'Incident description and priority' },
-    { label: 'Review & Submit', description: 'Review and confirm submission' },
+    { label: 'Policy & Loss', description: 'Policy UUID and incident date' },
+    { label: 'Incident Details', description: 'Describe the damage' },
+    { label: 'Review & Submit', description: 'Confirm FNOL submission' },
   ];
 
   currentStep = 0;
-
-  readonly claimTypes = [
-    { value: 'AUTO_COLLISION', label: 'Auto Collision' },
-    { value: 'AUTO_COMPREHENSIVE', label: 'Auto Comprehensive' },
-    { value: 'PROPERTY_FIRE', label: 'Property Fire' },
-    { value: 'PROPERTY_WATER', label: 'Property Water Damage' },
-    { value: 'GENERAL_LIABILITY', label: 'General Liability' },
-    { value: 'WORKERS_COMP', label: 'Workers Compensation' },
-    { value: 'PROFESSIONAL_LIABILITY', label: 'Professional Liability' },
-    { value: 'CYBER', label: 'Cyber Liability' },
-    { value: 'OTHER', label: 'Other' },
-  ];
-
-  readonly priorityOptions = [
-    { value: 'LOW', label: 'Low' },
-    { value: 'NORMAL', label: 'Normal' },
-    { value: 'HIGH', label: 'High' },
-    { value: 'URGENT', label: 'Urgent' },
-  ];
+  submitting = false;
+  error: string | null = null;
 
   readonly claimForm = this.fb.nonNullable.group({
-    policyNumber: ['', Validators.required],
-    claimantName: ['', Validators.required],
-    claimType: ['', Validators.required],
-    lossDate: ['', Validators.required],
-    claimedAmount: [0, [Validators.required, Validators.min(1)]],
-    description: ['', Validators.required],
-    priority: ['NORMAL'],
-    assignedAdjuster: [''],
+    policyId: [
+      '',
+      [
+        Validators.required,
+        Validators.pattern(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i),
+      ],
+    ],
+    incidentDate: [new Date().toISOString().slice(0, 10), Validators.required],
+    estimatedLoss: [0, [Validators.required, Validators.min(0)]],
+    description: ['', [Validators.required, Validators.minLength(5)]],
   });
-
-  constructor(private readonly claimsService: ClaimsService) {}
 
   getError(controlName: string): string | undefined {
     const control = this.claimForm.get(controlName);
     if (control?.invalid && (control.dirty || control.touched)) {
       if (control.errors?.['required']) return `${this.getFieldLabel(controlName)} is required`;
-      if (control.errors?.['min']) return 'Amount must be greater than 0';
+      if (control.errors?.['pattern']) return 'Must be a valid UUID (e.g. 550e8400-e29b-41d4-a716-446655440000)';
+      if (control.errors?.['min']) return 'Amount must be greater than or equal to 0';
+      if (control.errors?.['minlength']) return 'Description must be at least 5 characters';
     }
     return undefined;
   }
 
   getFieldLabel(controlName: string): string {
     const labels: Record<string, string> = {
-      policyNumber: 'Policy number',
-      claimantName: 'Claimant name',
-      claimType: 'Claim type',
-      lossDate: 'Loss date',
-      claimedAmount: 'Claim amount',
+      policyId: 'Policy ID',
+      incidentDate: 'Incident date',
+      estimatedLoss: 'Estimated loss',
       description: 'Description',
     };
     return labels[controlName] || controlName;
   }
 
-  getClaimTypeLabel(value: string): string {
-    return this.claimTypes.find(t => t.value === value)?.label || value;
-  }
-
   onNext(): void {
+    if (this.currentStep === 0) {
+      const pControl = this.claimForm.get('policyId');
+      const dControl = this.claimForm.get('incidentDate');
+      pControl?.markAsTouched();
+      dControl?.markAsTouched();
+      if (pControl?.invalid || dControl?.invalid) return;
+    } else if (this.currentStep === 1) {
+      const descControl = this.claimForm.get('description');
+      descControl?.markAsTouched();
+      if (descControl?.invalid) return;
+    }
+
     if (this.currentStep < this.steps.length - 1) {
       this.currentStep++;
     }
@@ -281,16 +266,29 @@ export class ClaimCreateComponent {
       return;
     }
 
+    this.submitting = true;
+    this.error = null;
     const payload = this.claimForm.getRawValue();
-    const created = this.claimsService.addClaim({
-      policyNumber: payload.policyNumber,
-      claimantName: payload.claimantName,
-      claimType: payload.claimType,
-      lossDate: payload.lossDate,
-      claimedAmount: payload.claimedAmount,
-      description: payload.description,
-    });
 
-    this.router.navigateByUrl(`/${created.claimId}`);
+    this.claimsService
+      .fileClaim({
+        policyId: payload.policyId.trim(),
+        incidentDate: payload.incidentDate,
+        description: payload.description.trim(),
+        estimatedLoss: payload.estimatedLoss,
+      })
+      .subscribe({
+        next: (created) => {
+          this.submitting = false;
+          this.router.navigate(['/claims', created.claimId]);
+        },
+        error: (err) => {
+          this.submitting = false;
+          this.error =
+            err?.error?.message ||
+            err?.message ||
+            'Failed to file claim. Please verify the Policy ID is valid and exists in the system.';
+        },
+      });
   }
 }

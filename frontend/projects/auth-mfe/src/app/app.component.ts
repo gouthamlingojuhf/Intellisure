@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { CardComponent, ButtonComponent, InputComponent } from 'ui-core';
+import { AuthApiService } from './services/auth-api.service';
 
 @Component({
   selector: 'app-root',
@@ -105,6 +106,7 @@ import { CardComponent, ButtonComponent, InputComponent } from 'ui-core';
 export class AppComponent {
   private readonly fb = new FormBuilder();
   private readonly router = inject(Router);
+  private readonly authApi = inject(AuthApiService);
 
   loading = false;
   errorMessage = '';
@@ -116,7 +118,7 @@ export class AppComponent {
     rememberMe: [false],
   });
 
-  async onSubmit(): Promise<void> {
+  onSubmit(): void {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       return;
@@ -124,20 +126,29 @@ export class AppComponent {
 
     this.loading = true;
     this.errorMessage = '';
+    this.successMessage = '';
 
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      this.successMessage = 'Sign in successful. Redirecting...';
-      setTimeout(() => {
-        this.router.navigateByUrl('/policy');
-      }, 1000);
-    } catch {
-      this.errorMessage = 'Invalid credentials. Please try again.';
-    } finally {
-      this.loading = false;
-    }
+    const { email, password } = this.loginForm.getRawValue();
+
+    this.authApi.login({ email, password }).subscribe({
+      next: (res) => {
+        this.loading = false;
+        const token = res?.accessToken ?? res?.token;
+        if (typeof localStorage !== 'undefined' && token) {
+          localStorage.setItem('is_token', token);
+          if (res.role) localStorage.setItem('is_role', res.role);
+          if (res.userId) localStorage.setItem('is_user_id', res.userId);
+          if (res.customerId) localStorage.setItem('is_customer_id', res.customerId);
+          if (res.email) localStorage.setItem('is_email', res.email);
+        }
+        this.successMessage = 'Sign in successful. Redirecting…';
+        this.router.navigateByUrl(res?.customerId ? '/dashboard' : '/profile');
+      },
+      error: (err) => {
+        this.loading = false;
+        this.errorMessage = err?.error?.message || err?.message || 'Invalid credentials. Please try again.';
+      },
+    });
   }
 
   loginWithProvider(provider: string): void {

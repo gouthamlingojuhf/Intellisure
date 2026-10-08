@@ -1,13 +1,35 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { unauthGuard } from './core/guards/unauth.guard';
 import { HomeComponent } from './features/home/home.component';
 import { NotFoundComponent } from './features/not-found/not-found.component';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
+  {
+    path: 'dashboard',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/dashboard/policyholder-dashboard.component').then(
+        (m) => m.PolicyholderDashboardComponent
+      ),
+  },
+  {
+    path: 'profile',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/profile/customer-profile.component').then(
+        (m) => m.CustomerProfileComponent
+      ),
+  },
   // Remote MFEs mount here via Module Federation (loadRemoteModule).
   // Placeholders keep deep links stable until each remote lands:
-  { path: 'auth', loadChildren: () => import('./features/auth/auth-shell.routes').then((m) => m.AUTH_SHELL_ROUTES) },
+  {
+    path: 'auth',
+    canActivate: [unauthGuard],
+    loadChildren: () =>
+      import('./features/auth/auth-shell.routes').then((m) => m.AUTH_SHELL_ROUTES),
+  },
   { path: 'policy', canActivate: [authGuard], loadChildren: () => import('./features/policy/policy-shell.routes').then((m) => m.POLICY_SHELL_ROUTES) },
   { path: 'underwriting', canActivate: [authGuard], loadChildren: () => import('./features/underwriting/underwriting-shell.routes').then((m) => m.UNDERWRITING_SHELL_ROUTES) },
   { path: 'claims', canActivate: [authGuard], loadChildren: () => import('./features/claims/claims-shell.routes').then((m) => m.CLAIMS_SHELL_ROUTES) },

@@ -42,7 +42,7 @@ import { CommonModule } from '@angular/common';
     .card {
       border: 1px solid var(--border);
       border-radius: 9px;
-      background: var(--surface);
+      background: #ffffff;
       box-shadow: var(--shadow);
       overflow: hidden;
     }

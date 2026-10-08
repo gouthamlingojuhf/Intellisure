@@ -1,4 +1,5 @@
 import { inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 import { catchError, exhaustMap, map, of, switchMap, tap, withLatestFrom } from 'rxjs';
@@ -7,16 +8,21 @@ import { authRemoteActions } from './auth.actions';
 import { selectRemoteToken } from './auth.selectors';
 
 export const loginRemoteEffect = createEffect(
-  (actions$ = inject(Actions), api = inject(AuthApiService)) =>
+  (actions$ = inject(Actions), api = inject(AuthApiService), router = inject(Router)) =>
     actions$.pipe(
       ofType(authRemoteActions.login),
       exhaustMap(({ request }) =>
         api.login(request).pipe(
           tap((res) => {
-            alert('login response: auth.effects ' + JSON.stringify(res));
-            if (typeof localStorage !== 'undefined' && res?.token) {
-              localStorage.setItem('is_token', res.token);
+            const token = res?.accessToken ?? res?.token;
+            if (typeof localStorage !== 'undefined' && token) {
+              localStorage.setItem('is_token', token);
+              if (res.role) localStorage.setItem('is_role', res.role);
+              if (res.userId) localStorage.setItem('is_user_id', res.userId);
+              if (res.customerId) localStorage.setItem('is_customer_id', res.customerId);
+              if (res.email) localStorage.setItem('is_email', res.email);
             }
+            router.navigateByUrl(res?.customerId ? '/dashboard' : '/profile');
           }),
           map((response) => authRemoteActions.loginSuccess({ response })),
           catchError((err) =>
@@ -45,11 +51,18 @@ export const registerRemoteEffect = createEffect(
 );
 
 export const logoutRemoteEffect = createEffect(
-  (actions$ = inject(Actions)) =>
+  (actions$ = inject(Actions), router = inject(Router)) =>
     actions$.pipe(
       ofType(authRemoteActions.logout),
       tap(() => {
-        if (typeof localStorage !== 'undefined') localStorage.removeItem('is_token');
+        if (typeof localStorage !== 'undefined') {
+          localStorage.removeItem('is_token');
+          localStorage.removeItem('is_role');
+          localStorage.removeItem('is_user_id');
+          localStorage.removeItem('is_customer_id');
+          localStorage.removeItem('is_email');
+        }
+        router.navigateByUrl('/');
       })
     ),
   { functional: true, dispatch: false }

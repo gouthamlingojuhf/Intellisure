@@ -12,8 +12,12 @@ export const loginEffect = createEffect(
       exhaustMap(({ request }) =>
         api.post<LoginResponse>('/api/auth/login', request).pipe(
           tap((res) => {
-            if (typeof localStorage !== 'undefined' && res?.token) {
-              localStorage.setItem('is_token', res.token);
+            const token = res?.accessToken ?? res?.token;
+            if (typeof localStorage !== 'undefined' && token) {
+              localStorage.setItem('is_token', token);
+              if (res.role) localStorage.setItem('is_role', res.role);
+              if (res.userId) localStorage.setItem('is_user_id', res.userId);
+              if (res.email) localStorage.setItem('is_email', res.email);
             }
           }),
           map((response) => authActions.loginSuccess({ response })),
@@ -32,7 +36,12 @@ export const logoutEffect = createEffect(
     return actions$.pipe(
       ofType(authActions.logout),
       tap(() => {
-        if (typeof localStorage !== 'undefined') localStorage.removeItem('is_token');
+        if (typeof localStorage !== 'undefined') {
+          localStorage.removeItem('is_token');
+          localStorage.removeItem('is_role');
+          localStorage.removeItem('is_user_id');
+          localStorage.removeItem('is_email');
+        }
       })
     );
   },

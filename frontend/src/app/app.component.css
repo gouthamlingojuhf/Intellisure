@@ -1,1 +1,7 @@
-
+.public-layout {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--warm-light);
+}

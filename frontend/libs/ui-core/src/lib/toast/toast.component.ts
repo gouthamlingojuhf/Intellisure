@@ -74,8 +74,8 @@ export interface Toast {
       border: 1px solid var(--border);
       border-left: 4px solid;
       border-radius: 8px;
-      background: var(--surface);
-      box-shadow: var(--shadow);
+      background: #ffffff;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
       color: #3c373a;
       font-size: 11px;
     }

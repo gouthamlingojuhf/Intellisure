@@ -10,12 +10,14 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  token: string;
+  accessToken?: string;
+  token?: string;
   tokenType?: string;
   expiresIn?: number;
   userId?: string;
+  customerId?: string;
   email?: string;
-  role?: UserRole;
+  role?: UserRole | string;
 }
 
 export interface RegisterRequest {
@@ -33,6 +35,22 @@ export interface UserProfile {
 }
 
 // ============ CUSTOMER PARTY DTOs ============
+
+export interface CustomerResponse {
+  customerId: string;
+  userId: string;
+  businessName: string;
+  ownerName: string;
+  phone?: string | null;
+  businessType?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  postalCode?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
 
 export interface CustomerProfile {
   customerId: string;
@@ -83,17 +101,15 @@ export interface UpdateUserStatusRequest {
 }
 
 export interface UpdateCustomerProfileRequest {
-  displayName?: string;
-  contactPhone?: string;
-  contactEmail?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  postalCode?: string;
-  country?: string;
-  annualRevenue?: number;
-  employeeCount?: number;
-  businessOperations?: string;
+  businessName: string;
+  ownerName: string;
+  phone?: string | null;
+  businessType?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  postalCode?: string | null;
 }
 
 // ============ QUOTE & POLICY DTOs ============

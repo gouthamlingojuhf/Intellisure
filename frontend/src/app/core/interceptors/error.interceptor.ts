@@ -17,8 +17,6 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         router.navigate(['/auth']);
       } else if (err.status === 403) {
         store.dispatch(uiActions.showToast({ message: 'Access denied: insufficient role privileges', kind: 'error' }));
-      } else if (err.status === 404) {
-        router.navigate(['/not-found']);
       } else if (err.status >= 500) {
         store.dispatch(uiActions.showToast({ message: 'Server error. Please try again.', kind: 'error' }));
       }

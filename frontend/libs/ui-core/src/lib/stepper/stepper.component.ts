@@ -84,6 +84,10 @@ export interface StepperStep {
             </div>
           }
         </div>
+      } @else {
+        <div class="stepper-horizontal-panel" role="tabpanel" [attr.id]="'stepper-panel-' + currentStep">
+          <ng-container *ngTemplateOutlet="stepTemplate || defaultTemplate" />
+        </div>
       }
     </div>
 
@@ -280,7 +284,8 @@ export interface StepperStep {
       margin-bottom: 20px;
     }
     
-    .stepper-panel-content {
+    .stepper-panel-content,
+    .stepper-horizontal-panel {
       min-height: 200px;
     }
     

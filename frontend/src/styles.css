@@ -4,16 +4,28 @@
 
 :root {
   --claret: #75013f;
+  --claret-hover: #8f1750;
+  --claret-soft: #fde8ed;
   --fuchsia: #fe3082;
+  --fuchsia-hover: #ff5aa8;
   --warm: #eae5df;
   --warm-light: #f7f5f3;
   --ink: #000000;
   --muted: #6f6a6d;
+  --surface: #ffffff;
+  --surface-hover: #faf9f8;
   --success: #176b45;
+  --success-light: #eaf6f0;
   --warning: #9a5b00;
+  --warning-light: #fff5dc;
   --danger: #a32120;
+  --danger-light: #fdecea;
   --border: #eae5df;
   --shadow: 0 1px 2px rgba(0, 0, 0, .04), 0 8px 24px rgba(0, 0, 0, .05);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(117, 30, 63, 0.16);
+  --shadow-lg: 0 14px 34px rgba(0, 0, 0, 0.08);
+  --focus-ring: 0 0 0 3px rgba(117, 30, 63, 0.08);
   color-scheme: light;
   font-family: Inter, "Segoe UI", Helvetica, Arial, sans-serif;
   font-synthesis: none;

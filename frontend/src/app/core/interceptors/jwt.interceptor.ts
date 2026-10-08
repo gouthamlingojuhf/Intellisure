@@ -10,8 +10,9 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
   return store.select(selectAuthToken).pipe(
     take(1),
     switchMap((token) => {
-      if (token && req.url.startsWith('http')) {
-        req = req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
+      const activeToken = token || (typeof localStorage !== 'undefined' ? localStorage.getItem('is_token') : null);
+      if (activeToken && req.url.startsWith('http')) {
+        req = req.clone({ setHeaders: { Authorization: `Bearer ${activeToken}` } });
       }
       return next(req);
     })

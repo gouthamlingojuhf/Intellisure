@@ -86,7 +86,7 @@ export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
     .modal-content {
       pointer-events: auto;
       width: 100%;
-      background: var(--surface);
+      background: #ffffff;
       border-radius: 12px;
       box-shadow: 0 24px 48px rgba(0, 0, 0, 0.18);
       overflow: hidden;

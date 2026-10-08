@@ -118,7 +118,7 @@ export interface NavItem {
       width: 264px;
       display: flex;
       flex-direction: column;
-      background: var(--surface);
+      background: #ffffff;
       border-right: 1px solid var(--border);
       transition: width 0.22s ease, transform 0.22s ease;
     }
