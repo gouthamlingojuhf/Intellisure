@@ -1,129 +1,95 @@
-# IntelliSure - Agent Instructions
+# IntelliSure Agent Instructions
 
-## Architecture Overview
+## Repository map
 
-Angular 17 monorepo with Module Federation (MFE). Single shell app + 4 remote MFEs + shared libraries.
+- `frontend/` is an Angular 17 Module Federation workspace with a shell, four active remote MFEs, and shared libraries.
+- `api-gateway/`, `eureka/`, and the service directories under the repository root are independent Spring Boot 4.1.1 applications targeting Java 17.
+- Keep business rules in service classes, HTTP concerns in controllers, persistence in repositories, and API shapes in DTOs/entities/mappers.
+- Use the existing service documentation for domain-specific behavior; do not duplicate it here.
 
+Relevant documentation:
+
+- [Frontend architecture](Docs/MICROFRONTEND_ARCHITECTURE_DOCUMENTATION.md)
+- [API gateway](Docs/API_GATEWAY_DOCUMENTATION.md)
+- [Service documentation](Docs/CLAIMS_SERVICE_DOCUMENTATION.md)
+- [Business blueprint](Docs/IntelliSure_Insurance_Lifecycle_Business_Blueprint.md)
+
+## Backend conventions
+
+- Services use Spring WebFlux, Reactor `Mono`/`Flux`, Spring Security, and Eureka discovery. Preserve reactive behavior; avoid blocking calls in request paths.
+- Each service has its own Maven module with a wrapper. Run commands from the service directory unless the task explicitly targets the root orchestration scripts.
+- Follow the existing package layout: `controller`, `service`, `repository`, `entity`, `dto`, `mapper`, `config`, `security`, `filter`, `exception`, and `client`.
+- Use MapStruct for entity/DTO mapping and Lombok for conventional boilerplate only when the surrounding module already uses it.
+- Validate request bodies with Jakarta Validation and return domain-specific exceptions through the module's global exception handler.
+- Reuse the existing `SecurityActorService` and role checks; do not bypass authorization or expose caller-specific data.
+- Preserve correlation IDs, JWT propagation, and authorization headers across gateway, service, and WebClient flows.
+- Treat database identifiers and UUID byte conversion as service-local concerns; keep schemas and migrations aligned with the existing persistence model.
+- Use the module's existing tests and add focused tests for changed behavior. Prefer real service/repository behavior where practical; mock only the lowest external boundary needed.
+
+Maven commands:
+
+```powershell
+# Build and test one service
+cd claims-service
+./mvnw test
+
+# Build all backend modules without running tests
+./build_all.ps1
+
+# Run all backend services in separate Windows terminals
+./run_all_services.ps1
 ```
-frontend/
-├── src/                    # shell-app (host)
-├── projects/
-│   ├── auth-mfe           # Port 4201 (remote)
-│   ├── claims-mfe         # Port 4202 (remote)
-│   ├── intelligence-mfe   # Port 4203 (remote)
-│   └── vendor-mfe         # Port 4205 (remote)
-└── libs/
-    ├── ui-core            # Design system (Hartford theme)
-    ├── auth               # Auth state/effects
-    ├── charting           # Chart components
-    ├── data-access        # API services
-    ├── shared-models      # TypeScript interfaces
-    └── store              # NgRx store
-```
 
-## Key Commands
+The root build script invokes Maven `clean install -DskipTests` for every backend module. Use targeted module tests for changes and run the relevant full test command before completion.
 
-Run from `frontend/` directory:
+## Frontend conventions
 
-```bash
-# Build all (production)
-npm run build                # shell-app only
+- The shell and each MFE are separate Angular projects. Keep remote route exports in `*-remote.routes.ts` and mount them through the shell's lazy route loaders.
+- Use standalone Angular components and the existing `ui-core` library for canonical design-system primitives. Do not copy UI components into feature modules.
+- Keep shared interfaces in `libs/shared-models`; keep frontend API clients in the owning feature or `libs/data-access`.
+- Use NgRx actions, reducers, selectors, and effects for application state. Keep effects responsible for side effects and reducers responsible for state transitions.
+- Use `inject()` from `@angular/core`; keep dependency injection constructor-based where the surrounding code does so.
+- Preserve Module Federation entry points in each project's `webpack.config.js`; `commonChunk: false` is intentional.
+- Do not change the configured ports or remote entry URLs without updating the shell routes, webpack configuration, and startup documentation.
+
+Frontend commands from `frontend/`:
+
+```powershell
+npm install
+npm run build                 # shell only
 npm run build:auth
 npm run build:claims
 npm run build:intelligence
 npm run build:vendor
-
-# Dev servers (run separately in different terminals)
-npm run start:shell          # http://localhost:4200
-npm run start:auth           # http://localhost:4201
-npm run start:claims         # http://localhost:4202
-npm run start:intelligence   # http://localhost:4203
-npm run start:vendor         # http://localhost:4205
-
-# Run all MFEs together (module federation dev server)
-npm run run:all
-
-# Test
 npm run test
-
-# Watch mode (dev)
-npm run watch
+npm run start:shell           # 4200
+npm run start:auth            # 4201
+npm run start:claims          # 4202
+npm run start:intelligence    # 4203
+npm run start:vendor          # 4205
+npm run run:all               # all MFEs through the Module Federation dev server
 ```
 
-## Build System Quirks
+Build and test rules:
 
-- **ngx-build-plus** used instead of standard Angular builder (custom webpack config per project)
-- **Common chunk disabled** (`commonChunk: false`) - each MFE bundles its own dependencies
-- **TypeScript paths** map to `./dist/<lib>` - must build libraries before consuming apps
-- **Budget limits**: component styles max 10kb warning / 20kb error (increased from default 2kb/4kb)
+- Build shared libraries before applications that consume them. In particular, build `ui-core` before dependent frontend verification when its public API changes.
+- `ngx-build-plus` is required for the shell and MFEs; do not replace it with the standard Angular builder without updating the custom webpack integration.
+- Preserve the configured production budgets in `angular.json`; if a component style exceeds the limit, prefer moving styles to the shared/global layer or justify a scoped budget change.
+- Karma + Jasmine is the current frontend test stack; no e2e suite is configured.
+- Run `npm run test` for frontend changes and the relevant Maven test command for backend changes. Do not claim a build or test passed without running it.
 
-## Library Development
+## Change workflow
 
-```bash
-# Build a library
-ng build ui-core
+1. Identify the owning module and inspect its existing tests and documentation before editing.
+2. Make the smallest behavior-preserving change. Update API documentation only when the external contract changes.
+3. Preserve existing security, role, error, and correlation behavior.
+4. Run the narrowest relevant test/build command, then run broader verification when the change affects a shared library, API contract, or Module Federation boundary.
+5. Review the diff for accidental generated files, secrets, logs, and stale port or route references.
 
-# Library output goes to dist/ui-core (referenced by TS paths)
-# Always rebuild library after changes before testing in apps
-```
+## Common pitfalls
 
-## Design System (ui-core)
-
-Hartford-inspired enterprise insurance theme in `libs/ui-core/src/lib/design-tokens.ts`:
-
-```typescript
-// Primary colors
-claret:     #75013F  // Primary brand
-fuchsia:    #FE3082  // Accent only
-warm:       #EAE5DF  // Borders, dividers
-warm-light: #F7F5F3  // Background
-ink:        #000000  // Text
-```
-
-**Import from ui-core** (not local copies):
-```typescript
-import { ButtonComponent, CardComponent, TableComponent } from 'ui-core';
-```
-
-Global styles loaded via `angular.json` → `src/styles.css` (imports Tailwind + design tokens).
-
-## State Management
-
-- **NgRx** for global state (`libs/store`, `libs/auth`)
-- Selectors in `core/store/*/selectors.ts`
-- Actions in `core/store/*/actions.ts`
-- Effects in `core/store/*/effects.ts`
-
-## Module Federation
-
-- Shell app loads MFEs via `loadRemoteModule()`
-- Remote entries defined in `webpack.config.js` per project
-- Dev: `http://localhost:420X/remoteEntry.js`
-- Route config in `src/app/features/*/shell.routes.ts`
-
-## Testing
-
-```bash
-ng test                          # All projects
-ng test ui-core                  # Single library
-ng test shell-app                # Shell app only
-```
-
-Karma + Jasmine. No e2e configured.
-
-## Common Gotchas
-
-| Issue | Fix |
-|-------|-----|
-| `Cannot find module 'ui-core'` | Run `ng build ui-core` first |
-| MFE not loading in dev | Ensure all `npm run start:*` servers running |
-| Style budget exceeded | Increase `anyComponentStyle` budget in angular.json or move styles to global |
-| TS path not resolving | Rebuild library (`ng build <lib>`) |
-| `inject()` not found | Import from `@angular/core` |
-
-## File Conventions
-
-- Standalone components only (no NgModules)
-- Components in `libs/ui-core` are the canonical UI primitives
-- Feature dashboards use `FeatureDashboardComponent` with `DashboardConfig` input
-- Routes are lazy-loaded; MFE routes loaded via `loadRemoteModule`
+- A frontend library change can fail in consumers when `dist/` has not been rebuilt.
+- MFE changes are not complete when only the remote project builds; verify the shell route and remote entry integration.
+- Backend changes that only compile may still break reactive request flows, authorization, or WebClient token propagation.
+- Existing service docs may contain stale ports or routes; verify them against the current code and configuration before relying on them.
+- Never commit credentials, tokens, private keys, or local environment values. The repository's `Credentials.txt` is not a template for new secrets.

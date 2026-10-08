@@ -17,6 +17,10 @@ $services = @(
 
 Write-Host 'Starting IntelliSure backend services...' -ForegroundColor Cyan
 
+Write-Host 'Launching MySQL...' -ForegroundColor Yellow
+Start-Process -FilePath 'C:\Program Files\MySQL\MySQL Server 9.7\bin\mysqld.exe' `
+    -ArgumentList '--defaults-file="C:\data\mysql\config.ini" --console' | Out-Null
+
 foreach ($service in $services) {
     $servicePath = Join-Path $root $service
     if (-not (Test-Path $servicePath)) {
@@ -24,6 +28,7 @@ foreach ($service in $services) {
     }
 
     $command = @"
+$Host.UI.RawUI.WindowTitle = '$service'
 Set-Location '$servicePath'
 ./mvnw.cmd spring-boot:run
 "@

@@ -25,7 +25,7 @@ management:
 
 jwt:
   secret: VVGF9BeSRx3K2epQp4/DRnq881+8YixWG3KHI4qTl9I=
-  expiration: 2592000000
+  expiration: 30*60
 
 logging:
   level:
