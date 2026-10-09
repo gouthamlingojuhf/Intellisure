@@ -177,8 +177,10 @@ export interface UserMenuItem {
   `,
   styles: [`
     .topbar {
-      position: sticky;
+      position: fixed;
       top: 0;
+      right: 0;
+      left: 264px;
       z-index: 30;
       height: 72px;
       display: flex;
@@ -195,6 +197,9 @@ export interface UserMenuItem {
       padding: 0 18px;
       gap: 10px;
     }
+
+    :host-context(.app-shell-sidebar-collapsed) .topbar { left: 76px; }
+    :host-context(.app-shell-mobile-open) .topbar { left: 0; }
     
     .topbar-left {
       min-width: 0;
@@ -668,6 +673,19 @@ export class TopbarComponent {
         this.toggleNotifications.emit();
       }
     }
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onDocumentKeydown(event: KeyboardEvent): void {
+    const modifierPressed = /Mac|iPhone|iPad/i.test(navigator.platform)
+      ? event.metaKey
+      : event.ctrlKey;
+    if (!modifierPressed || event.key.toLowerCase() !== 'k') return;
+
+    event.preventDefault();
+    const input = this.elementRef.nativeElement.querySelector('.search-input') as HTMLInputElement | null;
+    input?.focus();
+    input?.select();
   }
 
   onSearch(): void {

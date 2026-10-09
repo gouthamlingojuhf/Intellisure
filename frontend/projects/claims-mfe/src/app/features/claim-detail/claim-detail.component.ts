@@ -18,7 +18,7 @@ import { CardComponent, ButtonComponent, BadgeComponent, SkeletonComponent } fro
         <div class="header-left">
           <a routerLink="/claims" class="back-link">&larr; Back to claims queue</a>
           <div class="header-title-row">
-            <h1>Claim {{ claim?.claimNumber || claimId }}</h1>
+          <h1>Claim {{ claim?.claimNumber || 'details' }}</h1>
             @if (claim) {
               <is-badge [variant]="statusVariant(claim.status)" size="md">
                 {{ formatStatus(claim.status) }}
@@ -36,7 +36,7 @@ import { CardComponent, ButtonComponent, BadgeComponent, SkeletonComponent } fro
       } @else if (notFound) {
         <is-card title="Claim Not Found" subtitle="The requested claim identifier does not exist in the claims registry.">
           <div class="state-message">
-            <p>No claim record matching identifier <code>{{ claimId }}</code> was found.</p>
+            <p>No claim record matching the requested reference was found.</p>
             <is-button variant="secondary" (click)="goToClaims()">Return to claims queue</is-button>
           </div>
         </is-card>
@@ -54,7 +54,7 @@ import { CardComponent, ButtonComponent, BadgeComponent, SkeletonComponent } fro
         } @else if (recoveryCase) {
           <div class="recovery-banner success">
             <div>
-              <strong>Recovery case {{ recoveryCase.recoveryCaseId }}</strong>
+            <strong>Recovery case active</strong>
               <p>{{ recoveryCase.currentRestorePercent || 0 }}% restored · {{ formatStatus(recoveryCase.status) }}</p>
             </div>
             <is-button variant="secondary" size="sm" (click)="goToRecovery()">Open recovery</is-button>
@@ -84,18 +84,6 @@ import { CardComponent, ButtonComponent, BadgeComponent, SkeletonComponent } fro
                 <div>
                   <dt>Claim Number</dt>
                   <dd class="font-mono font-bold">{{ claim.claimNumber }}</dd>
-                </div>
-                <div>
-                  <dt>Claim UUID</dt>
-                  <dd class="font-mono text-xs">{{ claim.claimId }}</dd>
-                </div>
-                <div>
-                  <dt>Policy ID</dt>
-                  <dd class="font-mono text-xs">{{ claim.policyId }}</dd>
-                </div>
-                <div>
-                  <dt>Customer ID</dt>
-                  <dd class="font-mono text-xs">{{ claim.customerId }}</dd>
                 </div>
                 <div>
                   <dt>Incident Date</dt>

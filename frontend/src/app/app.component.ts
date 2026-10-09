@@ -199,7 +199,10 @@ export class AppComponent implements OnInit, OnDestroy {
       notification: '/notifications', notifications: '/notifications',
       underwriting: '/underwriting', analytics: '/analytics', profile: '/profile', dashboard: '/dashboard',
     };
-    const destinationPath = aliases[term] ?? this.navigationItems.find((item) => item.label.toLowerCase().includes(term))?.path;
+    const aliasMatch = Object.entries(aliases).find(([alias]) => alias.startsWith(term));
+    const destinationPath = aliases[term]
+      ?? aliasMatch?.[1]
+      ?? this.navigationItems.find((item) => item.label.toLowerCase().includes(term))?.path;
     const destination = this.navigationItems.find((item) => item.path === destinationPath && (!item.roles || item.roles.some((role) => role.toUpperCase() === (this.role ?? '').toUpperCase())));
     if (destination) this.router.navigateByUrl(destination.path);
   }

@@ -20,8 +20,8 @@ import {
     <section class="card">
       <h1 class="text-xl font-bold text-blue-900">Vendor assignments</h1>
       <form [formGroup]="filter" (ngSubmit)="reload()" class="mt-3 flex flex-wrap gap-2">
-        <input class="input-field !w-64" placeholder="Vendor ID" formControlName="vendorId" />
-        <input class="input-field !w-64" placeholder="Claim ID" formControlName="claimId" />
+        <input class="input-field !w-64" placeholder="Vendor reference" formControlName="vendorId" />
+        <input class="input-field !w-64" placeholder="Claim reference" formControlName="claimId" />
         <select class="input-field !w-48" formControlName="status">
           <option value="">Any status</option>
           <option>DISPATCHED</option>

@@ -211,7 +211,6 @@ export class ClaimListComponent implements OnInit {
 
   columns: TableColumn<ClaimResponse>[] = [
     { key: 'claimNumber', header: 'Claim #', width: '150px' },
-    { key: 'policyId', header: 'Policy ID', width: '170px' },
     { key: 'status', header: 'Status', width: '130px', render: this.renderStatus.bind(this) },
     { key: 'estimatedLoss', header: 'Estimated Loss', width: '130px', align: 'right', render: this.renderAmount.bind(this) },
     { key: 'incidentDate', header: 'Incident Date', width: '120px' },

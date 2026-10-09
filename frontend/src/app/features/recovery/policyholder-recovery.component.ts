@@ -43,10 +43,10 @@ import { selectUserRole } from '../../core/store/auth/auth.selectors';
         />
       } @else {
         <div class="case-grid">
-          @for (recoveryCase of cases; track recoveryCase.recoveryCaseId) {
+          @for (recoveryCase of cases; track recoveryCase.recoveryCaseId; let caseIndex = $index) {
             <is-card
-              [title]="'Recovery case ' + recoveryCase.recoveryCaseId"
-              [subtitle]="'Claim ' + recoveryCase.claimId"
+              [title]="'Recovery case ' + (caseIndex + 1)"
+              subtitle="Live recovery tracking"
             >
               <div class="case-content">
                 <div class="case-header">

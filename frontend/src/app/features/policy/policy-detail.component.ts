@@ -127,20 +127,12 @@ import {
             <is-card title="Contract Details" subtitle="Policy identity & dates">
               <dl class="meta-list">
                 <div>
-                  <dt>Policy ID</dt>
-                  <dd class="code-sm">{{ policy.policyId }}</dd>
-                </div>
-                <div>
                   <dt>Policy Number</dt>
                   <dd><strong>{{ policy.policyNumber }}</strong></dd>
                 </div>
                 <div>
                   <dt>Product Line</dt>
                   <dd>{{ policy.productCode }}</dd>
-                </div>
-                <div>
-                  <dt>Customer ID</dt>
-                  <dd class="code-sm">{{ policy.customerId }}</dd>
                 </div>
                 @if (policy.boundAt) {
                   <div>

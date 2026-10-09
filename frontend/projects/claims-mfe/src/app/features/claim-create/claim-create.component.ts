@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ClaimsService } from '../../services/claims.service';
+import { PolicyService } from '../../services/policy.service';
+import { PolicyOption } from '../../models/policy.models';
 
 import { CardComponent, ButtonComponent, InputComponent, SelectComponent, TextareaComponent, StepperComponent, StepperStep } from 'ui-core';
 
@@ -53,12 +55,20 @@ import { CardComponent, ButtonComponent, InputComponent, SelectComponent, Textar
     <ng-template #policySection>
       <div class="form-grid" [formGroup]="claimForm">
         <div class="md:col-span-2">
-          <is-input
-            label="Policy ID (UUID)"
-            placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
+          <is-select
+            label="Policy number"
+            placeholder="Select the policy for this claim"
+            [options]="policyOptions"
             formControlName="policyId"
             [error]="getError('policyId')"
           />
+          @if (policiesLoading) {
+            <small class="field-hint">Loading your eligible policies…</small>
+          } @else if (policyLookupError) {
+            <small class="field-error">{{ policyLookupError }}</small>
+          } @else if (!policyOptions.length) {
+            <small class="field-hint">No eligible policies were found for this account.</small>
+          }
         </div>
         <is-input
           label="Incident date"
@@ -94,8 +104,8 @@ import { CardComponent, ButtonComponent, InputComponent, SelectComponent, Textar
       <div class="review-summary">
         <h4>Review your submission</h4>
         <dl class="review-grid">
-          <dt>Policy ID</dt>
-          <dd>{{ claimForm.get('policyId')?.value }}</dd>
+          <dt>Policy number</dt>
+          <dd>{{ selectedPolicy?.policyNumber || 'Not selected' }}</dd>
           <dt>Incident date</dt>
           <dd>{{ claimForm.get('incidentDate')?.value }}</dd>
           <dt>Estimated loss</dt>
@@ -191,9 +201,10 @@ export class ClaimCreateComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly claimsService = inject(ClaimsService);
+  private readonly policyService = inject(PolicyService);
 
   readonly steps: StepperStep[] = [
-    { label: 'Policy & Loss', description: 'Policy UUID and incident date' },
+    { label: 'Policy & Loss', description: 'Select a policy and incident date' },
     { label: 'Incident Details', description: 'Describe the damage' },
     { label: 'Review & Submit', description: 'Confirm FNOL submission' },
   ];
@@ -201,6 +212,10 @@ export class ClaimCreateComponent {
   currentStep = 0;
   submitting = false;
   error: string | null = null;
+  policyOptions: Array<{ value: string; label: string }> = [];
+  selectedPolicy: PolicyOption | null = null;
+  policiesLoading = false;
+  policyLookupError: string | null = null;
 
   readonly claimForm = this.fb.nonNullable.group({
     policyId: [
@@ -220,13 +235,13 @@ export class ClaimCreateComponent {
     if (policyId) {
       this.claimForm.controls.policyId.setValue(policyId);
     }
+    this.loadPolicies(policyId);
   }
 
   getError(controlName: string): string | undefined {
     const control = this.claimForm.get(controlName);
     if (control?.invalid && (control.dirty || control.touched)) {
       if (control.errors?.['required']) return `${this.getFieldLabel(controlName)} is required`;
-      if (control.errors?.['pattern']) return 'Must be a valid UUID (e.g. 550e8400-e29b-41d4-a716-446655440000)';
       if (control.errors?.['min']) return 'Amount must be greater than or equal to 0';
       if (control.errors?.['minlength']) return 'Description must be at least 5 characters';
     }
@@ -235,12 +250,48 @@ export class ClaimCreateComponent {
 
   getFieldLabel(controlName: string): string {
     const labels: Record<string, string> = {
-      policyId: 'Policy ID',
+      policyId: 'Policy number',
       incidentDate: 'Incident date',
       estimatedLoss: 'Estimated loss',
       description: 'Description',
     };
     return labels[controlName] || controlName;
+  }
+
+  private loadPolicies(preselectedPolicyId: string | null): void {
+    const customerId = typeof localStorage !== 'undefined' ? localStorage.getItem('is_customer_id') : null;
+    if (!customerId) {
+      this.policyLookupError = 'Complete your business profile before filing a claim.';
+      return;
+    }
+
+    this.policiesLoading = true;
+    this.policyService.getCustomerPolicies(customerId).subscribe({
+      next: (policies) => {
+        this.policiesLoading = false;
+        const eligiblePolicies = policies.filter((policy) => ['ACTIVE', 'BOUND', 'ISSUED', 'IN_FORCE'].includes(policy.status.toUpperCase()));
+        this.policyOptions = eligiblePolicies.map((policy) => ({
+          value: policy.policyId,
+          label: `${policy.policyNumber} · ${this.formatProduct(policy.productCode)}`,
+        }));
+        this.selectedPolicy = eligiblePolicies.find((policy) => policy.policyId === preselectedPolicyId) ?? null;
+        if (!this.selectedPolicy && this.policyOptions.length === 1) {
+          this.claimForm.controls.policyId.setValue(this.policyOptions[0].value);
+          this.selectedPolicy = eligiblePolicies[0];
+        }
+        this.claimForm.controls.policyId.valueChanges.subscribe((value) => {
+          this.selectedPolicy = eligiblePolicies.find((policy) => policy.policyId === value) ?? null;
+        });
+      },
+      error: () => {
+        this.policiesLoading = false;
+        this.policyLookupError = 'Your policies could not be loaded. Please try again.';
+      },
+    });
+  }
+
+  private formatProduct(productCode: string): string {
+    return productCode.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
   }
 
   onNext(): void {
@@ -300,6 +351,6 @@ export class ClaimCreateComponent {
     if (err?.status === 401) return 'Your session has expired. Please sign in again.';
     if (err?.status === 403) return 'You do not have permission to file a claim.';
     if (err?.status === 404) return 'The selected policy or claims endpoint could not be found.';
-    return err?.error?.message || err?.message || 'Failed to file claim. Please verify the Policy ID is valid and exists in the system.';
+    return err?.error?.message || err?.message || 'Failed to file claim. Please verify that the selected policy is eligible.';
   }
 }

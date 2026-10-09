@@ -226,11 +226,6 @@ import {
           <!-- Metadata & Actions Bar -->
           <div class="actions-bar">
             <div class="metadata-info">
-              @if (profile?.customerId) {
-                <span class="customer-tag">
-                  <strong>Customer ID:</strong> <code>{{ profile?.customerId }}</code>
-                </span>
-              }
               @if (profile?.updatedAt) {
                 <span class="last-updated">
                   Last updated: {{ profile?.updatedAt | date:'medium' }}

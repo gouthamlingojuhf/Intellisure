@@ -222,14 +222,22 @@ interface ProductPreset {
                           @if (getCovError($index, 'coverageCode')) { <span class="field-error">{{ getCovError($index, 'coverageCode') }}</span> }
                         </div>
 
-                        <div>
-                          <is-input
-                            label="Coverage Name / Custom Description *"
-                            placeholder="e.g. Building Property"
-                            formControlName="coverageName"
-                            [error]="getCovError($index, 'coverageName')"
-                          />
-                        </div>
+                        @if (covGroup.get('coverageCode')?.value === 'CUSTOM') {
+                          <div>
+                            <is-input
+                              label="Custom Coverage Name *"
+                              placeholder="Describe the coverage you need"
+                              formControlName="coverageName"
+                              [error]="getCovError($index, 'coverageName')"
+                            />
+                          </div>
+                        } @else {
+                          <div class="coverage-name-display">
+                            <span class="field-label">Coverage name</span>
+                            <strong>{{ covGroup.get('coverageName')?.value }}</strong>
+                            <small>Selected automatically from the coverage catalogue.</small>
+                          </div>
+                        }
 
                         <div>
                           <is-input
@@ -279,11 +287,6 @@ interface ProductPreset {
                   <div class="summary-item">
                     <span class="summary-label">Requested Effective Date</span>
                     <strong class="summary-value">{{ form.get('requestedEffectiveDate')?.value }}</strong>
-                  </div>
-
-                  <div class="summary-item">
-                    <span class="summary-label">Customer ID</span>
-                    <span class="code-sm">{{ customerId }}</span>
                   </div>
 
                   <div class="summary-item col-span-2">
@@ -575,6 +578,19 @@ interface ProductPreset {
       font: inherit;
       font-size: 12px;
     }
+    .coverage-name-display {
+      min-height: 72px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      padding: 10px 12px;
+      border: 1px solid var(--warm);
+      border-radius: 6px;
+      background: var(--warm-light);
+    }
+    .coverage-name-display .field-label { margin: 0; }
+    .coverage-name-display strong { color: var(--ink); font-size: 11px; }
+    .coverage-name-display small { color: var(--muted); font-size: 9px; }
 
     .custom-textarea {
       width: 100%;

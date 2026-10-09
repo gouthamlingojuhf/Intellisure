@@ -52,12 +52,12 @@ import { VendorResponse } from '../../models/vendor.models';
           </select>
         </div>
         <div>
-          <label class="block text-sm font-semibold">Claim ID (optional)</label>
-          <input class="input-field" formControlName="claimId" placeholder="UUID" />
+          <label class="block text-sm font-semibold">Claim reference (optional)</label>
+          <input class="input-field" formControlName="claimId" placeholder="Enter the claim reference" />
         </div>
         <div>
-          <label class="block text-sm font-semibold">Recovery case ID (optional)</label>
-          <input class="input-field" formControlName="recoveryCaseId" placeholder="UUID for NETWORK_VENDOR recovery work" />
+          <label class="block text-sm font-semibold">Recovery case reference (optional)</label>
+          <input class="input-field" formControlName="recoveryCaseId" placeholder="Enter the recovery case reference" />
           <p class="mt-1 text-xs text-gray-500">A recovery assignment is created only for the explicit network-vendor path. Customer-owned paths never dispatch here.</p>
         </div>
         <div>

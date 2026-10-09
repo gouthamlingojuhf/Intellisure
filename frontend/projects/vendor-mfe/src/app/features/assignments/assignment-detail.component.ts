@@ -1,4 +1,4 @@
-import { AsyncPipe, DatePipe, JsonPipe } from '@angular/common';
+import { AsyncPipe, DatePipe } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -15,7 +15,7 @@ import { VendorPerformanceResponse } from '../../models/vendor.models';
 @Component({
   selector: 'vendor-assignment-detail',
   standalone: true,
-  imports: [ReactiveFormsModule, AsyncPipe, DatePipe, JsonPipe],
+  imports: [ReactiveFormsModule, AsyncPipe, DatePipe],
   template: `
     <section class="card max-w-2xl">
       <h1 class="text-xl font-bold text-blue-900">Assignment detail</h1>
@@ -49,8 +49,8 @@ import { VendorPerformanceResponse } from '../../models/vendor.models';
           <form [formGroup]="workForm" class="mt-4 space-y-2">
             <label class="block text-sm font-semibold">Progress or completion note</label>
             <textarea class="input-field" rows="3" formControlName="progressNote" placeholder="Record the work performed or current progress"></textarea>
-            <label class="block text-sm font-semibold">Evidence document IDs (optional, comma separated)</label>
-            <input class="input-field" formControlName="evidenceDocumentIds" placeholder="Document UUIDs from Document & Audit Service" />
+            <label class="block text-sm font-semibold">Evidence document references (optional, comma separated)</label>
+            <input class="input-field" formControlName="evidenceDocumentIds" placeholder="Add evidence references from Documents" />
             @if (a.status === 'IN_PROGRESS') {
               <p class="text-xs text-gray-500">Complete the assignment after the work is finished and include any available evidence document IDs.</p>
             }
@@ -89,10 +89,6 @@ import { VendorPerformanceResponse } from '../../models/vendor.models';
         @if (error$ | async; as err) {
           <p class="mt-2 text-sm text-rose-600">{{ err }}</p>
         }
-        <details class="mt-4 text-xs text-gray-600">
-          <summary>Raw payload</summary>
-          <pre>{{ a | json }}</pre>
-        </details>
       } @else {
         <p class="mt-3 text-gray-700">Loading assignment…</p>
       }

@@ -80,7 +80,12 @@ Last reviewed: 2026-10-09
 - Completed: topbar shortcut text is platform-aware (`Ctrl K` on Windows/Linux and `⌘ K` on Apple platforms), and customer-facing monetary values now default to INR formatting.
 - Completed: public registration now distinguishes Business Policyholder from Vendor / Service Provider Applicant. Vendor applicants receive a restricted `VENDOR_APPLICANT` role and may submit onboarding applications; activation remains Vendor Manager-controlled.
 - Completed: quote creation now explains product lines, includes the requested commercial insurance products, and provides coverage-code selection with auto-filled names plus a Custom coverage option.
+- Completed: coverage entry now shows one catalogue selector and displays the standard coverage name automatically; a free-text field appears only for Custom coverage.
+- Completed: quote, policy, claim, recovery, profile, and claim-list screens no longer expose internal UUID/customer-ID fields. FNOL policy selection now uses the policy number while retaining the internal policy identifier only in the API request.
+- Completed: the workspace topbar is fixed during scrolling, Ctrl/Cmd+K focuses the search field, partial search terms resolve to permitted workspace areas, and toast notifications auto-dismiss after 30 seconds.
+- Completed: Vendor assignment screens no longer expose raw payloads or literal UUID instructions in the user-facing workflow; backend references remain internal to the existing assignment contract pending reference-selector wiring.
 - Remaining: add deeper assignment referral and subjectivity screens only after their existing backend contracts and role boundaries are verified end-to-end.
+- Remaining: replace Vendor assignment reference text inputs with live claim/recovery/document selectors so operators never need to handle internal identifiers manually.
 - Remaining: System Administrator user-management actions have backend create/role/status endpoints but no list/search endpoint or frontend administration workspace. A UI should not be fabricated around manually supplied IDs; this is the next contract-level employee batch.
 - Dependency: preserve role restrictions and avoid exposing employee-only information to Policyholders.
 
@@ -125,4 +130,4 @@ Last reviewed: 2026-10-09
 
 ## Immediate batch
 
-Authenticated Docker journey is complete through quote, underwriting, policy, claim, recovery, documents, notifications, and recovery-linked Vendor dispatch/fulfillment. The cross-role route/API audit and affected frontend builds now pass. Employee decision/offer actions and the Vendor differentiator are available in the real frontend flow. The remaining demo-readiness task is native Windows startup verification with approved test identities; local Docker underwriter/vendor records are isolated in local database state and are not shared configuration.
+The authenticated Docker journey is complete through quote, underwriting, policy, claim, recovery, documents, notifications, and recovery-linked Vendor dispatch/fulfillment. The current UI-stability batch is verified with the shared ui-core build, shell build, Claims MFE build, and full configured Karma/ChromeHeadless suite. The next meaningful batch is the live documentation and administrator workspace, followed by Vendor reference selectors and authenticated role-by-role verification. Native Windows startup verification with approved office test identities remains a demo-readiness task; local Docker underwriter/vendor records are isolated in local database state and are not shared configuration.

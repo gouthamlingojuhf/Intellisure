@@ -42,7 +42,7 @@ import {
         <a routerLink="/policy" class="back-link">&larr; Back to quotes & policies</a>
         <div class="header-main">
           <div class="title-row">
-            <h1>Quote {{ quote?.quoteNumber || quoteId }}</h1>
+            <h1>Quote {{ quote?.quoteNumber || 'details' }}</h1>
             @if (quote) {
               <is-badge [variant]="getStatusVariant(quote.status)" size="md">
                 {{ formatStatus(quote.status) }}
@@ -335,16 +335,12 @@ import {
             <is-card title="Quote Overview" subtitle="Contract parameters">
               <dl class="meta-list">
                 <div>
-                  <dt>Quote ID</dt>
-                  <dd class="code-sm">{{ quote.quoteId }}</dd>
+                  <dt>Quote number</dt>
+                  <dd><strong>{{ quote.quoteNumber || 'Pending assignment' }}</strong></dd>
                 </div>
                 <div>
                   <dt>Product Code</dt>
                   <dd><strong>{{ quote.productCode }}</strong></dd>
-                </div>
-                <div>
-                  <dt>Customer ID</dt>
-                  <dd class="code-sm">{{ quote.customerId }}</dd>
                 </div>
                 <div>
                   <dt>Effective Date</dt>

@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ToastComponent, Toast } from './toast.component';
 
@@ -38,9 +38,33 @@ import { ToastComponent, Toast } from './toast.component';
     }
   `],
 })
-export class ToastStackComponent {
+export class ToastStackComponent implements OnChanges, OnDestroy {
   @Input() toasts: Toast[] = [];
   @Output() dismiss = new EventEmitter<number>();
+  private readonly timers = new Map<number, ReturnType<typeof setTimeout>>();
+
+  ngOnChanges(_changes: SimpleChanges): void {
+    const activeIds = new Set(this.toasts.map((toast) => toast.id));
+    for (const [id, timer] of this.timers) {
+      if (!activeIds.has(id)) {
+        clearTimeout(timer);
+        this.timers.delete(id);
+      }
+    }
+
+    for (const toast of this.toasts) {
+      if (this.timers.has(toast.id)) continue;
+      this.timers.set(toast.id, setTimeout(() => {
+        this.timers.delete(toast.id);
+        this.dismiss.emit(toast.id);
+      }, 30_000));
+    }
+  }
+
+  ngOnDestroy(): void {
+    for (const timer of this.timers.values()) clearTimeout(timer);
+    this.timers.clear();
+  }
 
   onDismiss(id: number): void {
     this.dismiss.emit(id);

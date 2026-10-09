@@ -128,7 +128,8 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid 
 
 .app-main { min-height: 100vh; margin-left: 264px; transition: margin-left .22s ease; }
 .app-shell-sidebar-collapsed .app-main { margin-left: 76px; }
-.topbar { position: sticky; top: 0; z-index: 30; height: 72px; display: flex; align-items: center; gap: 24px; padding: 0 24px; background: rgba(255,255,255,.94); border-bottom: 1px solid var(--border); backdrop-filter: blur(16px); }
+.topbar { position: fixed; top: 0; right: 0; left: 264px; z-index: 30; height: 72px; display: flex; align-items: center; gap: 24px; padding: 0 24px; background: rgba(255,255,255,.94); border-bottom: 1px solid var(--border); backdrop-filter: blur(16px); }
+.app-shell-sidebar-collapsed .topbar { left: 76px; }
 .topbar-left { min-width: 0; display: flex; align-items: center; gap: 8px; }
 .breadcrumbs { display: flex; align-items: center; min-width: 0; color: #777173; font-size: 12px; white-space: nowrap; }
 .breadcrumbs a { color: #777173; text-decoration: none; }
@@ -166,7 +167,7 @@ kbd { padding: 2px 5px; border: 1px solid var(--warm); border-radius: 4px; backg
 .user-popover-profile div { display: grid; }.user-popover-profile strong { font-size: 11px; }.user-popover-profile small { margin-top: 3px; color: #817b7f; font-size: 9px; }
 .user-popover a, .user-popover button { width: 100%; display: block; padding: 10px; border: 0; border-radius: 5px; background: transparent; color: #4b4649; font-size: 11px; text-align: left; text-decoration: none; cursor: pointer; }
 .user-popover a:hover, .user-popover button:hover { background: var(--warm-light); color: var(--claret); }
-.workspace-main { width: min(100%, 1540px); margin: 0 auto; padding: 30px 30px 48px; }
+.workspace-main { width: min(100%, 1540px); margin: 0 auto; padding: 102px 30px 48px; }
 
 .toast-stack { position: fixed; right: 24px; bottom: 24px; z-index: 100; width: min(370px, calc(100vw - 32px)); display: grid; gap: 10px; }
 .toast-item { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 13px 14px; border: 1px solid var(--border); border-left: 4px solid; border-radius: 8px; background: #fff; box-shadow: var(--shadow); color: #3c373a; font-size: 11px; }
@@ -184,10 +185,10 @@ kbd { padding: 2px 5px; border: 1px solid var(--warm); border-radius: 4px; backg
 @media (max-width: 900px) {
   .app-sidebar { transform: translateX(-100%); width: 264px; box-shadow: 18px 0 48px rgba(0,0,0,.18); }.app-shell-mobile-open .app-sidebar { transform: translateX(0); }.app-shell-sidebar-collapsed .app-sidebar { width: 264px; }.app-shell-sidebar-collapsed .logo-wordmark, .app-shell-sidebar-collapsed .sidebar-label, .app-shell-sidebar-collapsed .nav-label, .app-shell-sidebar-collapsed .sidebar-footer { display: initial; }.app-shell-sidebar-collapsed .sidebar-collapse { display: inline-grid; }.app-shell-sidebar-collapsed .sidebar-brand { justify-content: space-between; padding-inline: 18px; }
   .sidebar-backdrop { position: fixed; inset: 0; z-index: 35; background: rgba(0,0,0,.35); opacity: 0; pointer-events: none; }.app-shell-mobile-open .sidebar-backdrop { display: block; opacity: 1; pointer-events: auto; }
-  .app-main, .app-shell-sidebar-collapsed .app-main { margin-left: 0; }.mobile-menu { display: inline-grid; }.topbar { padding: 0 18px; gap: 10px; }.topbar-search { margin-left: 0; width: auto; flex: 1; }.workspace-main { padding: 24px 20px 40px; }
+  .app-main, .app-shell-sidebar-collapsed .app-main { margin-left: 0; }.mobile-menu { display: inline-grid; }.topbar, .app-shell-sidebar-collapsed .topbar { left: 0; padding: 0 18px; gap: 10px; }.topbar-search { margin-left: 0; width: auto; flex: 1; }.workspace-main { padding: 88px 20px 40px; }
 }
 @media (max-width: 640px) {
-  .topbar { height: 64px; }.breadcrumbs { display: none; }.topbar-search kbd { display: none; }.user-menu-button { padding-right: 0; }.user-menu-button > span:last-child { display: none; }.notification-popover, .user-popover { position: fixed; top: 58px; right: 10px; left: 10px; width: auto; }.workspace-main { padding: 20px 14px 36px; }
+  .topbar { height: 64px; }.breadcrumbs { display: none; }.topbar-search kbd { display: none; }.user-menu-button { padding-right: 0; }.user-menu-button > span:last-child { display: none; }.notification-popover, .user-popover { position: fixed; top: 58px; right: 10px; left: 10px; width: auto; }.workspace-main { padding: 84px 14px 36px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 .brand-home { display: grid; gap: 28px; }
