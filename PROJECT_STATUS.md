@@ -37,7 +37,7 @@ Last reviewed: 2026-10-09
 - A clean install against the configured internal Nexus registry remains unavailable from this Mac because the registry host cannot be resolved. After the explicitly approved minimal lockfile repair, a Node 20 local install using the public npm registry completed without changing `package.json` or regenerating dependency versions. The existing lockfile URLs were preserved.
 - The frontend was previously verified with Node 20.20.0; the final audit was also rerun with the currently installed Node 25.6.0. The shared `ui-core` library, shell, Claims and Vendor remotes built successfully, and the configured Karma/ChromeHeadless suite exited successfully. Node 25 reports the expected non-LTS warning; no project dependency or version was changed.
 - Registration/profile completion followed by re-login is required because the customer ID is embedded in the login JWT. The profile UI now makes this explicit and the auth effect persists/removes the customer ID consistently.
-- Test coverage is not yet near the requested target across all modules. Existing tests are uneven, and only Customer & Party plus Quote & Policy currently contain JaCoCo configuration. The service-by-service execution plan is in [TEST_COVERAGE_PLAN.md](Docs/TEST_COVERAGE_PLAN.md); coverage work is now the active priority.
+- Test coverage is not yet near the requested target across all modules. Existing tests are uneven; Eureka, API Gateway, Analytics & Intelligence, and Document & Audit now have JaCoCo reports and regression gates, while the remaining services and frontend projects are scheduled in the service-by-service execution plan in [TEST_COVERAGE_PLAN.md](Docs/TEST_COVERAGE_PLAN.md).
 
 ## Roadmap
 
@@ -56,6 +56,7 @@ Last reviewed: 2026-10-09
 - Risk: a fresh install through the configured internal Nexus still depends on that registry being reachable; do not change registry configuration or dependency versions in the project to work around it.
 - Completed: current service documentation was consolidated and cross-checked against source controllers, security configuration, Compose service definitions, and the verified Docker runtime.
 - Completed: Eureka and API Gateway now generate JaCoCo reports and enforce regression thresholds of 95% line/method/class and 90% branch coverage. Batch results are Eureka 100% line/method/class and API Gateway 99.35% line, 94.44% branch, 100% method/class.
+- Completed: Analytics & Intelligence and Document & Audit now have full unit/controller/security/entity/client coverage batches, JaCoCo reports, and the same regression gates. Analytics measured 100% line/method/class and 94.44% branch; Document & Audit measured 99.39% line, 94.44% branch, and 100% method/class. Their context smoke tests no longer require local MySQL schema initialization.
 
 ### P1 — Policyholder journey
 
@@ -141,4 +142,4 @@ Last reviewed: 2026-10-09
 
 ## Immediate batch
 
-The authenticated Docker journey is complete through quote, underwriting, policy, claim, recovery, documents, notifications, and recovery-linked Vendor dispatch/fulfillment. Infrastructure coverage is complete for Eureka and API Gateway. The next meaningful batch is Analytics & Intelligence plus Document & Audit, followed by Workflow/Notification, Recovery, Vendor, Claims, Risk, Quote/Policy, Customer/Party, and the frontend projects. The complete sequence is in `Docs/TEST_COVERAGE_PLAN.md`; native Windows, Java 17, and final role E2E evidence remain the final gate after coverage batches.
+The authenticated Docker journey is complete through quote, underwriting, policy, claim, recovery, documents, notifications, and recovery-linked Vendor dispatch/fulfillment. Coverage gates are complete for Eureka, API Gateway, Analytics & Intelligence, and Document & Audit. The next meaningful batch is Workflow & Notification, followed by Recovery, Vendor, Claims, Risk, Quote/Policy, Customer/Party, and the frontend projects. The complete sequence is in `Docs/TEST_COVERAGE_PLAN.md`; native Windows, Java 17, and final role E2E evidence remain the final gate after coverage batches.

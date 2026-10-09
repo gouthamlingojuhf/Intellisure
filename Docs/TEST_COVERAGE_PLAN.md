@@ -15,8 +15,8 @@ Generated Spring Boot bootstrap code and Angular framework bootstrap files may b
 | Batch | Module | Current state | Required work |
 | --- | --- | --- | --- |
 | 1 | Eureka + API Gateway | Complete: 100% Eureka line/method/class; 99.35% Gateway line, 94.44% branch, 100% method/class | Keep threshold checks green on Java 17 |
-| 2 | Analytics & Intelligence | Service tests are sparse | Cover controller, role rules, unavailable-data paths, converter, filter, DTO mapping |
-| 3 | Document & Audit | Security/service tests exist | Cover controller branches, ownership resolution, audit actor rules, error handling |
+| 2 | Analytics & Intelligence | Complete: 100% line/method/class; 94.44% branch | Keep threshold checks green on Java 17 |
+| 3 | Document & Audit | Complete: 99.39% line; 94.44% branch; 100% method/class | Keep threshold checks green on Java 17 |
 | 4 | Workflow & Notification | Service/security tests exist | Cover notification ownership, read state, workflow orchestration, controller/error branches |
 | 5 | Recovery | Core tests exist | Cover all recovery paths, idempotency, ownership, controller and WebClient behavior |
 | 6 | Vendor & Partner | Differentiator tests exist | Cover onboarding, verification, discovery, assignment lifecycle, evidence/performance, role boundaries |

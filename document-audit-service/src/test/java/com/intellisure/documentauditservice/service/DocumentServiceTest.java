@@ -85,4 +85,34 @@ class DocumentServiceTest {
                 .assertNext(res -> org.junit.jupiter.api.Assertions.assertEquals("dec.pdf", res.fileName()))
                 .verifyComplete();
     }
+
+    @Test
+    void computesHashAndDefaultsVersionWhenMetadataDoesNotProvideThem() {
+        UUID entityId = UUID.randomUUID();
+        UUID uploader = UUID.randomUUID();
+        when(documentSecurityService.currentUserId()).thenReturn(Mono.just(uploader));
+        when(repository.save(any(Document.class))).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
+
+        StepVerifier.create(service.logDocumentMetadata(new UploadDocumentRequest(
+                        entityId, "CLAIM", DocumentType.PHOTOGRAPH, "damage.jpg", 1024L,
+                        "image/jpeg", "claims/damage.jpg", null, null)))
+                .assertNext(result -> {
+                    org.junit.jupiter.api.Assertions.assertEquals(64, result.sha256Hash().length());
+                    org.junit.jupiter.api.Assertions.assertEquals(1, result.version());
+                    org.junit.jupiter.api.Assertions.assertEquals(uploader, result.uploadedBy());
+                }).verifyComplete();
+
+        verify(documentSecurityService).assertEntityAccess(entityId, "CLAIM");
+    }
+
+    @Test
+    void missingDocumentProducesDocumentNotFoundError() {
+        UUID documentId = UUID.randomUUID();
+        when(repository.findById(documentId)).thenReturn(Mono.empty());
+
+        StepVerifier.create(service.getDocument(documentId))
+                .expectErrorMessage("Document not found: " + documentId)
+                .verify();
+        verifyNoInteractions(documentSecurityService);
+    }
 }
