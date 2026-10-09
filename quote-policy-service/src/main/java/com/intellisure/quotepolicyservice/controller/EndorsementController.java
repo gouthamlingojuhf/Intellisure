@@ -71,7 +71,6 @@ public class EndorsementController {
     @PreAuthorize("hasAnyRole('UNDERWRITER', 'SYSTEM_ADMINISTRATOR', 'POLICYHOLDER')")
     @GetMapping("/{policyId}/endorsements")
     public Flux<EndorsementResponse> getEndorsements(@PathVariable UUID policyId) {
-        // Return all endorsements for a policy
-        return Flux.empty(); // Implement query method in service
+        return endorsementService.getEndorsements(policyId);
     }
 }

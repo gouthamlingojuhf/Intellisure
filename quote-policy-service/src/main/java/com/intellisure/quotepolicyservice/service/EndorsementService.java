@@ -148,6 +148,16 @@ public class EndorsementService {
                                         .thenReturn(endorsement))));
     }
 
+    @PreAuthorize("hasAnyRole('UNDERWRITER', 'SYSTEM_ADMINISTRATOR', 'POLICYHOLDER')")
+    public Flux<EndorsementResponse> getEndorsements(UUID policyId) {
+        return policyRepository.findById(policyId)
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException("Policy not found: " + policyId)))
+                .flatMap(policy -> securityActorService.assertCustomerAccess(policy.getCustomerId())
+                        .thenReturn(policy))
+                .flatMapMany(policy -> endorsementRepository.findAllByPolicyId(policy.getPolicyId())
+                        .flatMap(this::buildEndorsementResponse));
+    }
+
     private Mono<Endorsement> createEndorsement(Policy policy, RequestEndorsementRequest request, UUID userId) {
         LocalDateTime now = LocalDateTime.now();
         Endorsement endorsement = new Endorsement(
@@ -248,12 +258,13 @@ public class EndorsementService {
 
     private Mono<Void> removeCoverage(Policy policy, String coverageCode) {
         return policyCoverageRepository.findByPolicyIdAndCoverageCode(policy.getPolicyId(), coverageCode)
-                .flatMap(coverage -> entityTemplate.delete(coverage).then())
-                .switchIfEmpty(Mono.error(new BusinessException("Coverage not found for removal: " + coverageCode)));
+                .switchIfEmpty(Mono.error(new BusinessException("Coverage not found for removal: " + coverageCode)))
+                .flatMap(coverage -> entityTemplate.delete(coverage).then());
     }
 
     private Mono<Void> modifyCoverage(Policy policy, EndorsementCoverage ec, LocalDate effectiveFrom, LocalDate effectiveTo) {
         return policyCoverageRepository.findByPolicyIdAndCoverageCode(policy.getPolicyId(), ec.getCoverageCode())
+                .switchIfEmpty(Mono.error(new BusinessException("Coverage not found for modification: " + ec.getCoverageCode())))
                 .flatMap(coverage -> {
                     coverage.setLimitAmount(ec.getLimitAmount());
                     coverage.setDeductibleAmount(ec.getDeductibleAmount());
@@ -264,8 +275,7 @@ public class EndorsementService {
                     coverage.setEffectiveFrom(effectiveFrom);
                     coverage.setEffectiveTo(effectiveTo);
                     return entityTemplate.update(coverage).then();
-                })
-                .switchIfEmpty(Mono.error(new BusinessException("Coverage not found for modification: " + ec.getCoverageCode())));
+                });
     }
 
     private String generateEndorsementNumber() {

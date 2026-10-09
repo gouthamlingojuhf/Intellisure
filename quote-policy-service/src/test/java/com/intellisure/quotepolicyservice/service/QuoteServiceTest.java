@@ -1920,5 +1920,50 @@ class QuoteServiceTest {
                     () -> quoteService.validateStatusTransition(QuoteStatus.ISSUED, QuoteStatus.DRAFT)
             );
         }
+
+        @Test
+        @DisplayName("covers every guarded transition branch and string overload")
+        void coversRemainingTransitionBranches() {
+            org.junit.jupiter.api.Assertions.assertDoesNotThrow(() ->
+                    quoteService.validateStatusTransition(QuoteStatus.DRAFT, QuoteStatus.SUBMITTED));
+            org.junit.jupiter.api.Assertions.assertDoesNotThrow(() ->
+                    quoteService.validateStatusTransition(QuoteStatus.SUBMITTED, QuoteStatus.IN_REVIEW));
+            org.junit.jupiter.api.Assertions.assertDoesNotThrow(() ->
+                    quoteService.validateStatusTransition(QuoteStatus.IN_REVIEW, QuoteStatus.QUOTED));
+            org.junit.jupiter.api.Assertions.assertDoesNotThrow(() ->
+                    quoteService.validateStatusTransition(QuoteStatus.QUOTED, QuoteStatus.ACCEPTED));
+            org.junit.jupiter.api.Assertions.assertDoesNotThrow(() ->
+                    quoteService.validateStatusTransition(QuoteStatus.ACCEPTED, QuoteStatus.BOUND));
+            org.junit.jupiter.api.Assertions.assertDoesNotThrow(() ->
+                    quoteService.validateStatusTransition(QuoteStatus.BOUND, QuoteStatus.BOUND));
+            for (QuoteStatus terminal : List.of(QuoteStatus.DECLINED_BY_INSURER,
+                    QuoteStatus.DECLINED_BY_CUSTOMER, QuoteStatus.WITHDRAWN, QuoteStatus.EXPIRED)) {
+                org.junit.jupiter.api.Assertions.assertThrows(
+                        com.intellisure.quotepolicyservice.exception.BusinessException.class,
+                        () -> quoteService.validateStatusTransition(terminal, QuoteStatus.DRAFT));
+            }
+            for (QuoteStatus target : List.of(QuoteStatus.ACCEPTED, QuoteStatus.BOUND, QuoteStatus.ISSUED)) {
+                org.junit.jupiter.api.Assertions.assertThrows(
+                        com.intellisure.quotepolicyservice.exception.BusinessException.class,
+                        () -> quoteService.validateStatusTransition(QuoteStatus.SUBMITTED, target));
+                org.junit.jupiter.api.Assertions.assertThrows(
+                        com.intellisure.quotepolicyservice.exception.BusinessException.class,
+                        () -> quoteService.validateStatusTransition(QuoteStatus.IN_REVIEW, target));
+            }
+            org.junit.jupiter.api.Assertions.assertThrows(
+                    com.intellisure.quotepolicyservice.exception.BusinessException.class,
+                    () -> quoteService.validateStatusTransition(QuoteStatus.QUOTED, QuoteStatus.ISSUED));
+            org.junit.jupiter.api.Assertions.assertThrows(
+                    com.intellisure.quotepolicyservice.exception.BusinessException.class,
+                    () -> quoteService.validateStatusTransition(QuoteStatus.ACCEPTED, QuoteStatus.ISSUED));
+            org.junit.jupiter.api.Assertions.assertThrows(
+                    com.intellisure.quotepolicyservice.exception.BusinessException.class,
+                    () -> quoteService.validateStatusTransition((QuoteStatus) null, QuoteStatus.DRAFT));
+            org.junit.jupiter.api.Assertions.assertThrows(
+                    com.intellisure.quotepolicyservice.exception.BusinessException.class,
+                    () -> quoteService.validateStatusTransition("unknown", "DRAFT"));
+            org.junit.jupiter.api.Assertions.assertDoesNotThrow(() ->
+                    quoteService.validateStatusTransition(" draft ", " submitted "));
+        }
     }
 }

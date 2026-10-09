@@ -21,6 +21,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -109,6 +110,17 @@ public class PremiumAuditService {
                     return auditRepository.save(audit);
                 })
                 .flatMap(this::buildAuditResponse);
+    }
+
+    @PreAuthorize("hasAnyRole('UNDERWRITER', 'SYSTEM_ADMINISTRATOR', 'POLICYHOLDER')")
+    public Flux<PremiumAuditResponse> getAudits(UUID policyId) {
+        return policyRepository.findById(policyId)
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException("Policy not found: " + policyId)))
+                .flatMap(policy -> securityActorService.assertCustomerAccess(policy.getCustomerId())
+                        .thenReturn(policy))
+                .flatMapMany(policy -> auditRepository.findAllByPolicyId(policy.getPolicyId())
+                        .map(this::buildAuditResponse)
+                        .flatMap(mono -> mono));
     }
 
     private Mono<Policy> validatePolicyForAudit(Policy policy) {

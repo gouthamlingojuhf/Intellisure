@@ -22,7 +22,7 @@ Generated Spring Boot bootstrap code and Angular framework bootstrap files may b
 | 6 | Vendor & Partner | Complete: 98.0% line, 90.5% branch, 97.4% method, 95.7% class; 44 tests | Keep threshold checks green on Java 17 |
 | 7 | Claims | Complete: 64 tests; 99.36% line, 92.41% branch, 99.69% method, 100% class; `bash mvnw -q verify` passes | Keep threshold checks green on Java 17 |
 | 8 | Risk & Underwriting | Complete: 46 tests; 98.25% line, 92.83% branch, 97.93% method, 100% class; `bash mvnw -q verify` passes | Keep threshold checks green on Java 17 |
-| 9 | Quote & Policy | Largest existing suite | Measure current coverage, fill all service/controller/scheduler/mapper/security branches, keep lifecycle contract tests |
+| 9 | Quote & Policy | Complete: 313 tests; 98.34% line, 90.70% branch, 99.20% method, 100% class; `bash mvnw -q verify` passes | Keep threshold checks green on Java 17 |
 | 10 | Customer & Party | Broadest existing suite | Fix environment-dependent application-context test setup, cover admin/profile/auth/JWT/error branches |
 | 11 | Frontend shell, MFEs, libraries | Smoke specs only in many areas | Add specs file-by-file for guards, routes, API services, state, effects, and business components; run per-project coverage |
 | 12 | Cross-service gate | Individual suites complete | Run every backend suite on Java 17, all frontend coverage suites, ownership/security matrix, and final report |

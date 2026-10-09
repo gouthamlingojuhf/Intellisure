@@ -126,6 +126,17 @@ public class RenewalService {
                 .flatMap(response -> createRenewalPolicy(response));
     }
 
+    @PreAuthorize("hasAnyRole('UNDERWRITER', 'SYSTEM_ADMINISTRATOR', 'POLICYHOLDER')")
+    public Flux<RenewalTransactionResponse> getRenewals(UUID policyId) {
+        return policyRepository.findById(policyId)
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException("Policy not found: " + policyId)))
+                .flatMap(policy -> securityActorService.assertCustomerAccess(policy.getCustomerId())
+                        .thenReturn(policy))
+                .flatMapMany(policy -> renewalRepository.findAllByPolicyId(policy.getPolicyId())
+                        .map(this::buildRenewalResponse)
+                        .flatMap(mono -> mono));
+    }
+
     private Mono<Policy> validatePolicyForRenewal(Policy policy) {
         if (policy.getStatus() != PolicyStatus.IN_FORCE && policy.getStatus() != PolicyStatus.EXPIRED) {
             return Mono.error(new BusinessException("Renewal can only be initiated for IN_FORCE or EXPIRED policies. Current: " + policy.getStatus()));

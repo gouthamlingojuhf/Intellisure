@@ -63,6 +63,6 @@ public class RenewalController {
     @PreAuthorize("hasAnyRole('UNDERWRITER', 'SYSTEM_ADMINISTRATOR', 'POLICYHOLDER')")
     @GetMapping("/{policyId}/renewals")
     public Flux<RenewalTransactionResponse> getRenewals(@PathVariable UUID policyId) {
-        return Flux.empty(); // Implement query method in service
+        return renewalService.getRenewals(policyId);
     }
 }

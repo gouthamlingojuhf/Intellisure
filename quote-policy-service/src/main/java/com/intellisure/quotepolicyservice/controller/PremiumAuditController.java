@@ -52,6 +52,6 @@ public class PremiumAuditController {
     @PreAuthorize("hasAnyRole('UNDERWRITER', 'SYSTEM_ADMINISTRATOR', 'POLICYHOLDER')")
     @GetMapping("/{policyId}/audits")
     public Flux<PremiumAuditResponse> getAudits(@PathVariable UUID policyId) {
-        return Flux.empty(); // Implement query method in service
+        return premiumAuditService.getAudits(policyId);
     }
 }

@@ -63,6 +63,45 @@ class DefaultRatingServiceTest {
                 .verifyComplete();
     }
 
+    @Test
+    void coversValidationProductAndCoverageFactorBranches() {
+        StepVerifier.create(service.calculateBasePremium(UUID.randomUUID(), null, null))
+                .expectError(IllegalArgumentException.class).verify();
+        CreateQuoteRequest nullCoverages = new CreateQuoteRequest(UUID.randomUUID(), "BOP", "need", "ops",
+                LocalDate.now().plusDays(1), null);
+        StepVerifier.create(service.calculateBasePremium(UUID.randomUUID(), "BOP", nullCoverages))
+                .expectError(IllegalArgumentException.class).verify();
+        CreateQuoteRequest emptyCoverages = new CreateQuoteRequest(UUID.randomUUID(), "BOP", "need", "ops",
+                LocalDate.now().plusDays(1), List.of());
+        StepVerifier.create(service.calculateBasePremium(UUID.randomUUID(), "BOP", emptyCoverages))
+                .expectError(IllegalArgumentException.class).verify();
+        StepVerifier.create(service.calculateBasePremium(UUID.randomUUID(), "BOP",
+                        request("BOP", new CreateQuoteCoverageRequest("CYBER", "Cyber",
+                                new BigDecimal("100000000"), BigDecimal.ZERO, null))))
+                .assertNext(premium -> assertEquals(new BigDecimal("1000000.00"), premium))
+                .verifyComplete();
+
+        String[] products = {"BUSINESS_OWNER_POLICY", "GENERAL_LIABILITY", "COMMERCIAL_PROPERTY",
+                "CYBER", "PROFESSIONAL_LIABILITY", "unknown"};
+        for (String product : products) {
+            service.getRatingFactors(product).block();
+        }
+        String[] coverages = {"CYBER", "FIRE", "PROPERTY", "LIABILITY", "BUSINESS_INCOME", "PROFESSIONAL", "OTHER"};
+        for (String coverage : coverages) {
+            service.calculateBasePremium(UUID.randomUUID(), "BOP",
+                    request("BOP", new CreateQuoteCoverageRequest(coverage, coverage,
+                            new BigDecimal("100000"), new BigDecimal("500"), 365))).block();
+        }
+        service.calculateBasePremium(UUID.randomUUID(), "BOP",
+                request("BOP", new CreateQuoteCoverageRequest(null, "unknown",
+                        new BigDecimal("100000"), new BigDecimal("500"), null))).block();
+        service.calculateOfferedTerms(UUID.randomUUID(), new com.intellisure.quotepolicyservice.dto.request.OfferQuoteTermsRequest(null, List.of())).block();
+        assertTrue(service.validateTerms("BOP", List.of(new com.intellisure.quotepolicyservice.dto.request.OfferedCoverageRequest(
+                "FIRE", BigDecimal.ONE, BigDecimal.ZERO, BigDecimal.ZERO, null, null, null))).block());
+        assertTrue(!service.validateTerms("BOP", List.of(new com.intellisure.quotepolicyservice.dto.request.OfferedCoverageRequest(
+                "FIRE", BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, null, null, null))).block());
+    }
+
     private CreateQuoteRequest request(String productCode, CreateQuoteCoverageRequest coverage) {
         return new CreateQuoteRequest(
                 UUID.randomUUID(),
