@@ -31,6 +31,7 @@ export interface CreateVendorAssignmentRequest {
   assignmentType: string;
   claimId?: string | null;
   recoveryCaseId?: string | null;
+  recoveryPath?: 'NETWORK_VENDOR' | null;
   taskDescription: string;
   dueDate: string;
   priority: string;
@@ -93,4 +94,25 @@ export interface VerifyVendorRequest {
   verificationDecision: 'APPROVE' | 'REJECT';
   verificationNote?: string;
   verifiedDocumentIds?: string[];
+}
+
+export interface RecordVendorPerformanceRequest {
+  assignmentId: string;
+  qualityScore: number;
+  timelinessScore: number;
+  communicationScore: number;
+  outcomeScore: number;
+  note?: string;
+}
+
+export interface VendorPerformanceResponse {
+  vendorId: string;
+  assignmentId: string;
+  qualityScore: number;
+  timelinessScore: number;
+  communicationScore: number;
+  outcomeScore: number;
+  overallScore: number;
+  note?: string | null;
+  recordedAt: string;
 }

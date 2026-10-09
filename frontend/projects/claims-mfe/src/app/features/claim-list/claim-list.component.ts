@@ -27,10 +27,12 @@ import { CardComponent, ButtonComponent, BadgeComponent, TableComponent, TableCo
           <h1>Claim queue</h1>
           <p class="page-description">Manage and track all claims across the portfolio with real-time status updates from the gateway.</p>
         </div>
-        <is-button variant="primary" (click)="goToFileClaim()">
+        @if (isPolicyholder) {
+          <is-button variant="primary" (click)="goToFileClaim()">
           File new claim
           <span aria-hidden="true">&rarr;</span>
-        </is-button>
+          </is-button>
+        }
       </header>
 
       <div class="command-bar" aria-label="Claim queue controls">
@@ -74,8 +76,8 @@ import { CardComponent, ButtonComponent, BadgeComponent, TableComponent, TableCo
         <is-empty-state
           title="No claims found"
           description="There are currently no claims matching your selection."
-          actionLabel="File new claim"
-          (action)="goToFileClaim()"
+          [actionLabel]="isPolicyholder ? 'File new claim' : ''"
+          (action)="isPolicyholder && goToFileClaim()"
         />
       } @else {
         <is-table
@@ -205,6 +207,7 @@ export class ClaimListComponent implements OnInit {
   loading = false;
   error: string | null = null;
   selectedStatus = '';
+  isPolicyholder = false;
 
   columns: TableColumn<ClaimResponse>[] = [
     { key: 'claimNumber', header: 'Claim #', width: '150px' },
@@ -224,6 +227,8 @@ export class ClaimListComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    const role = typeof localStorage !== 'undefined' ? localStorage.getItem('is_role') : null;
+    this.isPolicyholder = ['POLICYHOLDER', 'USER'].includes((role ?? '').toUpperCase());
     this.loadClaims();
   }
 

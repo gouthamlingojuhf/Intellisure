@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { Observable, Subject, catchError, map, of, startWith, switchMap, take } from 'rxjs';
+import { Observable, Subject, catchError, map, of, startWith, switchMap, take, tap } from 'rxjs';
 import { RiskAssessment } from '../../core/models/underwriting.models';
 import { OfferQuoteTermsRequest, OfferedCoverageRequest, QuoteResponse, RecordUnderwritingDecisionRequest, UnderwritingDecisionType } from '../../core/models/quote.models';
 import { UnderwritingService } from '../../core/services/underwriting.service';
@@ -72,6 +72,7 @@ interface OfferedCoverageForm extends OfferedCoverageRequest {
               } @else if (reviewError) {
                 <div class="inline-state error" role="alert">{{ reviewError }}</div>
               } @else if (reviewQuote) {
+                @if (canManageQuote) {
                 <div class="review-grid">
                   <div class="review-section">
                     <h3>Decision</h3>
@@ -123,6 +124,12 @@ interface OfferedCoverageForm extends OfferedCoverageRequest {
                     </button>
                   </div>
                 </div>
+                } @else {
+                  <div class="read-only-note" role="status">
+                    <strong>Risk review access</strong>
+                    <p>This assessment and quote are available for risk-engineering review. Underwriting decisions and commercial terms can only be published by the assigned underwriter.</p>
+                  </div>
+                }
                 @if (actionMessage) { <div class="success-message" role="status">{{ actionMessage }}</div> }
                 @if (actionError) { <div class="inline-state error" role="alert">{{ actionError }}</div> }
               }
@@ -235,6 +242,7 @@ export class UnderwritingDashboardComponent {
   authorityLevel = '';
   decisionConditions = '';
   quoteExpiresAt = '';
+  userRole: string | null = null;
 
   readonly queue$ = this.reloadTrigger.pipe(
     startWith(void 0),
@@ -242,7 +250,10 @@ export class UnderwritingDashboardComponent {
     switchMap((userId): Observable<UnderwritingQueueState> => userId
       ? this.store.select(selectUserRole).pipe(
         take(1),
-        switchMap((role) => this.underwriting.getAssignedQueue(userId, role))
+        switchMap((role) => {
+          this.userRole = role;
+          return this.underwriting.getAssignedQueue(userId, role);
+        })
       ).pipe(map((items) => ({ loading: false, error: null, items })))
       : of({ loading: false, error: 'Your signed-in user identity is unavailable.', items: [] })),
     catchError((error: HttpErrorResponse) => of({ loading: false, error: this.errorMessage(error), items: [] })),
@@ -250,6 +261,10 @@ export class UnderwritingDashboardComponent {
   );
 
   reload(): void { this.reloadTrigger.next(); }
+
+  get canManageQuote(): boolean {
+    return (this.userRole ?? '').toUpperCase() === 'UNDERWRITER';
+  }
 
   selectAssessment(assessment: RiskAssessment): void {
     this.selectedAssessment = assessment;

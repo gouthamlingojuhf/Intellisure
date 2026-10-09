@@ -23,6 +23,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -158,7 +159,12 @@ public class VendorAssignmentService {
                     if (newStatus == AssignmentStatus.COMPLETED) {
                         assignment.setCompletedAt(LocalDateTime.now());
                         if (request.evidenceDocumentIds() != null) {
-                            assignment.setEvidenceDocumentIds(request.evidenceDocumentIds());
+                            assignment.setEvidenceDocumentIds(
+                                    request.evidenceDocumentIds().stream()
+                                            .filter(Objects::nonNull)
+                                            .map(UUID::toString)
+                                            .toList()
+                            );
                         }
                     }
                     
@@ -235,9 +241,21 @@ public class VendorAssignmentService {
                 entity.getPriority(),
                 entity.getAcceptedAt(),
                 entity.getCompletedAt(),
-                entity.getEvidenceDocumentIds(),
+                parseEvidenceDocumentIds(entity.getEvidenceDocumentIds()),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );
+    }
+
+    private List<UUID> parseEvidenceDocumentIds(List<String> evidenceDocumentIds) {
+        if (evidenceDocumentIds == null) {
+            return List.of();
+        }
+        return evidenceDocumentIds.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .map(UUID::fromString)
+                .toList();
     }
 }

@@ -1,9 +1,12 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { switchMap, take } from 'rxjs';
 import { BadgeComponent, ButtonComponent, CardComponent, EmptyStateComponent, SkeletonComponent } from 'ui-core';
 import { CustomerProfileService } from '../../core/services/customer-profile.service';
 import { RecoveryService } from '../../core/services/recovery.service';
 import { RecoveryCaseResponse, RecoveryPath } from '../../core/models/recovery.models';
+import { selectUserRole } from '../../core/store/auth/auth.selectors';
 
 @Component({
   selector: 'is-policyholder-recovery',
@@ -14,8 +17,8 @@ import { RecoveryCaseResponse, RecoveryPath } from '../../core/models/recovery.m
       <header class="page-header">
         <div>
           <p class="page-eyebrow">Business continuity</p>
-          <h1>Recovery cases</h1>
-          <p class="page-description">Track recovery progress and choose the supported recovery path for your own active cases.</p>
+          <h1>{{ isEmployee ? 'Recovery operations' : 'Recovery cases' }}</h1>
+          <p class="page-description">{{ isEmployee ? 'Monitor active recovery cases and update operational progress from the live recovery service.' : 'Track recovery progress and choose the supported recovery path for your own active cases.' }}</p>
         </div>
         <is-button variant="secondary" size="sm" (click)="loadCases()" [disabled]="loading">Refresh</is-button>
       </header>
@@ -35,7 +38,7 @@ import { RecoveryCaseResponse, RecoveryPath } from '../../core/models/recovery.m
       } @else if (!error && cases.length === 0) {
         <is-empty-state
           title="No recovery cases"
-          description="Recovery cases created for your claims will appear here when they are available."
+          [description]="isEmployee ? 'No recovery cases are currently available to the operational team.' : 'Recovery cases created for your claims will appear here when they are available.'"
           icon="↻"
         />
       } @else {
@@ -138,6 +141,7 @@ import { RecoveryCaseResponse, RecoveryPath } from '../../core/models/recovery.m
   `],
 })
 export class PolicyholderRecoveryComponent implements OnInit {
+  private readonly store = inject(Store);
   private readonly profileService = inject(CustomerProfileService);
   private readonly recoveryService = inject(RecoveryService);
 
@@ -146,6 +150,7 @@ export class PolicyholderRecoveryComponent implements OnInit {
   error: string | null = null;
   customerId: string | null = null;
   savingCaseId: string | null = null;
+  isEmployee = false;
   private readonly paths: Record<string, RecoveryPath | ''> = {};
   private readonly progress: Record<string, number> = {};
 
@@ -154,14 +159,21 @@ export class PolicyholderRecoveryComponent implements OnInit {
   loadCases(): void {
     this.loading = true;
     this.error = null;
-    this.profileService.getProfile().subscribe({
-      next: (profile) => {
-        this.customerId = profile.customerId;
-        this.recoveryService.getCases(profile.customerId).subscribe({
-          next: (response) => { this.cases = response?.items ?? []; this.loading = false; },
-          error: (err) => this.handleError(err),
-        });
-      },
+    this.store.select(selectUserRole).pipe(
+      take(1),
+      switchMap((role) => {
+        this.isEmployee = ['CLAIMS_ADJUSTER', 'CLAIMS_MANAGER', 'SYSTEM_ADMINISTRATOR', 'ADMIN'].includes((role ?? '').toUpperCase());
+        return this.isEmployee
+          ? this.recoveryService.getCases()
+          : this.profileService.getProfile().pipe(
+            switchMap((profile) => {
+              this.customerId = profile.customerId;
+              return this.recoveryService.getCases(profile.customerId);
+            })
+          );
+      })
+    ).subscribe({
+      next: (response) => { this.cases = response?.items ?? []; this.loading = false; },
       error: (err) => this.handleError(err),
     });
   }

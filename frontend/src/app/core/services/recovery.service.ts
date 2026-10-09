@@ -12,8 +12,10 @@ import {
 export class RecoveryService {
   private readonly api = inject(ApiService);
 
-  getCases(customerId: string): Observable<RecoveryCaseListResponse> {
-    return this.api.get<RecoveryCaseListResponse>('/api/recovery/cases', { customerId, page: 0, size: 50 });
+  getCases(customerId?: string): Observable<RecoveryCaseListResponse> {
+    const params: Record<string, string | number> = { page: 0, size: 50 };
+    if (customerId) params['customerId'] = customerId;
+    return this.api.get<RecoveryCaseListResponse>('/api/recovery/cases', params);
   }
 
   selectPath(recoveryCaseId: string, request: SelectRecoveryPathRequest): Observable<RecoveryCaseResponse> {

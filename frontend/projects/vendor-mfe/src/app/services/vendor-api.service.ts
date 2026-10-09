@@ -11,6 +11,8 @@ import {
   VendorAssignmentResponse,
   VendorOnboardingRequest,
   VendorOnboardingResponse,
+  RecordVendorPerformanceRequest,
+  VendorPerformanceResponse,
   VendorResponse,
   VerifyVendorRequest,
 } from '../models/vendor.models';
@@ -126,6 +128,18 @@ export class VendorApiService {
 
   verifyVendor(vendorId: string, request: VerifyVendorRequest): Observable<VendorOnboardingResponse> {
     return this.http.post<VendorOnboardingResponse>(`${this.base}/api/vendors/${vendorId}/verify`, request, {
+      headers: authHeaders(),
+    });
+  }
+
+  recordPerformance(vendorId: string, request: RecordVendorPerformanceRequest): Observable<VendorPerformanceResponse> {
+    return this.http.post<VendorPerformanceResponse>(`${this.base}/api/vendors/${vendorId}/performance`, request, {
+      headers: authHeaders(),
+    });
+  }
+
+  getPerformance(vendorId: string): Observable<VendorPerformanceResponse[]> {
+    return this.http.get<VendorPerformanceResponse[]>(`${this.base}/api/vendors/${vendorId}/performance`, {
       headers: authHeaders(),
     });
   }

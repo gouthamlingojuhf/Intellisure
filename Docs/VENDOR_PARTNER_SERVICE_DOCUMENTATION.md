@@ -1,111 +1,118 @@
-# Vendor & Partner Service - Technical & Flow Documentation
+# Vendor & Partner Service
 
-> **Service Name**: `vendor-partner-service`  
-> **Eureka Application Name**: `VENDOR-PARTNER-SERVICE`  
-> **Port**: `8085`  
-> **Framework**: Spring Boot 4.1.1, Spring WebFlux, Spring Data R2DBC, Java 17
-> **Database**: `vendor_partner_db` (MySQL)
+## Runtime identity
 
----
+- Service: `vendor-partner-service`
+- Eureka name: `VENDOR-PARTNER-SERVICE`
+- Port: `8085`
+- Database: `vendor_partner_db` (MySQL)
+- Runtime: Java 17, Spring Boot 4.1.1, WebFlux, R2DBC
+- Browser entry point: Vendor MFE through the API Gateway at `http://localhost:8080`
 
-## 1. Startup & Execution Guide (No Docker)
+The source controllers, security configuration, and this document describe the current contract. Native Windows startup remains governed by the existing root scripts; Docker is an additive development option.
 
-To run the Vendor & Partner Service natively using Maven:
+## Business purpose
 
-```bash
-# Navigate to vendor-partner-service directory
-cd /Users/gouthamlingoju/Projects/IntelliSure/vendor-partner-service
+This service manages the controlled network used to restore a small business after a claim. It supports:
 
-# Clean and run service
-./mvnw spring-boot:run
+1. Vendor onboarding and verification.
+2. Discovery of verified, active vendors by service type and area.
+3. Explicit dispatch of recovery or claim work to a selected vendor.
+4. Assignment acceptance, decline, progress, and completion.
+5. Evidence document references on completed work.
+6. Performance scoring after completion.
+
+Vendor assignment is deliberately explicit. A recommendation or a Policyholder selecting `NETWORK_VENDOR` does not create an assignment automatically.
+
+## Roles and security
+
+The Gateway and service both restrict this surface to employee roles:
+
+- `VENDOR_MANAGER`: manages the vendor network, onboarding, dispatch, and performance.
+- `CLAIMS_ADJUSTER` / `CLAIMS_MANAGER`: may work with assignments needed for claims operations.
+- `SYSTEM_ADMINISTRATOR` / `ADMIN`: administrative access.
+
+Policyholders cannot access Vendor MFE routes or vendor assignment APIs. `CUSTOMER_VENDOR` and `CUSTOMER_MANAGED` recovery paths must not create VendorAssignment records. Internal calls use the propagated Bearer JWT; there is no `X-User-Id` contract.
+
+## API contract through the Gateway
+
+### Vendor directory
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/api/vendors` | Search verified and active vendors by `serviceType`, `location`, `capability`, or availability filters. |
+| `GET` | `/api/vendors/recommendations` | Discover eligible candidates without creating an assignment. |
+| `GET` | `/api/vendors/{vendorId}` | Read one vendor. |
+| `PUT` | `/api/vendors/{vendorId}` | Update vendor profile capabilities and service areas. |
+| `PATCH` | `/api/vendors/{vendorId}/status` | Activate, suspend, or deactivate a vendor. |
+
+### Onboarding and verification
+
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/api/vendors/onboarding-requests` | Submit a vendor onboarding request. |
+| `GET` | `/api/vendors/onboarding-requests` | Read onboarding requests. |
+| `POST` | `/api/vendors/{vendorId}/verify` | Approve or reject a pending vendor. Approval makes the vendor `VERIFIED` and `ACTIVE`. |
+
+### Assignment lifecycle
+
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/api/vendor-assignments` | Dispatch a selected verified/active vendor. |
+| `GET` | `/api/vendor-assignments` | Filter by vendor, claim, recovery case, type, status, and date range. |
+| `GET` | `/api/vendor-assignments/{assignmentId}` | Read an assignment. |
+| `POST` | `/api/vendor-assignments/{assignmentId}/accept` | Accept dispatched work. |
+| `POST` | `/api/vendor-assignments/{assignmentId}/decline` | Decline dispatched work with a reason. |
+| `PATCH` | `/api/vendor-assignments/{assignmentId}/status` | Move accepted work to `IN_PROGRESS` or `COMPLETED`; completion may include evidence document IDs. |
+
+`CreateVendorAssignmentRequest` supports `vendorId`, `assignmentType`, optional `claimId`, optional `recoveryCaseId`, `recoveryPath`, task description, due date, and priority. A recovery assignment must use `NETWORK_VENDOR`; customer-owned paths are rejected by the service.
+
+The valid work states are `PENDING`, `REQUESTED`, `ASSIGNED`, `DISPATCHED`, `OFFERED`, `ACCEPTED`, `DECLINED`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`, and `REASSIGNED`. Invalid transitions are rejected, including direct dispatch-to-completion and changes after completion, cancellation, or decline.
+
+### Performance
+
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/api/vendors/{vendorId}/performance` | Record quality, timeliness, communication, and outcome scores for a completed assignment. |
+| `GET` | `/api/vendors/{vendorId}/performance` | Read the vendor's recorded performance history. |
+
+The service calculates `overallScore` as the average of the four supplied scores. Performance cannot be recorded until the linked assignment is `COMPLETED`.
+
+## Vendor MFE workflow
+
+The remote runs on port `4205` and is mounted at `/vendor` in the shell for employee roles.
+
+1. Open the assignment queue and filter by vendor, claim, or status.
+2. Create an assignment and refresh the live directory.
+3. Select a verified and active vendor returned by `/api/vendors`; the UI does not accept an arbitrary vendor record as an eligible choice.
+4. Link the dispatch to a claim or recovery case and use `NETWORK_VENDOR` for network recovery work.
+5. Open the assignment to accept or decline it.
+6. Start work with a progress note, then complete it with a completion note and optional Document & Audit evidence IDs.
+7. Record performance after completion.
+
+Empty vendor directories and empty assignment queues are valid states and are displayed as empty states. The MFE does not contain seeded vendor records or simulated responses.
+
+## Recovery integration
+
+Recovery remains the central case owner. The cross-service flow is:
+
+```text
+Claim / Recovery Case
+        |
+        | Policyholder chooses NETWORK_VENDOR
+        v
+Vendor Manager discovers an eligible vendor
+        |
+        | explicit POST /api/vendor-assignments
+        v
+DISPATCHED -> ACCEPTED -> IN_PROGRESS -> COMPLETED
+        |
+        +--> evidence document references
+        +--> vendor performance score
 ```
 
-- **Base URL**: `http://localhost:8085`
-- **Health Check Endpoint**: [http://localhost:8085/actuator/health](http://localhost:8085/actuator/health)
+The Vendor service does not automatically dispatch because a recovery path was selected. The `CUSTOMER_VENDOR` and `CUSTOMER_MANAGED` paths remain central Recovery records without VendorAssignment rows.
 
----
+## Verification
 
-## 2. Business Logic & Core Responsibilities
-
-The `vendor-partner-service` manages partner networks (Auto Repair Shops, Towing Operators, Medical Assessment Clinics, Property Restoration Contractors) and handles work order dispatching and vendor invoicing.
-
-### Key Responsibilities:
-1. **Vendor Onboarding & Tiering**: Registers third-party vendors, tracks service SLAs, certifications, and compliance metrics.
-2. **Automated Repair & Dispatch Work Orders**: Receives dispatch requests from `claims-service` and routes work orders to nearby qualified repair partners.
-3. **Vendor Invoicing & Service Fulfillment**: Allows vendors to upload work completion reports, itemized estimate costs, and final invoices.
-
----
-
-## 3. Technical Architecture & Class Diagrams
-
-```mermaid
-classDiagram
-    class Vendor {
-        +Long id
-        +String vendorUuid
-        +String businessName
-        +String vendorCategory
-        +String serviceRegion
-        +Double rating
-    }
-    class WorkOrder {
-        +Long id
-        +String workOrderNumber
-        +String claimNumber
-        +String vendorUuid
-        +String status
-        +BigDecimal estimatedCost
-    }
-    class VendorService {
-        +registerVendor(VendorDto) VendorDto
-        +createWorkOrder(WorkOrderDto) WorkOrderDto
-        +updateWorkOrderStatus(String workOrderNumber, String status) WorkOrderDto
-    }
-    VendorService --> Vendor
-    VendorService --> WorkOrder
-```
-
----
-
-## 4. REST API Specifications
-
-| Endpoint Path | HTTP Method | Request Body DTO | Response Body DTO |
-| :--- | :---: | :--- | :--- |
-| `/api/vendors` | `POST` | `VendorDto` | `VendorDto` |
-| `/api/vendors/dispatch` | `POST` | `CreateWorkOrderDto` | `WorkOrderDto` |
-| `/api/vendors/work-orders/{workOrderNumber}` | `GET` | N/A | `WorkOrderDto` |
-
----
-
-## 5. End-to-End Step-by-Step Dispatch Flow
-
-1. Claims Adjuster approves claim `CLM-2026-4401` requiring roadside towing and body repair.
-2. Adjuster dispatches work order via Vendor MFE (`http://localhost:4205`).
-3. `vendor-partner-service` queries `vendor_partner_db` for active vendors in zipcode `90210`.
-4. Dispatches Work Order `WO-8812` to "Precision Auto Repair".
-5. Repair shop accepts work order, completes repairs, submits invoice for $3,500.
-6. Work order status updated to `COMPLETED`, notifying `claims-service`.
-
----
-
-## 6. Mermaid Sequence Diagram
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Adjuster as Claims Adjuster / MFE (4205)
-    participant Gateway as API Gateway (8080)
-    participant VendorService as Vendor Partner Service (8085)
-    participant VendorPartner as External Repair Shop
-
-    Adjuster->>Gateway: POST /api/vendors/dispatch (Create Work Order)
-    Gateway->>VendorService: Forward Dispatch Request
-    VendorService->>VendorService: Match Nearest Repair Partner in Zipcode
-    VendorService->>VendorService: Create Work Order WO-8812 (Status = DISPATCHED)
-    VendorService-->>Gateway: 201 Created + WorkOrderDto
-    Gateway-->>Adjuster: 201 Created Response
-
-    VendorPartner->>VendorService: PUT /api/vendors/work-orders/WO-8812 (Submit Invoice $3,500)
-    VendorService->>VendorService: Update Status to COMPLETED
-    VendorService-->>VendorPartner: 200 OK Invoice Accepted
-```
+The focused Vendor service suite covers assignment transitions, verified/active-vendor enforcement, customer-owned path rejection, controller delegation, and role authorization. The Docker runtime flow has also been verified with local-only disposable data through the Gateway: onboarding, approval, directory discovery, recovery-linked dispatch, accept, progress, completion, evidence-list handling, and performance scoring.

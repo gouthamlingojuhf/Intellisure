@@ -52,7 +52,8 @@ public class VendorAssignment implements Persistable<UUID> {
     private LocalDateTime completedAt;
     
     @Column("evidence_document_ids")
-    private List<UUID> evidenceDocumentIds;
+    /* JSON is stored as text by the existing R2DBC list converter. */
+    private List<String> evidenceDocumentIds;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -75,7 +76,7 @@ public class VendorAssignment implements Persistable<UUID> {
     public VendorAssignment priority(String priority) { this.priority = priority; return this; }
     public VendorAssignment acceptedAt(LocalDateTime acceptedAt) { this.acceptedAt = acceptedAt; return this; }
     public VendorAssignment completedAt(LocalDateTime completedAt) { this.completedAt = completedAt; return this; }
-    public VendorAssignment evidenceDocumentIds(List<UUID> evidenceDocumentIds) { this.evidenceDocumentIds = evidenceDocumentIds; return this; }
+    public VendorAssignment evidenceDocumentIds(List<String> evidenceDocumentIds) { this.evidenceDocumentIds = evidenceDocumentIds; return this; }
     public VendorAssignment createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
     public VendorAssignment updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
     public VendorAssignment isNew(boolean isNew) { this.isNew = isNew; return this; }
@@ -114,8 +115,8 @@ public class VendorAssignment implements Persistable<UUID> {
     public void setAcceptedAt(LocalDateTime acceptedAt) { this.acceptedAt = acceptedAt; }
     public LocalDateTime getCompletedAt() { return completedAt; }
     public void setCompletedAt(LocalDateTime completedAt) { this.completedAt = completedAt; }
-    public List<UUID> getEvidenceDocumentIds() { return evidenceDocumentIds; }
-    public void setEvidenceDocumentIds(List<UUID> evidenceDocumentIds) { this.evidenceDocumentIds = evidenceDocumentIds; }
+    public List<String> getEvidenceDocumentIds() { return evidenceDocumentIds; }
+    public void setEvidenceDocumentIds(List<String> evidenceDocumentIds) { this.evidenceDocumentIds = evidenceDocumentIds; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

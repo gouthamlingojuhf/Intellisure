@@ -142,7 +142,7 @@ public class SecurityConfig {
                                 HttpMethod.GET,
                                 "/api/quotes/**"
                         )
-                        .hasAnyRole("POLICYHOLDER", "USER", "UNDERWRITER")
+                        .hasAnyRole("POLICYHOLDER", "USER", "UNDERWRITER", "RISK_ENGINEER", "SYSTEM_ADMINISTRATOR", "ADMIN")
 
                         .pathMatchers(
                                 "/api/quotes/**"
@@ -225,6 +225,8 @@ public class SecurityConfig {
                         )
                         .hasAnyRole(
                                 "VENDOR_MANAGER",
+                                "CLAIMS_ADJUSTER",
+                                "CLAIMS_MANAGER",
                                 "SYSTEM_ADMINISTRATOR",
                                 "ADMIN"
                         )

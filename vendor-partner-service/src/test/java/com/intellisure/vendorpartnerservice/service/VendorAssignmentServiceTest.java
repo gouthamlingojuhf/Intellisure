@@ -25,6 +25,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -266,6 +267,32 @@ class VendorAssignmentServiceTest {
                     assertNotNull(res.completedAt());
                     assertEquals(2, res.evidenceDocumentIds().size());
                 })
+                .verifyComplete();
+    }
+
+    @Test
+    @DisplayName("completion can read an empty JSON evidence list without UUID conversion failure")
+    void completionWithEmptyEvidenceListRemainsReadable() {
+        UUID assignmentId = UUID.randomUUID();
+        VendorAssignment accepted = VendorAssignment.builder()
+                .assignmentId(assignmentId)
+                .vendorId(UUID.randomUUID())
+                .assignmentType(AssignmentType.RECOVERY_REPAIR)
+                .status(AssignmentStatus.IN_PROGRESS)
+                .taskDescription("Restore operations")
+                .dueDate(LocalDate.now().plusDays(5))
+                .priority("HIGH")
+                .evidenceDocumentIds(List.of())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+        when(assignmentRepository.findById(assignmentId)).thenReturn(Mono.just(accepted));
+        when(assignmentRepository.save(accepted)).thenReturn(Mono.just(accepted));
+
+        StepVerifier.create(service.updateAssignmentStatus(
+                        assignmentId,
+                        new UpdateAssignmentStatusRequest("COMPLETED", "Done", LocalDate.now(), List.of())))
+                .assertNext(response -> assertTrue(response.evidenceDocumentIds().isEmpty()))
                 .verifyComplete();
     }
 

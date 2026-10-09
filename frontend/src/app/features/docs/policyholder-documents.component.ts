@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
-import { forkJoin, map, of, switchMap } from 'rxjs';
+import { Store } from '@ngrx/store';
+import { forkJoin, map, of, switchMap, take } from 'rxjs';
 import { BadgeComponent, ButtonComponent, CardComponent, EmptyStateComponent, SkeletonComponent } from 'ui-core';
 import { DocumentResponse } from '../../core/models/document.models';
 import { DocumentService } from '../../core/services/document.service';
@@ -8,6 +9,7 @@ import { CustomerProfileService } from '../../core/services/customer-profile.ser
 import { PolicyService } from '../../core/services/policy.service';
 import { QuoteService } from '../../core/services/quote.service';
 import { ApiService } from '../../core/services/api.service';
+import { selectUserRole } from '../../core/store/auth/auth.selectors';
 
 interface EntityReference { entityId: string; entityType: 'QUOTE' | 'POLICY' | 'CLAIM'; }
 interface ClaimReference { claimId: string; }
@@ -20,9 +22,9 @@ interface ClaimReference { claimId: string; }
     <section class="enterprise-page">
       <header class="page-header">
         <div>
-          <p class="page-eyebrow">Policy documents</p>
+          <p class="page-eyebrow">Document & audit</p>
           <h1>Documents</h1>
-          <p class="page-description">View documents attached to your quotes, policies, and claims.</p>
+          <p class="page-description">{{ isEmployee ? 'Review documents attached to operational claim records.' : 'View documents attached to your quotes, policies, and claims.' }}</p>
         </div>
         <is-button variant="secondary" size="sm" (click)="loadDocuments()" [disabled]="loading">Refresh</is-button>
       </header>
@@ -39,7 +41,7 @@ interface ClaimReference { claimId: string; }
       } @else if (!error && documents.length === 0) {
         <is-empty-state title="No documents available" description="Documents attached to your insurance records will appear here when they are available." icon="▤" />
       } @else {
-        <is-card title="Your document register" [subtitle]="documents.length + ' document' + (documents.length === 1 ? '' : 's')">
+        <is-card [title]="isEmployee ? 'Claim document register' : 'Your document register'" [subtitle]="documents.length + ' document' + (documents.length === 1 ? '' : 's')">
           <div class="document-list">
             @for (document of documents; track document.documentId) {
               <article class="document-row">
@@ -83,6 +85,7 @@ interface ClaimReference { claimId: string; }
   `],
 })
 export class PolicyholderDocumentsComponent implements OnInit {
+  private readonly store = inject(Store);
   private readonly profileService = inject(CustomerProfileService);
   private readonly policyService = inject(PolicyService);
   private readonly quoteService = inject(QuoteService);
@@ -92,18 +95,28 @@ export class PolicyholderDocumentsComponent implements OnInit {
   documents: DocumentResponse[] = [];
   loading = false;
   error: string | null = null;
+  isEmployee = false;
 
   ngOnInit(): void { this.loadDocuments(); }
 
   loadDocuments(): void {
     this.loading = true;
     this.error = null;
-    this.profileService.getProfile().pipe(
-      switchMap((profile) => forkJoin({
-        policies: this.policyService.getPoliciesByCustomerId(profile.customerId),
-        quotes: this.quoteService.getQuotesByCustomerId(profile.customerId),
-        claims: this.api.get<ClaimReference[]>('/api/claims'),
-      })),
+    this.store.select(selectUserRole).pipe(
+      take(1),
+      switchMap((role) => {
+        this.isEmployee = ['UNDERWRITER', 'RISK_ENGINEER', 'CLAIMS_ADJUSTER', 'CLAIMS_MANAGER', 'VENDOR_MANAGER', 'SYSTEM_ADMINISTRATOR', 'ADMIN'].includes((role ?? '').toUpperCase());
+        if (this.isEmployee) {
+          return this.api.get<ClaimReference[]>('/api/claims').pipe(map((claims) => ({ policies: [], quotes: [], claims })));
+        }
+        return this.profileService.getProfile().pipe(
+          switchMap((profile) => forkJoin({
+            policies: this.policyService.getPoliciesByCustomerId(profile.customerId),
+            quotes: this.quoteService.getQuotesByCustomerId(profile.customerId),
+            claims: this.api.get<ClaimReference[]>('/api/claims'),
+          }))
+        );
+      }),
       switchMap(({ policies, quotes, claims }) => {
         const references: EntityReference[] = [
           ...(quotes ?? []).map((quote) => ({ entityId: quote.quoteId, entityType: 'QUOTE' as const })),

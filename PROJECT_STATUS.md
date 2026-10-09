@@ -69,7 +69,14 @@ Last reviewed: 2026-10-09
 - Completed: Underwriting now shows the authenticated underwriter's or risk engineer's real assigned assessment queue, with empty/error states and an employee-only route guard. Both role-specific risk-service queue endpoints reject a non-admin request for another user's queue.
 - Completed: Vendor and Analytics deep links now have shell-level role guards aligned with their backend roles; dead static Analytics shell data was removed.
 - Completed: Underwriting review now loads the selected assigned quote and exposes the existing assigned-underwriter decision and offer-terms actions, including live coverage values, expiry, rationale, authority, conditions, and clear server error/success states. The page does not expose binding or underwriting-only operations to Policyholders.
-- Remaining: add deeper assignment, referral, and subjectivity screens only after their existing backend contracts and role boundaries are verified end-to-end.
+- Completed: Vendor MFE now discovers only live verified/active vendors, dispatches explicit `NETWORK_VENDOR` assignments linked to claims or recovery cases, supports accept/decline/progress/completion with notes and evidence IDs, and records post-completion performance scores.
+- Completed: Docker runtime verified Vendor onboarding, verification, directory discovery, recovery-linked dispatch, accept, progress, completion, performance scoring, and the empty evidence-list persistence path.
+- Completed: role-journey audit aligned the Gateway and shell boundaries: Risk Engineers can read assigned quote context, Claims Adjusters/Managers can reach supported Vendor APIs, and employee roles can use the live recovery/document views without a policyholder profile lookup.
+- Completed: Claims FNOL is now shown only to Policyholders in the claims queue; staff retain their operational claim view without being presented a customer-only action.
+- Completed: Risk Engineers receive read-only assessment/quote review in the shared Underwriting screen; decision and commercial-term controls remain Underwriter-only to match service authorization.
+- Completed: Claims and Intelligence MFE application TypeScript configs no longer compile Jasmine specs as application source, restoring normal remote production builds without dependency changes.
+- Remaining: add deeper assignment referral and subjectivity screens only after their existing backend contracts and role boundaries are verified end-to-end.
+- Remaining: System Administrator user-management actions have backend create/role/status endpoints but no list/search endpoint or frontend administration workspace. A UI should not be fabricated around manually supplied IDs; this is the next contract-level employee batch.
 - Dependency: preserve role restrictions and avoid exposing employee-only information to Policyholders.
 
 ### P3 — Analytics / Intelligence
@@ -108,7 +115,9 @@ Last reviewed: 2026-10-09
 - Replaced the fixed quote-rating placeholder with a tested, bounded baseline rating calculation that does not fabricate business records or override human underwriting.
 - Replaced the static Underwriting dashboard with the authenticated user's real assessment queue and tightened queue ownership authorization.
 - Added the employee Underwriting review action panel against the existing Quote & Policy decision and offer-terms APIs; shell build and configured frontend tests pass without dependency or startup-script changes.
+- Completed the Vendor differentiator batch: live eligible-vendor selection, explicit recovery dispatch, fulfillment evidence capture, performance scoring, a service-local JSON evidence mapping fix, focused regression coverage, and updated Vendor service documentation.
+- Completed the cross-role journey audit batch: repaired employee recovery/document loading, corrected claims staff affordances, aligned Gateway role matchers for Risk Engineering and claims-supported vendor operations, made underwriting controls role-safe, and repaired Claims/Intelligence remote build configuration.
 
 ## Immediate batch
 
-Authenticated Docker journey is complete through quote, underwriting, policy, claim, recovery, documents, and notifications. Employee decision/offer actions are now available in the real frontend flow. The remaining demo-readiness task is native Windows startup verification with approved test identities; the local Docker underwriter pool is intentionally isolated in `.codex-local/` and is not shared configuration.
+Authenticated Docker journey is complete through quote, underwriting, policy, claim, recovery, documents, notifications, and recovery-linked Vendor dispatch/fulfillment. The cross-role route/API audit and affected frontend builds now pass. Employee decision/offer actions and the Vendor differentiator are available in the real frontend flow. The remaining demo-readiness task is native Windows startup verification with approved test identities; local Docker underwriter/vendor records are isolated in local database state and are not shared configuration.
