@@ -91,8 +91,10 @@ public class UserAccountService {
         String normalizedSearch = search == null ? "" : search.trim().toLowerCase(Locale.ROOT);
 
         return userAccountRepo.findAll()
-                .filter(user -> normalizedRole == null || normalizedRole.equalsIgnoreCase(user.getRole()))
-                .filter(user -> normalizedStatus == null || normalizedStatus.equalsIgnoreCase(user.getAccountStatus()))
+                .filter(user -> normalizedRole == null || normalizedRole.equalsIgnoreCase(normalizeRole(user.getRole())))
+                .filter(user -> normalizedStatus == null
+                        || (user.getAccountStatus() != null
+                        && normalizedStatus.equalsIgnoreCase(user.getAccountStatus())))
                 .filter(user -> normalizedSearch.isBlank()
                         || contains(user.getEmail(), normalizedSearch)
                         || contains(user.getDisplayName(), normalizedSearch)

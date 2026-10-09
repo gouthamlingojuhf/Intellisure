@@ -7,6 +7,13 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
 import org.springframework.web.server.ServerWebExchange;
+import jakarta.validation.ConstraintViolationException;
+import org.springframework.web.bind.support.WebExchangeBindException;
+import org.springframework.validation.FieldError;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import java.util.List;
+import java.util.Set;
 
 import java.time.LocalDateTime;
 
@@ -71,5 +78,21 @@ class GlobalExceptionHandlerTest {
         ApiError body = resp.getBody();
         assertEquals("An unexpected error occurred", body.message());
         assertEquals("/u", body.path());
+    }
+
+    @Test
+    void handlesValidationAndConstraintErrors() {
+        ServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/v").build());
+        WebExchangeBindException bind = mock(WebExchangeBindException.class);
+        when(bind.getFieldErrors()).thenReturn(List.of(new FieldError("request", "email", "must be valid")));
+        var validation = handler.handleValidation(bind, exchange);
+        assertEquals(HttpStatus.BAD_REQUEST, validation.getStatusCode());
+        assertEquals("email: must be valid", validation.getBody().message());
+        var empty = mock(WebExchangeBindException.class);
+        when(empty.getFieldErrors()).thenReturn(List.of());
+        assertEquals("Invalid request", handler.handleValidation(empty, exchange).getBody().message());
+        var constraint = handler.handleConstraintViolation(new ConstraintViolationException(Set.of()), exchange);
+        assertEquals(HttpStatus.BAD_REQUEST, constraint.getStatusCode());
+        assertEquals("", constraint.getBody().message());
     }
 }

@@ -2,13 +2,10 @@ package com.intellisure.customerpartyservice.service;
 
 import com.intellisure.customerpartyservice.dto.AdminUserRequest;
 import com.intellisure.customerpartyservice.dto.AdminUserResponse;
-import com.intellisure.customerpartyservice.entity.BusinessCustomer;
 import com.intellisure.customerpartyservice.entity.UserAccount;
 import com.intellisure.customerpartyservice.exception.BusinessException;
 import com.intellisure.customerpartyservice.exception.DuplicateResourceException;
-import com.intellisure.customerpartyservice.mapper.BusinessCustomerMapper;
 import com.intellisure.customerpartyservice.mapper.UserAccountMapper;
-import com.intellisure.customerpartyservice.repository.BusinessCustomerRepository;
 import com.intellisure.customerpartyservice.repository.UserAccountRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,10 +24,8 @@ import java.util.UUID;
 public class AdminUserService {
 
     private final UserAccountRepo userAccountRepo;
-    private final BusinessCustomerRepository businessCustomerRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserAccountMapper userAccountMapper;
-    private final BusinessCustomerMapper businessCustomerMapper;
     private final R2dbcEntityTemplate entityTemplate;
 
     private static final Set<String> ADMIN_CREATABLE_ROLES = Set.of(
@@ -75,52 +70,14 @@ public class AdminUserService {
 
         return entityTemplate.insert(UserAccount.class)
                 .using(userAccount)
-                .flatMap(savedUser -> {
-                    if ("POLICYHOLDER".equals(role)) {
-                        return createBusinessCustomer(savedUser, request, now)
-                                .map(customer -> new AdminUserResponse(
-                                        savedUser.getUserId(),
-                                        customer.getCustomerId(),
-                                        savedUser.getEmail(),
-                                        savedUser.getDisplayName(),
-                                        savedUser.getRole(),
-                                        savedUser.getAccountStatus()
-                                ));
-                    } else {
-                        return Mono.just(new AdminUserResponse(
-                                savedUser.getUserId(),
-                                null,
-                                savedUser.getEmail(),
-                                savedUser.getDisplayName(),
-                                savedUser.getRole(),
-                                savedUser.getAccountStatus()
-                        ));
-                    }
-                });
-    }
-
-    private Mono<BusinessCustomer> createBusinessCustomer(UserAccount user, AdminUserRequest request, LocalDateTime now) {
-        BusinessCustomer customer = BusinessCustomer.builder()
-                .customerId(UUID.randomUUID())
-                .userId(user.getUserId())
-                .businessName(request.businessName() != null ? request.businessName() : user.getDisplayName())
-                .ownerName(request.ownerName() != null ? request.ownerName() : user.getDisplayName())
-                .businessType(request.businessType())
-                .phone(request.phone())
-                .address(request.address())
-                .city(request.city())
-                .state(request.state())
-                .country(request.country())
-                .postalCode(request.postalCode())
-                .version(0L)
-                .materialChangePending(false)
-                .createdAt(now)
-                .updatedAt(now)
-                .isNew(true)
-                .build();
-
-        return entityTemplate.insert(BusinessCustomer.class)
-                .using(customer);
+                .map(savedUser -> new AdminUserResponse(
+                        savedUser.getUserId(),
+                        null,
+                        savedUser.getEmail(),
+                        savedUser.getDisplayName(),
+                        savedUser.getRole(),
+                        savedUser.getAccountStatus()
+                ));
     }
 
     private String normalizeRole(String role) {

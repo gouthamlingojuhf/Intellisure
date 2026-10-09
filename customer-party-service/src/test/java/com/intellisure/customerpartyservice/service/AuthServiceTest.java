@@ -281,6 +281,33 @@ class AuthServiceTest {
     }
 
     @Test
+    void shouldNormalizeBlankAndPrefixedInternalRoles() {
+        for (String role : new String[]{null, " ", " ROLE_UNDERWRITER "}) {
+            UserAccount user = UserAccount.builder()
+                    .userId(UUID.randomUUID())
+                    .email("internal-" + UUID.randomUUID() + "@intellisure.com")
+                    .passwordHash("encoded-password")
+                    .role(role)
+                    .accountStatus("ACTIVE")
+                    .displayName("Internal User")
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+            LoginRequest request = new LoginRequest(user.getEmail(), "Password@123");
+            when(userAccountRepo.findByEmail(user.getEmail())).thenReturn(Mono.just(user));
+            when(passwordEncoder.matches(request.password(), user.getPasswordHash())).thenReturn(true);
+            when(jwtService.generateToken(user.getUserId(), role, null)).thenReturn("internal-token");
+            when(jwtService.getExpirationSeconds()).thenReturn(2592000L);
+            when(entityTemplate.update(any(UserAccount.class)))
+                    .thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
+
+            StepVerifier.create(authService.login(request))
+                    .assertNext(response -> assertEquals("internal-token", response.accessToken()))
+                    .verifyComplete();
+        }
+    }
+
+    @Test
     void shouldRejectWrongPassword() {
         UserAccount user = policyholder();
 

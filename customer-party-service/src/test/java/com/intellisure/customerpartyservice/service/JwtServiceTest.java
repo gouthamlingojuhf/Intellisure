@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class JwtServiceTest {
 
@@ -115,6 +116,14 @@ class JwtServiceTest {
                 3600L,
                 jwtService.getExpirationSeconds()
         );
+    }
+
+    @Test
+    void rejectsMissingRoles() {
+        assertThrows(IllegalArgumentException.class,
+                () -> jwtService.generateToken(UUID.randomUUID(), null, null));
+        assertThrows(IllegalArgumentException.class,
+                () -> jwtService.generateToken(UUID.randomUUID(), "   ", null));
     }
 
     private Claims parseClaims(String token) {

@@ -226,36 +226,41 @@
                                 <rule>
                                     <element>BUNDLE</element>
 
+                                    <excludes>
+                                        <!-- Bootstrap main method is process wiring, not business logic. -->
+                                        <exclude>**.CustomerPartyServiceApplication</exclude>
+                                    </excludes>
+
                                     <limits>
 
                                         <limit>
                                             <counter>INSTRUCTION</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.80</minimum>
+                                            <minimum>0.95</minimum>
                                         </limit>
 
                                         <limit>
                                             <counter>LINE</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.80</minimum>
+                                            <minimum>0.95</minimum>
                                         </limit>
 
                                         <limit>
                                             <counter>BRANCH</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.80</minimum>
+                                            <minimum>0.90</minimum>
                                         </limit>
 
                                         <limit>
                                             <counter>METHOD</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.80</minimum>
+                                            <minimum>0.95</minimum>
                                         </limit>
 
                                         <limit>
                                             <counter>CLASS</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.80</minimum>
+                                            <minimum>0.95</minimum>
                                         </limit>
 
                                     </limits>

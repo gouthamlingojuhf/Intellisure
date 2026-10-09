@@ -146,6 +146,22 @@ class UserAccountServiceTest {
     }
 
     @Test
+    void shouldRegisterVendorApplicantWhenRequested() {
+        RegisterRequest request = new RegisterRequest(
+                "vendor@example.com", "Password@123", "Vendor", "VENDOR_APPLICANT");
+        when(userAccountRepo.findByEmail(request.email())).thenReturn(Mono.empty());
+        when(passwordEncoder.encode(request.password())).thenReturn("vendor-hash");
+        when(entityTemplate.insert(any(UserAccount.class)))
+                .thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
+        when(userAccountMapper.toUserResponse(any(UserAccount.class)))
+                .thenAnswer(invocation -> responseFrom(invocation.getArgument(0)));
+
+        StepVerifier.create(userAccountService.register(request))
+                .assertNext(response -> assertEquals("VENDOR_APPLICANT", response.role()))
+                .verifyComplete();
+    }
+
+    @Test
     void shouldRejectDuplicateEmail() {
         RegisterRequest request =
                 new RegisterRequest(
