@@ -37,6 +37,7 @@ Last reviewed: 2026-10-09
 - A clean install against the configured internal Nexus registry remains unavailable from this Mac because the registry host cannot be resolved. After the explicitly approved minimal lockfile repair, a Node 20 local install using the public npm registry completed without changing `package.json` or regenerating dependency versions. The existing lockfile URLs were preserved.
 - The frontend was previously verified with Node 20.20.0; the final audit was also rerun with the currently installed Node 25.6.0. The shared `ui-core` library, shell, Claims and Vendor remotes built successfully, and the configured Karma/ChromeHeadless suite exited successfully. Node 25 reports the expected non-LTS warning; no project dependency or version was changed.
 - Registration/profile completion followed by re-login is required because the customer ID is embedded in the login JWT. The profile UI now makes this explicit and the auth effect persists/removes the customer ID consistently.
+- Test coverage is not yet near the requested target across all modules. Existing tests are uneven, and only Customer & Party plus Quote & Policy currently contain JaCoCo configuration. The service-by-service execution plan is in [TEST_COVERAGE_PLAN.md](Docs/TEST_COVERAGE_PLAN.md); coverage work is now the active priority.
 
 ## Roadmap
 
@@ -54,6 +55,7 @@ Last reviewed: 2026-10-09
 - Completed: frontend shared library, shell, all active remotes, and configured unit tests were verified with Node 20.20.0.
 - Risk: a fresh install through the configured internal Nexus still depends on that registry being reachable; do not change registry configuration or dependency versions in the project to work around it.
 - Completed: current service documentation was consolidated and cross-checked against source controllers, security configuration, Compose service definitions, and the verified Docker runtime.
+- Completed: Eureka and API Gateway now generate JaCoCo reports and enforce regression thresholds of 95% line/method/class and 90% branch coverage. Batch results are Eureka 100% line/method/class and API Gateway 99.35% line, 94.44% branch, 100% method/class.
 
 ### P1 — Policyholder journey
 
@@ -107,6 +109,7 @@ Last reviewed: 2026-10-09
 - Local verification complete: shared ui-core, shell, Claims, and Vendor builds; configured frontend Karma/ChromeHeadless suite; customer-party and quote-policy Java compilation; quote-policy focused Maven suite. Customer-party full tests remain blocked only by the unavailable local R2DBC/MySQL test context.
 - Remaining external verification: run the checklist on the office Windows laptop with approved test identities, run the complete backend test suite on supported Java 17, and retain the evidence listed in the checklist.
 - Completed: additive Docker environment was validated without changing the native Windows path; repeat only when the office environment needs a fresh runtime check.
+- Deferred until coverage batches complete: final all-service coverage report and Java 17/frontend evidence package.
 
 ### P5 — Nice-to-have
 
@@ -138,4 +141,4 @@ Last reviewed: 2026-10-09
 
 ## Immediate batch
 
-The authenticated Docker journey is complete through quote, underwriting, policy, claim, recovery, documents, notifications, and recovery-linked Vendor dispatch/fulfillment. The UI-stability, documentation/administrator, Vendor access/reference, responsive, and deep-link role-boundary batches are verified with Java compilation, shared ui-core/shell builds, Claims/Vendor builds, and the configured frontend suite. The only remaining evidence-dependent work is the native Windows run, supported Java 17 full backend test run, and authenticated role/ownership execution using approved office accounts; the exact procedure is in `Docs/ROLE_BASED_E2E_CHECKLIST.md`.
+The authenticated Docker journey is complete through quote, underwriting, policy, claim, recovery, documents, notifications, and recovery-linked Vendor dispatch/fulfillment. Infrastructure coverage is complete for Eureka and API Gateway. The next meaningful batch is Analytics & Intelligence plus Document & Audit, followed by Workflow/Notification, Recovery, Vendor, Claims, Risk, Quote/Policy, Customer/Party, and the frontend projects. The complete sequence is in `Docs/TEST_COVERAGE_PLAN.md`; native Windows, Java 17, and final role E2E evidence remain the final gate after coverage batches.
