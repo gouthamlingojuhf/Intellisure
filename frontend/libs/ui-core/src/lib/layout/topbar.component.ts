@@ -68,7 +68,7 @@ export interface UserMenuItem {
           aria-label="Search workspace"
           class="search-input"
         />
-        <kbd class="search-shortcut">⌘ K</kbd>
+        <kbd class="search-shortcut">{{ searchShortcut }}</kbd>
       </div>
 
       <div class="topbar-actions">
@@ -638,7 +638,7 @@ export class TopbarComponent {
   @Input() breadcrumbs: BreadcrumbItem[] = [];
   @Input() searchTerm = '';
   @Input() searchPlaceholder = 'Search policies, claims, vendors…';
-  @Input() userName = 'IntelliSure User';
+  @Input() userName = 'Workspace user';
   @Input() userRole = 'Enterprise workspace';
   @Input() userInitial = 'U';
   @Input() notifications: Notification[] = [];
@@ -656,6 +656,7 @@ export class TopbarComponent {
   @Output() markAllRead = new EventEmitter<void>();
 
   searchFocused = false;
+  readonly searchShortcut = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.platform) ? '⌘ K' : 'Ctrl K';
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {

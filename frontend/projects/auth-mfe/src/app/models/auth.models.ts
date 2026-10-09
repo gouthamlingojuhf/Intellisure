@@ -19,6 +19,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   displayName: string;
+  registrationType?: 'POLICYHOLDER' | 'VENDOR_APPLICANT';
 }
 
 export interface UserProfile {

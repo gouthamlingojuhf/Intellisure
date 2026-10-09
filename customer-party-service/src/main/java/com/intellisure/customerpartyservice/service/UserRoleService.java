@@ -33,6 +33,7 @@ public class UserRoleService {
             "CLAIMS_ADJUSTER",
             "CLAIMS_MANAGER",
             "VENDOR_MANAGER",
+            "VENDOR_APPLICANT",
             "SYSTEM_ADMINISTRATOR"
     );
 

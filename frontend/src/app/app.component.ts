@@ -6,6 +6,7 @@ import { Store } from '@ngrx/store';
 import { filter, forkJoin } from 'rxjs';
 import { NotificationResponse } from './core/models/notification.models';
 import { NotificationService } from './core/services/notification.service';
+import { ApiService } from './core/services/api.service';
 import { authActions } from './core/store/auth/auth.actions';
 import { selectIsAuthenticated, selectUserId, selectUserRole } from './core/store/auth/auth.selectors';
 import { selectGlobalLoading, selectToasts } from './core/store/ui/ui.selectors';
@@ -40,15 +41,16 @@ export class AppComponent implements OnInit, OnDestroy {
   private readonly store = inject(Store);
   private readonly router = inject(Router);
   private readonly notificationService = inject(NotificationService);
+  private readonly api = inject(ApiService);
   
   readonly navigationItems: NavigationItem[] = [
     { label: 'Overview', path: '/', icon: '🏠' },
-    { label: 'Dashboard', path: '/dashboard', icon: '📊', roles: ['Admin', 'ADMIN', 'SYSTEM_ADMINISTRATOR', 'Policyholder', 'POLICYHOLDER'] },
-    { label: 'Business Profile', path: '/profile', icon: '🏢', roles: ['Admin', 'ADMIN', 'SYSTEM_ADMINISTRATOR', 'Policyholder', 'POLICYHOLDER'] },
+    { label: 'Dashboard', path: '/dashboard', icon: '📊', roles: ['Policyholder', 'POLICYHOLDER'] },
+    { label: 'Business Profile', path: '/profile', icon: '🏢', roles: ['Policyholder', 'POLICYHOLDER'] },
     { label: 'Quotes & Policies', path: '/policy', icon: '📋', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Policyholder', 'POLICYHOLDER'] },
     { label: 'Underwriting', path: '/underwriting', icon: '🔍', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Risk Engineer', 'RISK_ENGINEER'] },
     { label: 'Claims', path: '/claims', icon: '📄', roles: ['Admin', 'ADMIN', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Policyholder', 'POLICYHOLDER'] },
-    { label: 'Vendors', path: '/vendor', icon: '🏢', roles: ['Admin', 'ADMIN', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Vendor Manager', 'VENDOR_MANAGER', 'SYSTEM_ADMINISTRATOR'] },
+    { label: 'Vendors', path: '/vendor', icon: '🏢', roles: ['Admin', 'ADMIN', 'Vendor Applicant', 'VENDOR_APPLICANT', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Vendor Manager', 'VENDOR_MANAGER', 'SYSTEM_ADMINISTRATOR'] },
     { label: 'Analytics', path: '/analytics', icon: '📊', roles: ['Admin', 'ADMIN', 'SYSTEM_ADMINISTRATOR', 'Underwriter', 'UNDERWRITER', 'Risk Engineer', 'RISK_ENGINEER', 'Claims Manager', 'CLAIMS_MANAGER'] },
     { label: 'Recovery', path: '/recovery', icon: '💰', roles: ['Admin', 'ADMIN', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Policyholder', 'POLICYHOLDER'] },
     { label: 'Documents', path: '/docs', icon: '📁', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Risk Engineer', 'RISK_ENGINEER', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Vendor Manager', 'VENDOR_MANAGER', 'SYSTEM_ADMINISTRATOR', 'Policyholder', 'POLICYHOLDER'] },
@@ -68,6 +70,7 @@ export class AppComponent implements OnInit, OnDestroy {
   currentPath = '/';
   breadcrumbs: { label: string; link?: string }[] = [];
   role: string | null = null;
+  displayName: string | null = null;
   notifications: Array<{ id: string; title: string; message: string; time: string; kind: 'success' | 'warning' | 'info' | 'danger'; read?: boolean }> = [];
   private notificationUserId: string | null = null;
 
@@ -98,14 +101,20 @@ export class AppComponent implements OnInit, OnDestroy {
     return this.role ?? 'Enterprise workspace';
   }
 
+  get isPolicyholder(): boolean {
+    return ['POLICYHOLDER', 'USER'].includes((this.role ?? '').toUpperCase());
+  }
+
   get unreadCount(): number {
     return this.notifications.filter(n => !n.read).length;
   }
 
   get userMenuItems(): Array<{ label: string; link?: string; action?: () => void; icon?: string; variant?: 'default' | 'danger' }> {
     return [
-      { label: 'Dashboard', link: '/dashboard', icon: '📊' },
-      { label: 'Business profile', link: '/profile', icon: '🏢' },
+      ...(this.isPolicyholder ? [
+        { label: 'Dashboard', link: '/dashboard', icon: '📊' },
+        { label: 'Business profile', link: '/profile', icon: '🏢' },
+      ] : []),
       { label: 'Quotes & Policies', link: '/policy', icon: '📋' },
       { label: 'Sign out', action: () => this.logout(), icon: '🚪', variant: 'danger' },
     ];
@@ -118,6 +127,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.restoreUserSession();
+    this.loadCurrentUser();
     this.updateNavigation(this.router.url);
   }
 
@@ -182,11 +192,20 @@ export class AppComponent implements OnInit, OnDestroy {
   search(): void {
     const term = this.searchTerm.trim().toLowerCase();
     if (!term) return;
-    const destination = this.navigationItems.find((item) => item.label.toLowerCase().includes(term));
+    const aliases: Record<string, string> = {
+      policy: '/policy', policies: '/policy', quote: '/policy', quotes: '/policy',
+      claim: '/claims', claims: '/claims', vendor: '/vendor', vendors: '/vendor',
+      recovery: '/recovery', document: '/docs', documents: '/docs',
+      notification: '/notifications', notifications: '/notifications',
+      underwriting: '/underwriting', analytics: '/analytics', profile: '/profile', dashboard: '/dashboard',
+    };
+    const destinationPath = aliases[term] ?? this.navigationItems.find((item) => item.label.toLowerCase().includes(term))?.path;
+    const destination = this.navigationItems.find((item) => item.path === destinationPath && (!item.roles || item.roles.some((role) => role.toUpperCase() === (this.role ?? '').toUpperCase())));
     if (destination) this.router.navigateByUrl(destination.path);
   }
 
   logout(): void {
+    this.displayName = null;
     this.store.dispatch(authActions.logout());
     this.router.navigateByUrl('/');
   }
@@ -229,6 +248,14 @@ export class AppComponent implements OnInit, OnDestroy {
     this.notificationService.getAllNotifications(userId).subscribe({
       next: (notifications) => { this.notifications = notifications.map((notification) => this.toTopbarNotification(notification)); },
       error: () => { this.notifications = []; },
+    });
+  }
+
+  private loadCurrentUser(): void {
+    if (typeof localStorage === 'undefined' || !localStorage.getItem('is_token')) return;
+    this.api.get<{ displayName?: string; email?: string }>('/api/auth/me').subscribe({
+      next: (user) => { this.displayName = user.displayName || user.email || null; },
+      error: () => { this.displayName = localStorage.getItem('is_email'); },
     });
   }
 

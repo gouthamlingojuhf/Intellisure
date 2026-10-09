@@ -25,15 +25,24 @@
           </p>
 
           <div class="hero-actions">
-            <a routerLink="/auth/register" class="hero-cta-btn">
-              <is-button variant="primary" size="lg">
-                Get Started
-                <span class="btn-arrow" aria-hidden="true">&rarr;</span>
-              </is-button>
-            </a>
-            <a routerLink="/auth/login" class="hero-cta-btn">
-              <is-button variant="secondary" size="lg">Sign In</is-button>
-            </a>
+            @if (isAuthenticated$ | async) {
+              <a routerLink="/policy" class="hero-cta-btn">
+                <is-button variant="primary" size="lg">
+                  Enter Workspace
+                  <span class="btn-arrow" aria-hidden="true">&rarr;</span>
+                </is-button>
+              </a>
+            } @else {
+              <a routerLink="/auth/register" class="hero-cta-btn">
+                <is-button variant="primary" size="lg">
+                  Get Started
+                  <span class="btn-arrow" aria-hidden="true">&rarr;</span>
+                </is-button>
+              </a>
+              <a routerLink="/auth/login" class="hero-cta-btn">
+                <is-button variant="secondary" size="lg">Sign In</is-button>
+              </a>
+            }
           </div>
 
           <div class="hero-reassurance-list" aria-label="Key architecture highlights">

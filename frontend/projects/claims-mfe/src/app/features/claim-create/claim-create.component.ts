@@ -99,7 +99,7 @@ import { CardComponent, ButtonComponent, InputComponent, SelectComponent, Textar
           <dt>Incident date</dt>
           <dd>{{ claimForm.get('incidentDate')?.value }}</dd>
           <dt>Estimated loss</dt>
-          <dd>{{ claimForm.get('estimatedLoss')?.value | currency:'USD':'symbol':'1.0-0' }}</dd>
+          <dd>{{ claimForm.get('estimatedLoss')?.value | currency:'INR':'symbol':'1.0-0' }}</dd>
           <dt>Description</dt>
           <dd>{{ claimForm.get('description')?.value }}</dd>
         </dl>

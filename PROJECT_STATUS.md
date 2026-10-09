@@ -75,6 +75,11 @@ Last reviewed: 2026-10-09
 - Completed: Claims FNOL is now shown only to Policyholders in the claims queue; staff retain their operational claim view without being presented a customer-only action.
 - Completed: Risk Engineers receive read-only assessment/quote review in the shared Underwriting screen; decision and commercial-term controls remain Underwriter-only to match service authorization.
 - Completed: Claims and Intelligence MFE application TypeScript configs no longer compile Jasmine specs as application source, restoring normal remote production builds without dependency changes.
+- Completed: landing-page hero and final CTA now follow the authenticated session state; signed-in users see Enter Workspace/Sign Out instead of Sign In/Get Started while the public experience remains unchanged for signed-out users.
+- Completed: global UI role handling now keeps Dashboard and Business Profile policyholder-only, removes the customer-facing System Status card, resolves the signed-in display name from `/api/auth/me`, and routes search terms such as policies, claims, vendors, recovery, documents, analytics, and underwriting to their permitted workspace areas.
+- Completed: topbar shortcut text is platform-aware (`Ctrl K` on Windows/Linux and `⌘ K` on Apple platforms), and customer-facing monetary values now default to INR formatting.
+- Completed: public registration now distinguishes Business Policyholder from Vendor / Service Provider Applicant. Vendor applicants receive a restricted `VENDOR_APPLICANT` role and may submit onboarding applications; activation remains Vendor Manager-controlled.
+- Completed: quote creation now explains product lines, includes the requested commercial insurance products, and provides coverage-code selection with auto-filled names plus a Custom coverage option.
 - Remaining: add deeper assignment referral and subjectivity screens only after their existing backend contracts and role boundaries are verified end-to-end.
 - Remaining: System Administrator user-management actions have backend create/role/status endpoints but no list/search endpoint or frontend administration workspace. A UI should not be fabricated around manually supplied IDs; this is the next contract-level employee batch.
 - Dependency: preserve role restrictions and avoid exposing employee-only information to Policyholders.

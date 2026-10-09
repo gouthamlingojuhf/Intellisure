@@ -1,7 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { Store } from '@ngrx/store';
 import { ButtonComponent } from 'ui-core';
+import { selectIsAuthenticated } from '../../../core/store/auth/auth.selectors';
+import { authActions } from '../../../core/store/auth/auth.actions';
 
 @Component({
   selector: 'is-final-cta',
@@ -21,12 +24,19 @@ import { ButtonComponent } from 'ui-core';
           </p>
 
           <div class="cta-actions">
-            <a routerLink="/auth/register" class="cta-btn-link">
-              <is-button variant="primary" size="lg">Get Started</is-button>
-            </a>
-            <a routerLink="/auth/login" class="cta-btn-link">
-              <is-button variant="secondary" size="lg">Sign In</is-button>
-            </a>
+            @if (isAuthenticated$ | async) {
+              <a routerLink="/policy" class="cta-btn-link">
+                <is-button variant="primary" size="lg">Enter Workspace</is-button>
+              </a>
+              <button type="button" class="cta-btn-link cta-signout" (click)="logout()">Sign Out</button>
+            } @else {
+              <a routerLink="/auth/register" class="cta-btn-link">
+                <is-button variant="primary" size="lg">Get Started</is-button>
+              </a>
+              <a routerLink="/auth/login" class="cta-btn-link">
+                <is-button variant="secondary" size="lg">Sign In</is-button>
+              </a>
+            }
           </div>
 
           <div class="reassurance-strip" aria-label="Platform assurance points">
@@ -137,6 +147,21 @@ import { ButtonComponent } from 'ui-core';
       display: inline-flex;
     }
 
+    .cta-signout {
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 20px;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      border-radius: 6px;
+      background: transparent;
+      color: #ffffff;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
     .reassurance-strip {
       display: flex;
       flex-wrap: wrap;
@@ -178,4 +203,11 @@ import { ButtonComponent } from 'ui-core';
     }
   `],
 })
-export class FinalCtaComponent {}
+export class FinalCtaComponent {
+  private readonly store = inject(Store);
+  readonly isAuthenticated$ = this.store.select(selectIsAuthenticated);
+
+  logout(): void {
+    this.store.dispatch(authActions.logout());
+  }
+}

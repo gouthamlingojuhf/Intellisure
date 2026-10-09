@@ -113,7 +113,7 @@ import {
                         </is-badge>
                       </td>
                       <td>
-                        <strong>{{ policy.totalPremium | currency:'USD':'symbol':'1.0-0' }}</strong>
+                        <strong>{{ policy.totalPremium | currency:'INR':'symbol':'1.0-0' }}</strong>
                       </td>
                       <td>
                         <small class="text-muted">{{ policy.startDate }} to {{ policy.endDate }}</small>
@@ -178,7 +178,7 @@ import {
                       <td>{{ quote.requestedEffectiveDate }}</td>
                       <td>
                         @if (quote.totalPremium !== null && quote.totalPremium !== undefined) {
-                          <strong>{{ quote.totalPremium | currency:'USD':'symbol':'1.0-0' }}</strong>
+                          <strong>{{ quote.totalPremium | currency:'INR':'symbol':'1.0-0' }}</strong>
                         } @else {
                           <span class="text-muted">Awaiting Rating</span>
                         }

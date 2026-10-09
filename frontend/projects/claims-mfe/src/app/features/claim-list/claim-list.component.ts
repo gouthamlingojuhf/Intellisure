@@ -281,7 +281,7 @@ export class ClaimListComponent implements OnInit {
 
   renderAmount(row: ClaimResponse, value: number): string {
     const amount = typeof value === 'number' ? value : 0;
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
+    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
   }
 
   private describeError(err: { status?: number; error?: { message?: string }; message?: string }): string {

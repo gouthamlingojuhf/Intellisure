@@ -15,11 +15,15 @@ import { VendorApiService } from '../../services/vendor-api.service';
   imports: [ReactiveFormsModule, AsyncPipe],
   template: `
     <section class="card">
-      <h1 class="text-xl font-bold text-blue-900">Onboarding requests</h1>
+      <h1 class="text-xl font-bold text-blue-900">{{ isApplicant ? 'Vendor onboarding application' : 'Onboarding requests' }}</h1>
+      @if (isApplicant) {
+        <p class="mt-2 text-sm text-gray-600">Submit your business and service details for Vendor Manager verification.</p>
+      }
       <button class="btn-secondary mt-2" (click)="reload()">Refresh</button>
       @if (error) {
         <p class="mt-2 text-sm text-rose-600">{{ error }}</p>
       }
+      @if (!isApplicant) {
       <table class="table mt-2">
         <thead>
           <tr>
@@ -47,6 +51,7 @@ import { VendorApiService } from '../../services/vendor-api.service';
           }
         </tbody>
       </table>
+      }
 
       <h2 class="mt-6 font-bold">Submit onboarding request</h2>
       <form [formGroup]="form" (ngSubmit)="submit()" class="mt-2 grid grid-cols-2 gap-2">
@@ -76,6 +81,7 @@ export class OnboardingListComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   items: import('../../models/vendor.models').VendorOnboardingResponse[] = [];
   error: string | null = null;
+  isApplicant = typeof localStorage !== 'undefined' && localStorage.getItem('is_role') === 'VENDOR_APPLICANT';
 
   readonly form = this.fb.nonNullable.group({
     legalName: ['', Validators.required],
@@ -94,6 +100,7 @@ export class OnboardingListComponent implements OnInit {
   }
 
   reload(): void {
+    if (this.isApplicant) { this.items = []; return; }
     this.api.getOnboardingRequests().subscribe({
       next: (items) => {
         this.items = items;

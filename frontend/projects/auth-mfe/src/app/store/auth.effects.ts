@@ -22,7 +22,7 @@ export const loginRemoteEffect = createEffect(
               if (res.customerId) localStorage.setItem('is_customer_id', res.customerId);
               if (res.email) localStorage.setItem('is_email', res.email);
             }
-            router.navigateByUrl(res?.customerId ? '/dashboard' : '/profile');
+            router.navigateByUrl(res?.role === 'VENDOR_APPLICANT' ? '/vendor/onboarding' : res?.customerId ? '/dashboard' : '/profile');
           }),
           map((response) => authRemoteActions.loginSuccess({ response })),
           catchError((err) =>

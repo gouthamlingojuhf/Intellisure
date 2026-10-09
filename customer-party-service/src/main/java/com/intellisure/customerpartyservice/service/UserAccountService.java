@@ -46,11 +46,13 @@ public class UserAccountService {
                 .switchIfEmpty(
                         Mono.defer(()->{
                                     LocalDateTime now = LocalDateTime.now();
+                                    String role = "VENDOR_APPLICANT".equalsIgnoreCase(request.registrationType())
+                                            ? "VENDOR_APPLICANT" : "POLICYHOLDER";
                                     UserAccount userAccount = UserAccount.builder()
                                             .userId(UUID.randomUUID())
                                             .email(request.email())
                                             .passwordHash(passwordEncoder.encode(request.password()))
-                                            .role("POLICYHOLDER")
+                                            .role(role)
                                             .accountStatus("ACTIVE")
                                             .displayName(request.displayName())
                                             .createdAt(now)

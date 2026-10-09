@@ -113,7 +113,7 @@ import {
                   <h3>Commercial Terms Offered!</h3>
                   <p>
                     Underwriter has approved terms with an indicated total premium of
-                    <strong>{{ quote.totalPremium | currency:'USD':'symbol':'1.0-0' }}</strong>.
+                    <strong>{{ quote.totalPremium | currency:'INR':'symbol':'1.0-0' }}</strong>.
                     Review the offered limits below and accept to proceed to binding.
                   </p>
                 </div>
@@ -259,7 +259,7 @@ import {
                         </td>
                         <td class="text-right">
                           @if (cov.coveragePremium !== null && cov.coveragePremium !== undefined) {
-                            <strong>{{ cov.coveragePremium | currency:'USD':'symbol':'1.0-0' }}</strong>
+                            <strong>{{ cov.coveragePremium | currency:'INR':'symbol':'1.0-0' }}</strong>
                           } @else {
                             <span class="text-muted">—</span>
                           }
@@ -365,7 +365,7 @@ import {
                 @if (quote.totalPremium) {
                   <div class="premium-highlight">
                     <dt>Total Indicated Premium</dt>
-                    <dd class="premium-amount">{{ quote.totalPremium | currency:'USD':'symbol':'1.0-0' }}</dd>
+                    <dd class="premium-amount">{{ quote.totalPremium | currency:'INR':'symbol':'1.0-0' }}</dd>
                   </div>
                 }
               </dl>

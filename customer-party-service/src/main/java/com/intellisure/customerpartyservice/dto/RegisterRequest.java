@@ -12,6 +12,11 @@ public record RegisterRequest(
         String password,
 
         @NotBlank
-        String displayName
+        String displayName,
+
+        String registrationType
 ) {
+    public RegisterRequest(String email, String password, String displayName) {
+        this(email, password, displayName, "POLICYHOLDER");
+    }
 }

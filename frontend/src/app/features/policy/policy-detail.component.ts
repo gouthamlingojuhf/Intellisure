@@ -65,7 +65,7 @@ import {
             <h3>Active Contract Protection</h3>
             <p>
               Term period from <strong>{{ policy.startDate }}</strong> to <strong>{{ policy.endDate }}</strong>. Total annual written premium:
-              <strong>{{ policy.totalPremium | currency:'USD':'symbol':'1.0-0' }}</strong>.
+              <strong>{{ policy.totalPremium | currency:'INR':'symbol':'1.0-0' }}</strong>.
             </p>
           </div>
           <is-button variant="primary" (click)="goToClaim(policy.policyId)">
@@ -112,7 +112,7 @@ import {
                           \${{ cov.deductibleAmount | number:'1.0-0' }}
                         </td>
                         <td class="text-right">
-                          <strong>{{ cov.coveragePremium | currency:'USD':'symbol':'1.0-0' }}</strong>
+                          <strong>{{ cov.coveragePremium | currency:'INR':'symbol':'1.0-0' }}</strong>
                         </td>
                       </tr>
                     }
@@ -156,7 +156,7 @@ import {
                 }
                 <div class="premium-box">
                   <dt>Annual Written Premium</dt>
-                  <dd class="premium-text">{{ policy.totalPremium | currency:'USD':'symbol':'1.0-0' }}</dd>
+                  <dd class="premium-text">{{ policy.totalPremium | currency:'INR':'symbol':'1.0-0' }}</dd>
                 </div>
               </dl>
             </is-card>

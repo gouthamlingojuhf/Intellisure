@@ -219,12 +219,19 @@ public class SecurityConfig {
                          */
 
                         .pathMatchers(
+                                HttpMethod.POST,
+                                "/api/vendors/onboarding-requests"
+                        )
+                        .hasAnyRole("VENDOR_APPLICANT", "VENDOR_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
+
+                        .pathMatchers(
                                 "/api/vendors/**",
                                 "/api/vendor-assignments/**",
                                 "/api/partners/**"
                         )
                         .hasAnyRole(
                                 "VENDOR_MANAGER",
+                                "VENDOR_APPLICANT",
                                 "CLAIMS_ADJUSTER",
                                 "CLAIMS_MANAGER",
                                 "SYSTEM_ADMINISTRATOR",

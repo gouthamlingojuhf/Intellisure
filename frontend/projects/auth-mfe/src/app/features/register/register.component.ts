@@ -36,6 +36,17 @@ import { selectRegistered, selectRemoteError, selectRemoteLoading } from '../../
           </div>
 
           <div class="form-field">
+            <label for="registrationType" class="form-label">Account type</label>
+            <select id="registrationType" class="form-input" formControlName="registrationType">
+              <option value="POLICYHOLDER">Business policyholder</option>
+              <option value="VENDOR_APPLICANT">Vendor / service provider applicant</option>
+            </select>
+            @if (form.controls.registrationType.value === 'VENDOR_APPLICANT') {
+              <p class="form-hint">Complete vendor onboarding after registration. Activation requires Vendor Manager verification.</p>
+            }
+          </div>
+
+          <div class="form-field">
             <label for="email" class="form-label">Email address</label>
             <input
               id="email"
@@ -293,6 +304,7 @@ export class RegisterComponent {
         Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/),
       ],
     ],
+    registrationType: ['POLICYHOLDER' as 'POLICYHOLDER' | 'VENDOR_APPLICANT', Validators.required],
   });
 
   submit(): void {

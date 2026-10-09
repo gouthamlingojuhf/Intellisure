@@ -128,12 +128,12 @@ import { CardComponent, ButtonComponent, BadgeComponent, SkeletonComponent } fro
                 <span class="section-label">Loss Valuation</span>
                 <div class="amount-hero">
                   <span class="amount-label">Estimated Loss</span>
-                  <strong class="amount-value">{{ claim.estimatedLoss | currency:'USD':'symbol':'1.0-0' }}</strong>
+                  <strong class="amount-value">{{ claim.estimatedLoss | currency:'INR':'symbol':'1.0-0' }}</strong>
                 </div>
                 @if (claim.payoutAmount !== undefined && claim.payoutAmount !== null) {
                   <div class="amount-sub">
                     <span class="amount-label">Payout Amount</span>
-                    <strong class="amount-subvalue">{{ claim.payoutAmount | currency:'USD':'symbol':'1.0-0' }}</strong>
+                    <strong class="amount-subvalue">{{ claim.payoutAmount | currency:'INR':'symbol':'1.0-0' }}</strong>
                   </div>
                 }
               </div>

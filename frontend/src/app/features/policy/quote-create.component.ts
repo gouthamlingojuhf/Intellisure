@@ -136,6 +136,7 @@ interface ProductPreset {
                       (change)="onProductChange()"
                       [error]="getFieldError('productCode')"
                     />
+                    <p class="field-help"><span class="info-icon" [title]="productDescriptions[form.get('productCode')?.value || '']">i</span>{{ productDescriptions[form.get('productCode')?.value || ''] || 'Select the insurance line that best matches your business exposure.' }}</p>
                   </div>
 
                   <div class="col-span-2">
@@ -210,18 +211,20 @@ interface ProductPreset {
                       </div>
 
                       <div class="form-grid">
-                        <div>
-                          <is-input
-                            label="Coverage Code *"
-                            placeholder="e.g. BLDG"
-                            formControlName="coverageCode"
-                            [error]="getCovError($index, 'coverageCode')"
-                          />
+                        <div class="form-group">
+                          <label class="field-label">Coverage Code *</label>
+                          <select class="coverage-select" [value]="covGroup.get('coverageCode')?.value" (change)="onCoverageCodeChange($index, $event)">
+                            @for (option of coverageOptions; track option.code) {
+                              <option [value]="option.code">{{ option.code }} — {{ option.name }}</option>
+                            }
+                            <option value="CUSTOM">Custom coverage</option>
+                          </select>
+                          @if (getCovError($index, 'coverageCode')) { <span class="field-error">{{ getCovError($index, 'coverageCode') }}</span> }
                         </div>
 
                         <div>
                           <is-input
-                            label="Coverage Name *"
+                            label="Coverage Name / Custom Description *"
                             placeholder="e.g. Building Property"
                             formControlName="coverageName"
                             [error]="getCovError($index, 'coverageName')"
@@ -537,6 +540,42 @@ interface ProductPreset {
       font-weight: 600;
     }
 
+    .field-help {
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      margin: 7px 0 0;
+      color: var(--muted, #6f6a6d);
+      font-size: 10px;
+      line-height: 1.45;
+    }
+
+    .info-icon {
+      display: inline-grid;
+      flex: 0 0 auto;
+      place-items: center;
+      width: 15px;
+      height: 15px;
+      border: 1px solid var(--claret, #75013f);
+      border-radius: 50%;
+      color: var(--claret, #75013f);
+      font-size: 10px;
+      font-weight: 800;
+      cursor: help;
+    }
+
+    .coverage-select {
+      width: 100%;
+      min-height: 38px;
+      padding: 0 10px;
+      border: 1px solid var(--warm, #eae5df);
+      border-radius: 6px;
+      background: var(--surface, #ffffff);
+      color: var(--ink, #000000);
+      font: inherit;
+      font-size: 12px;
+    }
+
     .custom-textarea {
       width: 100%;
       padding: 9px 12px;
@@ -834,6 +873,35 @@ export class QuoteCreateComponent implements OnInit {
     { value: 'GENERAL_LIABILITY', label: 'Commercial General Liability (CGL)' },
     { value: 'BUSINESS_OWNERS_POLICY', label: "Business Owner's Policy (BOP Package)" },
     { value: 'COMMERCIAL_AUTO', label: 'Commercial Fleet Auto' },
+    { value: 'WORKERS_COMPENSATION', label: 'Workers\' Compensation Insurance' },
+    { value: 'PROFESSIONAL_LIABILITY', label: 'Professional Liability / Errors & Omissions (E&O)' },
+    { value: 'CYBER_LIABILITY', label: 'Cyber Liability Insurance' },
+    { value: 'COMMERCIAL_UMBRELLA', label: 'Commercial Umbrella Insurance' },
+    { value: 'INLAND_MARINE', label: 'Inland Marine Insurance' },
+  ];
+
+  readonly productDescriptions: Record<string, string> = {
+    COMMERCIAL_PROPERTY: 'Protects buildings, contents, equipment, and other business property from covered physical loss.',
+    GENERAL_LIABILITY: 'Covers third-party bodily injury, property damage, and related liability exposures.',
+    BUSINESS_OWNERS_POLICY: 'A packaged small-business policy combining eligible property and general liability protection.',
+    COMMERCIAL_AUTO: 'Covers company-owned, hired, or non-owned vehicles used for business operations.',
+    WORKERS_COMPENSATION: 'Covers eligible employee workplace injuries and statutory employer obligations.',
+    PROFESSIONAL_LIABILITY: 'Protects against claims alleging professional mistakes, omissions, or inadequate advice.',
+    CYBER_LIABILITY: 'Addresses cyber incidents, privacy events, notification costs, and technology-related liability.',
+    COMMERCIAL_UMBRELLA: 'Provides additional liability limits above eligible primary liability policies.',
+    INLAND_MARINE: 'Covers movable property, equipment, and goods while transported or temporarily stored.',
+  };
+
+  readonly coverageOptions = [
+    { code: 'BLDG', name: 'Building Property' },
+    { code: 'BPP', name: 'Business Personal Property' },
+    { code: 'GL_OCCURRENCE', name: 'General Liability — Occurrence' },
+    { code: 'AUTO_LIABILITY', name: 'Commercial Auto Liability' },
+    { code: 'WORKERS_COMP', name: 'Workers Compensation' },
+    { code: 'PROFESSIONAL_LIABILITY', name: 'Professional Liability' },
+    { code: 'CYBER', name: 'Cyber Liability' },
+    { code: 'UMBRELLA', name: 'Commercial Umbrella' },
+    { code: 'INLAND_MARINE', name: 'Inland Marine' },
   ];
 
   readonly form = this.fb.nonNullable.group({
@@ -884,9 +952,20 @@ export class QuoteCreateComponent implements OnInit {
 
   onProductChange(): void {
     const selected = this.form.get('productCode')?.value;
-    if (selected && this.productPresets[selected]) {
-      this.applyPreset(selected);
+    if (selected && this.productPresets[selected]) this.applyPreset(selected);
+    else {
+      this.coveragesArray.clear();
+      this.addCoverage();
     }
+  }
+
+  onCoverageCodeChange(index: number, event: Event): void {
+    const code = (event.target as HTMLSelectElement).value;
+    const option = this.coverageOptions.find((item) => item.code === code);
+    const group = this.coveragesArray.at(index);
+    group.get('coverageCode')?.setValue(code);
+    if (option) group.get('coverageName')?.setValue(option.name);
+    else if (code === 'CUSTOM') group.get('coverageName')?.setValue('');
   }
 
   applyPreset(productCode: string): void {

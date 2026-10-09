@@ -237,7 +237,7 @@ import {
                             </is-badge>
                           </td>
                           <td>
-                            <strong>{{ policy.totalPremium | currency:'USD':'symbol':'1.0-0' }}</strong>
+                            <strong>{{ policy.totalPremium | currency:'INR':'symbol':'1.0-0' }}</strong>
                           </td>
                           <td>
                             <small class="text-muted">{{ policy.startDate }} to {{ policy.endDate }}</small>
@@ -298,15 +298,6 @@ import {
               </div>
             </is-card>
 
-            <is-card title="System Status" subtitle="Verified API Gateway Connectivity">
-              <div class="status-box">
-                <div class="status-indicator">
-                  <span class="dot-online"></span>
-                  <strong>Gateway :8080 Connected</strong>
-                </div>
-                <p>Reactive Spring WebFlux microservice infrastructure operating normally.</p>
-              </div>
-            </is-card>
           </aside>
         </div>
       }

@@ -1,7 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { Store } from '@ngrx/store';
 import { ButtonComponent } from 'ui-core';
+import { selectIsAuthenticated } from '../../core/store/auth/auth.selectors';
 
 import { LandingHeaderComponent } from './components/landing-header.component';
 import { HeroVisualComponent } from './components/hero-visual.component';
@@ -35,4 +37,7 @@ import { LandingFooterComponent } from './components/landing-footer.component';
   templateUrl: './home.component.html',
   styleUrl: './home.component.css',
 })
-export class HomeComponent {}
+export class HomeComponent {
+  private readonly store = inject(Store);
+  readonly isAuthenticated$ = this.store.select(selectIsAuthenticated);
+}
