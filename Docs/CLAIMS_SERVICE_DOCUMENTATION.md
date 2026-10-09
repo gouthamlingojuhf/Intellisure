@@ -3,7 +3,7 @@
 > **Service Name**: `claims-service`  
 > **Eureka Application Name**: `CLAIMS-SERVICE`  
 > **Port**: `8084`  
-> **Framework**: Spring Boot 3.x, **CompletableFuture Claim Adjudication**, Spring Data JPA, Java 17  
+> **Framework**: Spring Boot 4.1.1, Spring WebFlux, Spring Data R2DBC, Java 17
 > **Database**: `claims_db` (MySQL)
 
 ---

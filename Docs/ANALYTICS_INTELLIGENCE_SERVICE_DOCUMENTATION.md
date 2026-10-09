@@ -3,7 +3,7 @@
 > **Service Name**: `analytics-intelligence-service`  
 > **Eureka Application Name**: `ANALYTICS-INTELLIGENCE-SERVICE`  
 > **Port**: `8089`  
-> **Framework**: Spring Boot 3.x, Analytics Aggregation Engine, Spring Data JPA, Java 17  
+> **Framework**: Spring Boot 4.1.1, Spring WebFlux, Spring Data R2DBC, Java 17
 > **Database**: `analytics_intelligence_db` (MySQL)
 
 ---

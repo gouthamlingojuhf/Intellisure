@@ -1,6 +1,7 @@
 package com.intellisure.claimsservice.service;
 
 import com.intellisure.claimsservice.client.CustomerPartyAdjusterClient;
+import com.intellisure.claimsservice.client.PolicyOwnershipClient;
 import com.intellisure.claimsservice.dto.ClaimResponse;
 import com.intellisure.claimsservice.dto.FileClaimRequest;
 import com.intellisure.claimsservice.entity.Claim;
@@ -31,6 +32,7 @@ public class ClaimService {
 
     private final ClaimRepository claimRepository;
     private final CustomerPartyAdjusterClient customerPartyAdjusterClient;
+    private final PolicyOwnershipClient policyOwnershipClient;
     private final SecurityActorService securityActorService;
 
     public Flux<ClaimResponse> getClaims(UUID customerId) {
@@ -43,12 +45,6 @@ public class ClaimService {
     }
 
     public Flux<ClaimResponse> getClaimsForCaller(UUID requestedCustomerId, String status) {
-        if (securityActorService == null) {
-            if (status != null && !status.isBlank()) {
-                return getClaimsByStatus(status);
-            }
-            return getClaims(requestedCustomerId);
-        }
         return securityActorService.hasAnyRole("CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
                 .flatMapMany(isStaff -> {
                     if (Boolean.TRUE.equals(isStaff)) {
@@ -72,24 +68,14 @@ public class ClaimService {
     public Mono<ClaimResponse> getClaim(UUID id) {
         return claimRepository.findById(id)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException("Claim not found: " + id)))
-                .flatMap(claim -> {
-                    if (securityActorService != null) {
-                        return securityActorService.assertClaimAccess(claim).thenReturn(claim);
-                    }
-                    return Mono.just(claim);
-                })
+                .flatMap(claim -> securityActorService.assertClaimAccess(claim).thenReturn(claim))
                 .map(this::mapToResponse);
     }
 
     public Mono<ClaimResponse> getClaimByNumber(String claimNumber) {
         return claimRepository.findByClaimNumber(claimNumber)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException("Claim not found: " + claimNumber)))
-                .flatMap(claim -> {
-                    if (securityActorService != null) {
-                        return securityActorService.assertClaimAccess(claim).thenReturn(claim);
-                    }
-                    return Mono.just(claim);
-                })
+                .flatMap(claim -> securityActorService.assertClaimAccess(claim).thenReturn(claim))
                 .map(this::mapToResponse);
     }
 
@@ -273,11 +259,10 @@ public class ClaimService {
     }
 
     public Mono<ClaimResponse> fileClaim(FileClaimRequest request) {
-        if (securityActorService != null) {
-            return securityActorService.currentCustomerId()
-                    .flatMap(customerId -> fileClaim(request, customerId));
-        }
-        return fileClaim(request, UUID.randomUUID());
+        return securityActorService.currentCustomerId()
+                .flatMap(customerId -> policyOwnershipClient
+                        .assertPolicyOwnership(request.policyId(), customerId)
+                        .then(Mono.defer(() -> fileClaim(request, customerId))));
     }
 
     public Mono<ClaimResponse> fileClaim(FileClaimRequest request, UUID customerId) {

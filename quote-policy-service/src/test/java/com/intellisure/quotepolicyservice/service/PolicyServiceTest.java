@@ -82,6 +82,10 @@ class PolicyServiceTest {
         );
 
         lenient().when(
+                securityActorService.assertCustomerAccess(any(UUID.class))
+        ).thenReturn(Mono.empty());
+
+        lenient().when(
                 entityTemplate.update(any(Policy.class))
         ).thenAnswer(
                 invocation -> Mono.just(invocation.getArgument(0))

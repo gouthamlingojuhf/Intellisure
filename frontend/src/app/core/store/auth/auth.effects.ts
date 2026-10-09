@@ -17,6 +17,7 @@ export const loginEffect = createEffect(
               localStorage.setItem('is_token', token);
               if (res.role) localStorage.setItem('is_role', res.role);
               if (res.userId) localStorage.setItem('is_user_id', res.userId);
+              if (res.customerId) localStorage.setItem('is_customer_id', res.customerId);
               if (res.email) localStorage.setItem('is_email', res.email);
             }
           }),
@@ -41,6 +42,7 @@ export const logoutEffect = createEffect(
           localStorage.removeItem('is_role');
           localStorage.removeItem('is_user_id');
           localStorage.removeItem('is_email');
+          localStorage.removeItem('is_customer_id');
         }
       })
     );

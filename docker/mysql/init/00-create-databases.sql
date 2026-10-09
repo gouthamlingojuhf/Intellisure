@@ -1,0 +1,9 @@
+CREATE DATABASE IF NOT EXISTS customer_party_db;
+CREATE DATABASE IF NOT EXISTS quote_policy_db;
+CREATE DATABASE IF NOT EXISTS risk_underwriting_db;
+CREATE DATABASE IF NOT EXISTS claims_db;
+CREATE DATABASE IF NOT EXISTS vendor_partner_db;
+CREATE DATABASE IF NOT EXISTS recovery_continuity_db;
+CREATE DATABASE IF NOT EXISTS workflow_notification_db;
+CREATE DATABASE IF NOT EXISTS document_audit_db;
+CREATE DATABASE IF NOT EXISTS analytics_intelligence_db;

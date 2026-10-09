@@ -1,0 +1,242 @@
+name: intellisure
+
+x-backend-defaults: &backend-defaults
+  restart: unless-stopped
+  networks:
+    - intellisure-network
+  environment: &backend-environment
+    SPRING_PROFILES_ACTIVE: docker
+    SPRING_R2DBC_USERNAME: root
+    SPRING_R2DBC_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD for Docker development}
+    EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    JWT_SECRET: ${INTELLISURE_JWT_SECRET:?Set INTELLISURE_JWT_SECRET for Docker development}
+
+x-service-build: &service-build
+  context: .
+  dockerfile: Dockerfile.backend
+
+x-service-health: &service-health
+  interval: 10s
+  timeout: 5s
+  retries: 12
+  start_period: 45s
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    networks:
+      - intellisure-network
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD for Docker development}
+    ports:
+      - "3306:3306"
+    volumes:
+      - intellisure-mysql-data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  eureka-server:
+    <<: *backend-defaults
+    build:
+      <<: *service-build
+      args:
+        SERVICE_DIR: eureka
+    ports:
+      - "8761:8761"
+    healthcheck:
+      <<: *service-health
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8761/actuator/health | grep -q UP"]
+
+  customer-party-service:
+    <<: *backend-defaults
+    build:
+      <<: *service-build
+      args:
+        SERVICE_DIR: customer-party-service
+    environment:
+      <<: *backend-environment
+      SPRING_R2DBC_URL: r2dbc:mysql://mysql:3306/customer_party_db
+    depends_on: &service-depends
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    healthcheck:
+      <<: *service-health
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8081/actuator/health | grep -q UP"]
+
+  quote-policy-service:
+    <<: *backend-defaults
+    build:
+      <<: *service-build
+      args:
+        SERVICE_DIR: quote-policy-service
+    environment:
+      <<: *backend-environment
+      SPRING_R2DBC_URL: r2dbc:mysql://mysql:3306/quote_policy_db
+    depends_on: *service-depends
+    ports:
+      - "8082:8082"
+    healthcheck:
+      <<: *service-health
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8082/actuator/health | grep -q UP"]
+
+  risk-underwriting-service:
+    <<: *backend-defaults
+    build:
+      <<: *service-build
+      args:
+        SERVICE_DIR: risk-underwriting-service
+    environment:
+      <<: *backend-environment
+      SPRING_R2DBC_URL: r2dbc:mysql://mysql:3306/risk_underwriting_db
+    depends_on: *service-depends
+    ports:
+      - "8083:8083"
+    healthcheck:
+      <<: *service-health
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8083/actuator/health | grep -q UP"]
+
+  claims-service:
+    <<: *backend-defaults
+    build:
+      <<: *service-build
+      args:
+        SERVICE_DIR: claims-service
+    environment:
+      <<: *backend-environment
+      SPRING_R2DBC_URL: r2dbc:mysql://mysql:3306/claims_db
+    depends_on: *service-depends
+    ports:
+      - "8084:8084"
+    healthcheck:
+      <<: *service-health
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8084/actuator/health | grep -q UP"]
+
+  vendor-partner-service:
+    <<: *backend-defaults
+    build:
+      <<: *service-build
+      args:
+        SERVICE_DIR: vendor-partner-service
+    environment:
+      <<: *backend-environment
+      SPRING_R2DBC_URL: r2dbc:mysql://mysql:3306/vendor_partner_db
+    depends_on: *service-depends
+    ports:
+      - "8085:8085"
+    healthcheck:
+      <<: *service-health
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8085/actuator/health | grep -q UP"]
+
+  recovery-service:
+    <<: *backend-defaults
+    build:
+      <<: *service-build
+      args:
+        SERVICE_DIR: recovery-service
+    environment:
+      <<: *backend-environment
+      SPRING_R2DBC_URL: r2dbc:mysql://mysql:3306/recovery_continuity_db
+    depends_on: *service-depends
+    ports:
+      - "8086:8086"
+    healthcheck:
+      <<: *service-health
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8086/actuator/health | grep -q UP"]
+
+  workflow-notification-service:
+    <<: *backend-defaults
+    build:
+      <<: *service-build
+      args:
+        SERVICE_DIR: workflow-notification-service
+    environment:
+      <<: *backend-environment
+      SPRING_R2DBC_URL: r2dbc:mysql://mysql:3306/workflow_notification_db
+    depends_on: *service-depends
+    ports:
+      - "8087:8087"
+    healthcheck:
+      <<: *service-health
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8087/actuator/health | grep -q UP"]
+
+  document-audit-service:
+    <<: *backend-defaults
+    build:
+      <<: *service-build
+      args:
+        SERVICE_DIR: document-audit-service
+    environment:
+      <<: *backend-environment
+      SPRING_R2DBC_URL: r2dbc:mysql://mysql:3306/document_audit_db
+    depends_on: *service-depends
+    ports:
+      - "8088:8088"
+    healthcheck:
+      <<: *service-health
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8088/actuator/health | grep -q UP"]
+
+  analytics-intelligence-service:
+    <<: *backend-defaults
+    build:
+      <<: *service-build
+      args:
+        SERVICE_DIR: analytics-intelligence-service
+    environment:
+      <<: *backend-environment
+      SPRING_R2DBC_URL: r2dbc:mysql://mysql:3306/analytics_intelligence_db
+    depends_on: *service-depends
+    ports:
+      - "8089:8089"
+    healthcheck:
+      <<: *service-health
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8089/actuator/health | grep -q UP"]
+
+  api-gateway:
+    <<: *backend-defaults
+    build:
+      <<: *service-build
+      args:
+        SERVICE_DIR: api-gateway
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      customer-party-service:
+        condition: service_healthy
+      quote-policy-service:
+        condition: service_healthy
+      risk-underwriting-service:
+        condition: service_healthy
+      claims-service:
+        condition: service_healthy
+      vendor-partner-service:
+        condition: service_healthy
+      recovery-service:
+        condition: service_healthy
+      workflow-notification-service:
+        condition: service_healthy
+      document-audit-service:
+        condition: service_healthy
+      analytics-intelligence-service:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    healthcheck:
+      <<: *service-health
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep -q UP"]
+
+volumes:
+  intellisure-mysql-data:
+
+networks:
+  intellisure-network:
+    driver: bridge

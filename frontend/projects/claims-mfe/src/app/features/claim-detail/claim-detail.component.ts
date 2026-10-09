@@ -1,8 +1,10 @@
 ﻿import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ClaimResponse } from '../../models/claim.models';
 import { ClaimsService } from '../../services/claims.service';
+import { RecoveryService } from '../../services/recovery.service';
+import { RecoveryCaseResponse, RecoverySeverity } from '../../models/recovery.models';
 
 import { CardComponent, ButtonComponent, BadgeComponent, SkeletonComponent } from 'ui-core';
 
@@ -35,7 +37,7 @@ import { CardComponent, ButtonComponent, BadgeComponent, SkeletonComponent } fro
         <is-card title="Claim Not Found" subtitle="The requested claim identifier does not exist in the claims registry.">
           <div class="state-message">
             <p>No claim record matching identifier <code>{{ claimId }}</code> was found.</p>
-            <is-button variant="secondary" routerLink="/claims">Return to claims queue</is-button>
+            <is-button variant="secondary" (click)="goToClaims()">Return to claims queue</is-button>
           </div>
         </is-card>
       } @else if (error) {
@@ -47,6 +49,32 @@ import { CardComponent, ButtonComponent, BadgeComponent, SkeletonComponent } fro
           <is-button variant="secondary" size="sm" (click)="loadClaim()">Retry</is-button>
         </div>
       } @else if (claim) {
+        @if (recoveryLoading) {
+          <div class="recovery-banner" role="status" aria-live="polite">Checking recovery support for this claim…</div>
+        } @else if (recoveryCase) {
+          <div class="recovery-banner success">
+            <div>
+              <strong>Recovery case {{ recoveryCase.recoveryCaseId }}</strong>
+              <p>{{ recoveryCase.currentRestorePercent || 0 }}% restored · {{ formatStatus(recoveryCase.status) }}</p>
+            </div>
+            <is-button variant="secondary" size="sm" (click)="goToRecovery()">Open recovery</is-button>
+          </div>
+        } @else {
+          <div class="recovery-banner">
+            <div>
+              <strong>Business recovery support</strong>
+              <p>Start a recovery case to track restoration and choose a supported recovery path.</p>
+            </div>
+            <is-button variant="secondary" size="sm" [disabled]="recoverySaving" (click)="startRecovery()">
+              {{ recoverySaving ? 'Starting…' : 'Start recovery case' }}
+            </is-button>
+          </div>
+        }
+
+        @if (recoveryError) {
+          <div class="error-banner" role="alert"><p>{{ recoveryError }}</p></div>
+        }
+
         <div class="detail-grid">
           <!-- Main Details Card -->
           <article class="detail-card">
@@ -316,6 +344,21 @@ import { CardComponent, ButtonComponent, BadgeComponent, SkeletonComponent } fro
       margin: 2px 0 0;
     }
 
+    .recovery-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 18px;
+      border: 1px solid var(--border, #eae5df);
+      border-radius: 8px;
+      background: var(--warm-light, #f7f5f3);
+      color: var(--ink, #000);
+      font-size: 12px;
+    }
+    .recovery-banner p { margin: 4px 0 0; color: var(--muted, #6f6a6d); font-size: 11px; }
+    .recovery-banner.success { border-color: #b8dfc9; background: #effaf3; }
+
     .state-message {
       display: flex;
       flex-direction: column;
@@ -336,13 +379,19 @@ import { CardComponent, ButtonComponent, BadgeComponent, SkeletonComponent } fro
 })
 export class ClaimDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly claimsService = inject(ClaimsService);
+  private readonly recoveryService = inject(RecoveryService);
 
   claimId = '';
   claim: ClaimResponse | null = null;
   loading = false;
   error: string | null = null;
   notFound = false;
+  recoveryCase: RecoveryCaseResponse | null = null;
+  recoveryLoading = false;
+  recoverySaving = false;
+  recoveryError: string | null = null;
 
   ngOnInit(): void {
     this.claimId = this.route.snapshot.paramMap.get('claimId') ?? '';
@@ -360,6 +409,7 @@ export class ClaimDetailComponent implements OnInit {
       next: (data) => {
         this.claim = data;
         this.loading = false;
+        this.loadRecoveryCase(data);
       },
       error: (err) => {
         this.loading = false;
@@ -376,6 +426,33 @@ export class ClaimDetailComponent implements OnInit {
     });
   }
 
+  startRecovery(): void {
+    if (!this.claim || this.recoverySaving) return;
+    this.recoverySaving = true;
+    this.recoveryError = null;
+    this.recoveryService.createCase({
+      claimId: this.claim.claimId,
+      customerId: this.claim.customerId,
+      severity: this.recoverySeverity(this.claim.estimatedLoss),
+      recoveryObjective: `Restore business operations after claim ${this.claim.claimNumber}`,
+    }).subscribe({
+      next: (recoveryCase) => {
+        this.recoveryCase = recoveryCase;
+        this.recoverySaving = false;
+      },
+      error: (err) => {
+        this.recoverySaving = false;
+        this.recoveryError = err?.status === 403
+          ? 'You do not have permission to start recovery for this claim.'
+          : err?.error?.message || err?.message || 'The recovery case could not be created.';
+      },
+    });
+  }
+
+  goToRecovery(): void {
+    this.router.navigate(['/recovery']);
+  }
+
   statusVariant(status?: string): 'info' | 'success' | 'warning' | 'danger' | 'neutral' {
     const s = (status || '').toUpperCase();
     if (s === 'APPROVED' || s === 'SETTLED' || s === 'PAID') return 'success';
@@ -387,5 +464,36 @@ export class ClaimDetailComponent implements OnInit {
 
   formatStatus(status?: string): string {
     return (status || 'UNKNOWN').replace(/_/g, ' ');
+  }
+
+  goToClaims(): void {
+    this.router.navigate(['/claims']);
+  }
+
+  private loadRecoveryCase(claim: ClaimResponse): void {
+    this.recoveryLoading = true;
+    this.recoveryError = null;
+    this.recoveryService.getCases(claim.customerId).subscribe({
+      next: (response) => {
+        this.recoveryCase = (response.items || []).find((item) => item.claimId === claim.claimId) ?? null;
+        this.recoveryLoading = false;
+      },
+      error: (err) => {
+        this.recoveryLoading = false;
+        if (err?.status !== 404) {
+          this.recoveryError = err?.status === 403
+            ? 'Recovery support is not available for this claim.'
+            : 'Recovery status could not be checked.';
+        }
+      },
+    });
+  }
+
+  private recoverySeverity(estimatedLoss: number | null | undefined): RecoverySeverity {
+    const loss = Number(estimatedLoss || 0);
+    if (loss >= 250000) return 'CRITICAL';
+    if (loss >= 100000) return 'HIGH';
+    if (loss >= 25000) return 'MEDIUM';
+    return 'LOW';
   }
 }

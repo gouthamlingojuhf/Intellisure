@@ -3,7 +3,7 @@
 > **Service Name**: `eureka`  
 > **Eureka Application Name**: `EUREKA-SERVER`  
 > **Port**: `8761`  
-> **Framework**: Spring Cloud Netflix Eureka Server (Spring Boot 3.x, Java 17)  
+> **Framework**: Spring Cloud Netflix Eureka Server (Spring Boot 4.1.1, Java 17)
 > **Database**: N/A (In-Memory Discovery Registry)
 
 ---

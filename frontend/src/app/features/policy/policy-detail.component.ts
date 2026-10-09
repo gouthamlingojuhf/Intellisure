@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { PolicyService } from '../../core/services/policy.service';
 import { PolicyResponse } from '../../core/models/policy.models';
@@ -68,7 +68,7 @@ import {
               <strong>{{ policy.totalPremium | currency:'USD':'symbol':'1.0-0' }}</strong>.
             </p>
           </div>
-          <is-button variant="primary" [routerLink]="['/claims/new']" [queryParams]="{ policyId: policy.policyId }">
+          <is-button variant="primary" (click)="goToClaim(policy.policyId)">
             Report a Claim (FNOL) &rarr;
           </is-button>
         </section>
@@ -167,8 +167,7 @@ import {
                 <is-button
                   variant="secondary"
                   size="sm"
-                  [routerLink]="['/claims/new']"
-                  [queryParams]="{ policyId: policy.policyId }"
+                  (click)="goToClaim(policy.policyId)"
                 >
                   File First Notice of Loss
                 </is-button>
@@ -394,6 +393,7 @@ import {
 })
 export class PolicyDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly policyService = inject(PolicyService);
 
   policyId = '';
@@ -427,6 +427,10 @@ export class PolicyDetailComponent implements OnInit {
 
   formatStatus(status?: string): string {
     return (status || 'UNKNOWN').replace(/_/g, ' ');
+  }
+
+  goToClaim(policyId: string): void {
+    this.router.navigate(['/claims', 'new'], { queryParams: { policyId } });
   }
 
   getStatusVariant(status?: string): 'info' | 'success' | 'warning' | 'danger' | 'neutral' {

@@ -3,7 +3,7 @@
 > **Service Name**: `workflow-notification-service`  
 > **Eureka Application Name**: `WORKFLOW-NOTIFICATION-SERVICE`  
 > **Port**: `8087`  
-> **Framework**: Spring Boot 3.x, **Async Email/SMS Dispatch (CompletableFuture / @Async)**, Spring Data JPA, Java 17  
+> **Framework**: Spring Boot 4.1.1, Spring WebFlux, Spring Data R2DBC, Java 17
 > **Database**: `workflow_notification_db` (MySQL)
 
 ---

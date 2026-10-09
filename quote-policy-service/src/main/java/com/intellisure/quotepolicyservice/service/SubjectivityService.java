@@ -105,6 +105,9 @@ public class SubjectivityService {
     public Flux<SubjectivityResponse> getSubjectivities(UUID quoteId) {
         return quoteRepository.findById(quoteId)
                 .switchIfEmpty(Mono.error(new ResourceNotFoundException("Quote not found: " + quoteId)))
+                .flatMap(quote -> securityActorService
+                        .assertCustomerAccess(quote.getCustomerId())
+                        .thenReturn(quote))
                 .thenMany(subjectivityRepository.findAllByQuoteId(quoteId)
                         .flatMap(this::buildSubjectivityResponse));
     }

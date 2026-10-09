@@ -4,6 +4,8 @@ import com.intellisure.documentauditservice.dto.UploadDocumentRequest;
 import com.intellisure.documentauditservice.entity.Document;
 import com.intellisure.documentauditservice.entity.DocumentType;
 import com.intellisure.documentauditservice.repository.DocumentRepository;
+import com.intellisure.documentauditservice.security.DocumentSecurityService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,18 +21,25 @@ import org.mockito.ArgumentCaptor;
 @ExtendWith(MockitoExtension.class)
 class DocumentServiceTest {
     @Mock DocumentRepository repository;
+    @Mock DocumentSecurityService documentSecurityService;
     @InjectMocks DocumentService service;
+
+    @BeforeEach
+    void allowEntityReadsForServiceTests() {
+        lenient().when(documentSecurityService.assertEntityAccess(any(), anyString())).thenReturn(Mono.empty());
+    }
 
     @Test
     void loggingDocumentPreservesEvidenceMetadataAndUploader() {
         UUID entity = UUID.randomUUID(), uploader = UUID.randomUUID();
+        when(documentSecurityService.currentUserId()).thenReturn(Mono.just(uploader));
         Document saved = Document.builder().documentId(UUID.randomUUID()).entityId(entity)
                 .entityType("CLAIM").documentType(DocumentType.PHOTOGRAPH).fileName("damage.jpg").fileSize(1024L)
                 .contentType("image/jpeg").storagePath("claims/damage.jpg").sha256Hash("abc123").version(1)
                 .uploadedBy(uploader).build();
         when(repository.save(any(Document.class))).thenReturn(Mono.just(saved));
         StepVerifier.create(service.logDocumentMetadata(new UploadDocumentRequest(entity, "CLAIM",
-                        DocumentType.PHOTOGRAPH, "damage.jpg", 1024L, "image/jpeg", "claims/damage.jpg", null, null), uploader))
+                        DocumentType.PHOTOGRAPH, "damage.jpg", 1024L, "image/jpeg", "claims/damage.jpg", null, null)))
                 .assertNext(result -> {
                     org.junit.jupiter.api.Assertions.assertEquals(entity, result.entityId());
                     org.junit.jupiter.api.Assertions.assertEquals("damage.jpg", result.fileName());

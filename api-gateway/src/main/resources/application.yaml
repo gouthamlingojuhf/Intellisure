@@ -27,7 +27,6 @@ spring:
               - Authorization
               - Content-Type
               - X-Correlation-ID
-              - X-User-Id
               - Accept
               - Origin
             allowCredentials: true

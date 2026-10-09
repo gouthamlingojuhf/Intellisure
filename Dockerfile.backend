@@ -1,0 +1,25 @@
+FROM eclipse-temurin:17-jdk-jammy AS build
+
+ARG SERVICE_DIR
+WORKDIR /workspace
+
+COPY . .
+
+RUN chmod +x "${SERVICE_DIR}/mvnw" \
+    && "${SERVICE_DIR}/mvnw" -f "${SERVICE_DIR}/pom.xml" -DskipTests package
+
+FROM eclipse-temurin:17-jre-jammy
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG SERVICE_DIR
+WORKDIR /app
+
+COPY --from=build "/workspace/${SERVICE_DIR}/target" /build-target
+RUN set -eux; jar_file="$(find /build-target -maxdepth 1 -type f -name '*.jar' ! -name '*-plain.jar' | head -n 1)"; test -n "${jar_file}"; cp "${jar_file}" /app/app.jar; rm -rf /build-target
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

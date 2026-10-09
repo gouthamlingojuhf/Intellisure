@@ -141,4 +141,14 @@ public class RiskAssessmentController {
                 underwriterId
         );
     }
+
+    @GetMapping("/risk-engineer/{riskEngineerId}")
+    @Operation(summary = "Get assigned risk engineer queue")
+    public Flux<RiskAssessmentResponse> getRiskEngineerQueue(
+            @PathVariable UUID riskEngineerId
+    ) {
+        return service.getAssignedRiskEngineerQueue(
+                riskEngineerId
+        );
+    }
 }

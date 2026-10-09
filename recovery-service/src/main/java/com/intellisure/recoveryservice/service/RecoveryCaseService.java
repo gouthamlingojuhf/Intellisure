@@ -17,6 +17,7 @@ import com.intellisure.recoveryservice.entity.RecoveryCaseStatus;
 import com.intellisure.recoveryservice.entity.RecoveryPath;
 import com.intellisure.recoveryservice.entity.RecoverySeverity;
 import com.intellisure.recoveryservice.repository.RecoveryCaseRepository;
+import com.intellisure.recoveryservice.security.SecurityActorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,50 +37,48 @@ public class RecoveryCaseService {
     private final RecoveryCaseRepository recoveryCaseRepository;
     private final RecoveryEstimationService estimationService;
     private final VendorPartnerClient vendorPartnerClient;
+    private final SecurityActorService securityActorService;
 
     public Mono<RecoveryCaseResponse> createCase(CreateRecoveryCaseRequest request) {
-        RecoveryCase recoveryCase = RecoveryCase.builder()
-                .recoveryCaseId(UUID.randomUUID())
-                .claimId(request.claimId())
-                .customerId(request.customerId())
-                .severity(request.severity())
-                .status(RecoveryCaseStatus.INITIATED)
-                .recoveryPath(RecoveryPath.CUSTOMER_MANAGED)
-                .recoveryObjective(request.recoveryObjective())
-                .targetRestoreDate(request.targetRestoreDate())
-                .currentRestorePercent(BigDecimal.ZERO)
-                .ownerId(request.ownerId())
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .isNew(true)
-                .build();
+        return recoveryCaseRepository.findByClaimId(request.claimId())
+                .flatMap(existing -> securityActorService
+                        .assertCustomerAccess(existing.getCustomerId())
+                        .thenReturn(mapToResponse(existing)))
+                .switchIfEmpty(Mono.defer(() -> securityActorService
+                        .assertCustomerAccess(request.customerId())
+                        .then(Mono.defer(() -> {
+                            RecoveryCase recoveryCase = RecoveryCase.builder()
+                                    .recoveryCaseId(UUID.randomUUID())
+                                    .claimId(request.claimId())
+                                    .customerId(request.customerId())
+                                    .severity(request.severity())
+                                    .status(RecoveryCaseStatus.INITIATED)
+                                    .recoveryPath(RecoveryPath.CUSTOMER_MANAGED)
+                                    .recoveryObjective(request.recoveryObjective())
+                                    .targetRestoreDate(request.targetRestoreDate())
+                                    .currentRestorePercent(BigDecimal.ZERO)
+                                    .ownerId(request.ownerId())
+                                    .createdAt(LocalDateTime.now())
+                                    .updatedAt(LocalDateTime.now())
+                                    .isNew(true)
+                                    .build();
 
-        return recoveryCaseRepository.save(recoveryCase)
-                .map(this::mapToResponse);
+                            return recoveryCaseRepository.save(recoveryCase)
+                                    .map(this::mapToResponse);
+                        }))));
     }
 
     public Mono<RecoveryCaseResponse> getCase(UUID recoveryCaseId) {
-        return recoveryCaseRepository.findById(recoveryCaseId)
-                .map(this::mapToResponse)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("Recovery case not found: " + recoveryCaseId)));
+        return findCaseForCaller(recoveryCaseId)
+                .map(this::mapToResponse);
     }
 
     public Mono<RecoveryCaseListResponse> getCases(RecoveryCaseFilterRequest filter) {
-        Flux<RecoveryCase> cases;
-
-        if (filter.customerId() != null) {
-            cases = recoveryCaseRepository.findByCustomerId(filter.customerId());
-        } else if (filter.ownerId() != null) {
-            cases = recoveryCaseRepository.findByOwnerId(filter.ownerId());
-        } else if (filter.status() != null) {
-            cases = recoveryCaseRepository.findByStatus(filter.status());
-        } else if (filter.severity() != null) {
-            cases = recoveryCaseRepository.findBySeverity(filter.severity());
-        } else {
-            cases = recoveryCaseRepository.findAll();
-        }
-
-        return cases
+        return securityActorService.hasAnyRole("CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
+                .flatMapMany(isStaff -> isStaff
+                        ? findCasesForStaff(filter)
+                        : securityActorService.currentCustomerId()
+                                .flatMapMany(recoveryCaseRepository::findByCustomerId))
                 .map(this::mapToResponse)
                 .collectList()
                 .map(list -> new RecoveryCaseListResponse(list, 
@@ -89,8 +88,7 @@ public class RecoveryCaseService {
     }
 
     public Mono<RecoveryCaseResponse> updateCase(UUID recoveryCaseId, UpdateRecoveryCaseRequest request) {
-        return recoveryCaseRepository.findById(recoveryCaseId)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("Recovery case not found: " + recoveryCaseId)))
+        return findCaseForCaller(recoveryCaseId)
                 .flatMap(recoveryCase -> {
                     if (request.severity() != null) recoveryCase.setSeverity(request.severity());
                     if (request.recoveryObjective() != null) recoveryCase.setRecoveryObjective(request.recoveryObjective());
@@ -109,8 +107,7 @@ public class RecoveryCaseService {
             return Mono.error(new IllegalArgumentException("Recovery path is required and cannot be null"));
         }
 
-        return recoveryCaseRepository.findById(recoveryCaseId)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("Recovery case not found: " + recoveryCaseId)))
+        return findCaseForCaller(recoveryCaseId)
                 .flatMap(recoveryCase -> {
                     if (recoveryCase.getStatus() == RecoveryCaseStatus.COMPLETED
                             || recoveryCase.getStatus() == RecoveryCaseStatus.CANCELLED) {
@@ -173,8 +170,7 @@ public class RecoveryCaseService {
         if (request == null || request.restorePercent() == null) {
             return Mono.error(new IllegalArgumentException("Restore percent is required"));
         }
-        return recoveryCaseRepository.findById(recoveryCaseId)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("Recovery case not found: " + recoveryCaseId)))
+        return findCaseForCaller(recoveryCaseId)
                 .flatMap(recoveryCase -> {
                     if (recoveryCase.getStatus() == RecoveryCaseStatus.COMPLETED
                             || recoveryCase.getStatus() == RecoveryCaseStatus.CANCELLED) {
@@ -254,8 +250,7 @@ public class RecoveryCaseService {
         if (request == null || request.status() == null) {
             return Mono.error(new IllegalArgumentException("Status is required"));
         }
-        return recoveryCaseRepository.findById(recoveryCaseId)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("Recovery case not found: " + recoveryCaseId)))
+        return findCaseForCaller(recoveryCaseId)
                 .flatMap(recoveryCase -> {
                     try {
                         validateStatusTransition(recoveryCase.getStatus(), request.status());
@@ -280,8 +275,7 @@ public class RecoveryCaseService {
     }
 
     public Mono<RecoveryCaseResponse> completeCase(UUID recoveryCaseId, CompleteRecoveryCaseRequest request) {
-        return recoveryCaseRepository.findById(recoveryCaseId)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("Recovery case not found: " + recoveryCaseId)))
+        return findCaseForCaller(recoveryCaseId)
                 .flatMap(recoveryCase -> {
                     try {
                         validateStatusTransition(recoveryCase.getStatus(), RecoveryCaseStatus.COMPLETED);
@@ -311,6 +305,21 @@ public class RecoveryCaseService {
 
     public Mono<RecoveryEstimationResponse> estimateRecoveryAsync(RecoveryEstimationRequest request) {
         return Mono.fromFuture(estimationService.estimateRecoveryAsync(request));
+    }
+
+    private Flux<RecoveryCase> findCasesForStaff(RecoveryCaseFilterRequest filter) {
+        if (filter.customerId() != null) return recoveryCaseRepository.findByCustomerId(filter.customerId());
+        if (filter.ownerId() != null) return recoveryCaseRepository.findByOwnerId(filter.ownerId());
+        if (filter.status() != null) return recoveryCaseRepository.findByStatus(filter.status());
+        if (filter.severity() != null) return recoveryCaseRepository.findBySeverity(filter.severity());
+        return recoveryCaseRepository.findAll();
+    }
+
+    private Mono<RecoveryCase> findCaseForCaller(UUID recoveryCaseId) {
+        return recoveryCaseRepository.findById(recoveryCaseId)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("Recovery case not found: " + recoveryCaseId)))
+                .flatMap(recoveryCase -> securityActorService.assertCustomerAccess(recoveryCase.getCustomerId())
+                        .thenReturn(recoveryCase));
     }
 
     private RecoveryCaseResponse mapToResponse(RecoveryCase recoveryCase) {

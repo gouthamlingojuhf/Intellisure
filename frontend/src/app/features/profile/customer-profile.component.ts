@@ -97,6 +97,11 @@ import {
               <p>{{ successMessage }}</p>
             </div>
             <div class="success-actions">
+              @if (reauthenticationRequired) {
+                <is-button variant="secondary" size="sm" (click)="reauthenticate()">
+                  Sign in again
+                </is-button>
+              }
               <is-button variant="primary" size="sm" routerLink="/policy">
                 View Policies & Quotes →
               </is-button>
@@ -567,6 +572,7 @@ export class CustomerProfileComponent implements OnInit {
   notFound = false;
   errorMessage: string | null = null;
   successMessage: string | null = null;
+  reauthenticationRequired = false;
 
   readonly businessTypeOptions = [
     { value: 'LIMITED_LIABILITY_COMPANY', label: 'Limited Liability Company (LLC)' },
@@ -674,6 +680,9 @@ export class CustomerProfileComponent implements OnInit {
     this.saving = true;
     this.errorMessage = null;
     this.successMessage = null;
+    this.reauthenticationRequired = false;
+
+    const profileWasMissing = !this.profile;
 
     const raw = this.profileForm.getRawValue();
     const payload = {
@@ -699,8 +708,11 @@ export class CustomerProfileComponent implements OnInit {
           localStorage.setItem('is_customer_id', updated.customerId);
         }
 
-        const msg = 'Business profile updated successfully.';
+        const msg = profileWasMissing
+          ? 'Business profile created. Sign in again to refresh your customer access before creating a quote or using other policyholder services.'
+          : 'Business profile updated successfully.';
         this.successMessage = msg;
+        this.reauthenticationRequired = profileWasMissing;
         this.store.dispatch(uiActions.showToast({ message: msg, kind: 'success' }));
       },
       error: (err) => {
@@ -717,6 +729,11 @@ export class CustomerProfileComponent implements OnInit {
         );
       },
     });
+  }
+
+  reauthenticate(): void {
+    this.store.dispatch(authActions.logout());
+    this.router.navigate(['/auth']);
   }
 
   getFieldError(controlName: string): string | undefined {

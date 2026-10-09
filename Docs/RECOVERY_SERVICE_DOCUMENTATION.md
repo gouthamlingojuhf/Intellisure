@@ -3,7 +3,7 @@
 > **Service Name**: `recovery-service`  
 > **Eureka Application Name**: `RECOVERY-SERVICE`  
 > **Port**: `8086`  
-> **Framework**: Spring Boot 3.x, **CompletableFuture Recovery Estimation**, Spring Data JPA, Java 17  
+> **Framework**: Spring Boot 4.1.1, Spring WebFlux, Spring Data R2DBC, Java 17
 > **Database**: `recovery_continuity_db` (MySQL)
 
 ---

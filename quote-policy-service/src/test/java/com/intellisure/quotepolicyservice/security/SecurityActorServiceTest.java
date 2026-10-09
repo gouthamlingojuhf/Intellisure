@@ -408,4 +408,69 @@ class SecurityActorServiceTest {
                 authentication.getAuthorities().size()
         );
     }
+
+    @Test
+    @DisplayName("allows a policyholder to access its own customer resource")
+    void allowsOwnCustomerResource() {
+        UUID customerId = UUID.randomUUID();
+        JwtAuthenticationToken token = jwtToken(Map.of(
+                "sub", UUID.randomUUID().toString(),
+                "customerId", customerId.toString()
+        ));
+
+        StepVerifier.create(
+                        service.assertCustomerAccess(customerId)
+                                .contextWrite(
+                                        ReactiveSecurityContextHolder
+                                                .withAuthentication(token)
+                                )
+                )
+                .verifyComplete();
+    }
+
+    @Test
+    @DisplayName("rejects a policyholder accessing another customer resource")
+    void rejectsOtherCustomerResource() {
+        UUID authenticatedCustomerId = UUID.randomUUID();
+        UUID requestedCustomerId = UUID.randomUUID();
+        JwtAuthenticationToken token = jwtToken(Map.of(
+                "sub", UUID.randomUUID().toString(),
+                "customerId", authenticatedCustomerId.toString()
+        ));
+
+        StepVerifier.create(
+                        service.assertCustomerAccess(requestedCustomerId)
+                                .contextWrite(
+                                        ReactiveSecurityContextHolder
+                                                .withAuthentication(token)
+                                )
+                )
+                .expectErrorSatisfies(error -> TestAssertions.errorIs(
+                        AccessDeniedBusinessException.class,
+                        "The authenticated customer does not own this resource",
+                        error
+                ))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("allows staff roles to access customer resources")
+    void allowsStaffResourceAccess() {
+        JwtAuthenticationToken token = new JwtAuthenticationToken(
+                Jwt.withTokenValue("token")
+                        .header("alg", "none")
+                        .subject(UUID.randomUUID().toString())
+                        .build(),
+                List.of(new SimpleGrantedAuthority("ROLE_UNDERWRITER"))
+        );
+
+        StepVerifier.create(
+                        service.assertCustomerAccess(UUID.randomUUID())
+                                .contextWrite(
+                                        ReactiveSecurityContextHolder
+                                                .withAuthentication(token)
+                                )
+                )
+                .verifyComplete();
+    }
 }

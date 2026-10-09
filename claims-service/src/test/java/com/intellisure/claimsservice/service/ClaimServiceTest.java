@@ -1,6 +1,7 @@
 package com.intellisure.claimsservice.service;
 
 import com.intellisure.claimsservice.client.CustomerPartyAdjusterClient;
+import com.intellisure.claimsservice.client.PolicyOwnershipClient;
 import com.intellisure.claimsservice.dto.FileClaimRequest;
 import com.intellisure.claimsservice.entity.Claim;
 import com.intellisure.claimsservice.repository.ClaimRepository;
@@ -23,6 +24,7 @@ import static org.mockito.Mockito.*;
 class ClaimServiceTest {
     @Mock ClaimRepository repository;
     @Mock CustomerPartyAdjusterClient customerPartyAdjusterClient;
+    @Mock PolicyOwnershipClient policyOwnershipClient;
     @Mock SecurityActorService securityActorService;
     @InjectMocks ClaimService service;
 
@@ -50,6 +52,48 @@ class ClaimServiceTest {
             assertEquals(adjuster, r.assignedAdjusterId());
             assertEquals(new BigDecimal("1000"), r.estimatedLoss());
         }).verifyComplete();
+    }
+
+    @Test
+    void authenticatedFilingVerifiesPolicyOwnershipBeforeSaving() {
+        UUID policy = UUID.randomUUID(), customer = UUID.randomUUID();
+        when(securityActorService.currentCustomerId()).thenReturn(Mono.just(customer));
+        when(policyOwnershipClient.assertPolicyOwnership(policy, customer)).thenReturn(Mono.empty());
+        when(repository.save(any(Claim.class))).thenAnswer(i -> Mono.just(i.getArgument(0)));
+        when(customerPartyAdjusterClient.findAvailableAdjusters()).thenReturn(Flux.empty());
+
+        FileClaimRequest request = new FileClaimRequest(
+                policy,
+                LocalDate.of(2026, 1, 2),
+                "loss",
+                new BigDecimal("1000")
+        );
+
+        StepVerifier.create(service.fileClaim(request))
+                .assertNext(response -> assertEquals(customer, response.customerId()))
+                .verifyComplete();
+        verify(policyOwnershipClient).assertPolicyOwnership(policy, customer);
+        verify(repository).save(any(Claim.class));
+    }
+
+    @Test
+    void authenticatedFilingDoesNotSaveWhenPolicyOwnershipFails() {
+        UUID policy = UUID.randomUUID(), customer = UUID.randomUUID();
+        when(securityActorService.currentCustomerId()).thenReturn(Mono.just(customer));
+        when(policyOwnershipClient.assertPolicyOwnership(policy, customer))
+                .thenReturn(Mono.error(new com.intellisure.claimsservice.exception.AccessDeniedBusinessException("denied")));
+
+        FileClaimRequest request = new FileClaimRequest(
+                policy,
+                LocalDate.of(2026, 1, 2),
+                "loss",
+                new BigDecimal("1000")
+        );
+
+        StepVerifier.create(service.fileClaim(request))
+                .expectError(com.intellisure.claimsservice.exception.AccessDeniedBusinessException.class)
+                .verify();
+        verify(repository, never()).save(any(Claim.class));
     }
 
     @Test

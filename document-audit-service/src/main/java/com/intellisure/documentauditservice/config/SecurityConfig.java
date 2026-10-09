@@ -54,7 +54,7 @@ public class SecurityConfig {
                         .pathMatchers("/api/documents/**")
                         .hasAnyRole("POLICYHOLDER", "UNDERWRITER", "CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "VENDOR_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
                         .pathMatchers(HttpMethod.POST, "/api/audit-events")
-                        .authenticated()
+                        .hasAnyRole("UNDERWRITER", "CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN", "SYSTEM")
                         .pathMatchers("/api/audit-events/**")
                         .hasAnyRole("SYSTEM_ADMINISTRATOR", "ADMIN", "CLAIMS_MANAGER", "UNDERWRITER")
                         .pathMatchers("/api/**").authenticated()

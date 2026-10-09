@@ -462,20 +462,76 @@ public class RiskAssessmentService {
     @PreAuthorize("""
                 hasAnyRole(
                 'UNDERWRITER',
-                'RISK_ENGINEER',
-                'ADMIN',
-                'CLAIMS_ADJUSTER',
-                'CLAIMS_MANAGER'
+                'ADMIN'
                 )
                 """)
     public Flux<RiskAssessmentResponse>
     getAssignedUnderwriterQueue(
             UUID underwriterId
     ) {
-        return assessmentRepository
-                .findAllByAssignedUnderwriterId(
-                        underwriterId
+        return securityActorService
+                .hasRole("ADMIN")
+                .flatMapMany(isAdmin -> {
+                    if (isAdmin) {
+                        return assessmentRepository
+                                .findAllByAssignedUnderwriterId(underwriterId);
+                    }
+
+                    return securityActorService
+                            .currentUserId()
+                            .flatMapMany(currentUserId -> {
+                                if (!currentUserId.equals(underwriterId)) {
+                                    return Flux.error(
+                                            new AccessDeniedBusinessException(
+                                                    "The authenticated user can only view their own underwriting queue"
+                                            )
+                                    );
+                                }
+
+                                return assessmentRepository
+                                        .findAllByAssignedUnderwriterId(underwriterId);
+                            });
+                })
+                .map(mapper::toResponse);
+    }
+
+    @PreAuthorize("""
+                hasAnyRole(
+                'RISK_ENGINEER',
+                'ADMIN'
                 )
+                """)
+    public Flux<RiskAssessmentResponse>
+    getAssignedRiskEngineerQueue(
+            UUID riskEngineerId
+    ) {
+        return securityActorService
+                .hasRole("ADMIN")
+                .flatMapMany(isAdmin -> {
+                    if (isAdmin) {
+                        return assessmentRepository
+                                .findAllByAssignedRiskEngineerId(
+                                        riskEngineerId
+                                );
+                    }
+
+                    return securityActorService
+                            .currentUserId()
+                            .flatMapMany(currentUserId -> {
+                                if (!currentUserId.equals(riskEngineerId)) {
+                                    return Flux.error(
+                                            new AccessDeniedBusinessException(
+                                                    "The authenticated user can only view their own risk engineering queue"
+                                            )
+                                    );
+                                }
+
+                                return assessmentRepository
+                                        .findAllByAssignedRiskEngineerId(
+                                                riskEngineerId
+                                        );
+                            });
+                })
                 .map(mapper::toResponse);
     }
 

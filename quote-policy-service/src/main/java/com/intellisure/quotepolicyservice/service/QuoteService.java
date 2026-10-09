@@ -225,7 +225,9 @@ public class QuoteService {
 
     public Mono<QuoteResponse> getQuoteById(UUID quoteId) {
         return getQuoteEntity(quoteId)
-                .flatMap(this::buildQuoteResponse);
+                .flatMap(quote -> securityActorService
+                        .assertCustomerAccess(quote.getCustomerId())
+                        .then(Mono.defer(() -> buildQuoteResponse(quote))));
     }
 
     public Mono<QuoteResponse> getQuoteByNumber(
@@ -239,15 +241,19 @@ public class QuoteService {
                                         + quoteNumber
                         )
                 ))
-                .flatMap(this::buildQuoteResponse);
+                .flatMap(quote -> securityActorService
+                        .assertCustomerAccess(quote.getCustomerId())
+                        .then(Mono.defer(() -> buildQuoteResponse(quote))));
     }
 
     public Flux<QuoteResponse> getQuotesByCustomerId(
             UUID customerId
     ) {
-        return quoteRepository
-                .findAllByCustomerId(customerId)
-                .flatMap(this::buildQuoteResponse);
+        return securityActorService
+                .assertCustomerAccess(customerId)
+                .thenMany(quoteRepository
+                        .findAllByCustomerId(customerId)
+                        .flatMap(this::buildQuoteResponse));
     }
 
 
@@ -617,6 +623,8 @@ public class QuoteService {
             UUID quoteId
     ) {
         return getQuoteEntity(quoteId)
+                .flatMap(quote -> securityActorService
+                        .assertCustomerAccess(quote.getCustomerId()))
                 .thenMany(
                         underwritingDecisionRepository
                                 .findAllByQuoteId(quoteId)

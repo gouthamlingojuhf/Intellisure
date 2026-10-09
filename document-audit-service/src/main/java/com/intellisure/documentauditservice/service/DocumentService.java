@@ -4,6 +4,8 @@ import com.intellisure.documentauditservice.dto.DocumentResponse;
 import com.intellisure.documentauditservice.dto.UploadDocumentRequest;
 import com.intellisure.documentauditservice.entity.Document;
 import com.intellisure.documentauditservice.entity.DocumentType;
+import com.intellisure.documentauditservice.exception.DocumentNotFoundException;
+import com.intellisure.documentauditservice.security.DocumentSecurityService;
 import com.intellisure.documentauditservice.repository.DocumentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,40 +23,46 @@ import java.util.UUID;
 public class DocumentService {
 
     private final DocumentRepository documentRepository;
+    private final DocumentSecurityService documentSecurityService;
 
-    public Mono<DocumentResponse> logDocumentMetadata(UploadDocumentRequest request, UUID uploadedBy) {
-        LocalDateTime now = LocalDateTime.now();
+    public Mono<DocumentResponse> logDocumentMetadata(UploadDocumentRequest request) {
+        return documentSecurityService.assertEntityAccess(request.entityId(), request.entityType())
+                .then(documentSecurityService.currentUserId())
+                .flatMap(uploadedBy -> {
+                    LocalDateTime now = LocalDateTime.now();
+                    String sha256Hash = request.sha256Hash() != null ? request.sha256Hash() : computeSha256(request);
+                    Integer version = request.version() != null ? request.version() : 1;
 
-        String sha256Hash = request.sha256Hash() != null ? request.sha256Hash() : computeSha256(request);
-        Integer version = request.version() != null ? request.version() : 1;
+                    Document document = Document.builder()
+                            .documentId(UUID.randomUUID())
+                            .entityId(request.entityId())
+                            .entityType(request.entityType())
+                            .documentType(request.documentType())
+                            .fileName(request.fileName())
+                            .fileSize(request.fileSize())
+                            .contentType(request.contentType())
+                            .storagePath(request.storagePath())
+                            .sha256Hash(sha256Hash)
+                            .version(version)
+                            .uploadedBy(uploadedBy)
+                            .createdAt(now)
+                            .isNew(true)
+                            .build();
 
-        Document document = Document.builder()
-                .documentId(UUID.randomUUID())
-                .entityId(request.entityId())
-                .entityType(request.entityType())
-                .documentType(request.documentType())
-                .fileName(request.fileName())
-                .fileSize(request.fileSize())
-                .contentType(request.contentType())
-                .storagePath(request.storagePath())
-                .sha256Hash(sha256Hash)
-                .version(version)
-                .uploadedBy(uploadedBy)
-                .createdAt(now)
-                .isNew(true)
-                .build();
-
-        return documentRepository.save(document)
-                .map(this::mapToResponse);
+                    return documentRepository.save(document).map(this::mapToResponse);
+                });
     }
 
     public Mono<DocumentResponse> getDocument(UUID documentId) {
         return documentRepository.findById(documentId)
-                .map(this::mapToResponse);
+                .switchIfEmpty(Mono.error(new DocumentNotFoundException("Document not found: " + documentId)))
+                .flatMap(document -> documentSecurityService.assertEntityAccess(document.getEntityId(), document.getEntityType())
+                        .thenReturn(mapToResponse(document)));
     }
 
     public Flux<DocumentResponse> getDocumentsByEntity(UUID entityId, String entityType) {
-        return documentRepository.findByEntityIdAndEntityType(entityId, entityType)
+        return documentSecurityService.assertEntityAccess(entityId, entityType)
+                .thenMany(documentRepository.findByEntityIdAndEntityType(entityId, entityType))
                 .map(this::mapToResponse);
     }
 

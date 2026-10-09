@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ClaimsService } from '../../services/claims.service';
 
 import { CardComponent, ButtonComponent, InputComponent, SelectComponent, TextareaComponent, StepperComponent, StepperStep } from 'ui-core';
@@ -12,7 +12,6 @@ import { CardComponent, ButtonComponent, InputComponent, SelectComponent, Textar
   imports: [
     CommonModule,
     ReactiveFormsModule, 
-    RouterLink,
     CardComponent,
     ButtonComponent,
     InputComponent,
@@ -189,6 +188,7 @@ import { CardComponent, ButtonComponent, InputComponent, SelectComponent, Textar
 })
 export class ClaimCreateComponent {
   private readonly fb = new FormBuilder();
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly claimsService = inject(ClaimsService);
 
@@ -214,6 +214,13 @@ export class ClaimCreateComponent {
     estimatedLoss: [0, [Validators.required, Validators.min(0)]],
     description: ['', [Validators.required, Validators.minLength(5)]],
   });
+
+  constructor() {
+    const policyId = this.route.snapshot.queryParamMap.get('policyId');
+    if (policyId) {
+      this.claimForm.controls.policyId.setValue(policyId);
+    }
+  }
 
   getError(controlName: string): string | undefined {
     const control = this.claimForm.get(controlName);
@@ -284,11 +291,15 @@ export class ClaimCreateComponent {
         },
         error: (err) => {
           this.submitting = false;
-          this.error =
-            err?.error?.message ||
-            err?.message ||
-            'Failed to file claim. Please verify the Policy ID is valid and exists in the system.';
+          this.error = this.describeError(err);
         },
       });
+  }
+
+  private describeError(err: { status?: number; error?: { message?: string }; message?: string }): string {
+    if (err?.status === 401) return 'Your session has expired. Please sign in again.';
+    if (err?.status === 403) return 'You do not have permission to file a claim.';
+    if (err?.status === 404) return 'The selected policy or claims endpoint could not be found.';
+    return err?.error?.message || err?.message || 'Failed to file claim. Please verify the Policy ID is valid and exists in the system.';
   }
 }

@@ -12,8 +12,8 @@ import java.util.UUID;
 
 /**
  * Rating Service Interface
- * Implementations should provide product-specific premium calculation logic
- * to replace the 2% demo placeholder.
+ * Implementations provide a transparent product-specific baseline indication.
+ * Final commercial terms remain an underwriting responsibility.
  */
 public interface RatingService {
 

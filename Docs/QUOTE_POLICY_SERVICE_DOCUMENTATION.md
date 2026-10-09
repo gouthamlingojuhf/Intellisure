@@ -3,7 +3,7 @@
 > **Service Name**: `quote-policy-service`  
 > **Eureka Application Name**: `QUOTE-POLICY-SERVICE`  
 > **Port**: `8082`  
-> **Framework**: Spring Boot 3.x, **CompletableFuture Multithreading**, Spring Data JPA, Java 17  
+> **Framework**: Spring Boot 4.1.1, Spring WebFlux, Spring Data R2DBC, Java 17
 > **Database**: `quote_policy_db` (MySQL)
 
 ---

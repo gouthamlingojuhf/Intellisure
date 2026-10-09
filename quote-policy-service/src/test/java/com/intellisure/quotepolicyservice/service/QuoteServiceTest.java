@@ -103,6 +103,10 @@ class QuoteServiceTest {
         );
 
         lenient().when(
+                securityActorService.assertCustomerAccess(any(UUID.class))
+        ).thenReturn(Mono.empty());
+
+        lenient().when(
                 quoteVersionRepository.save(any())
         ).thenAnswer(
                 invocation -> Mono.just(invocation.getArgument(0))

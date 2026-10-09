@@ -3,7 +3,7 @@
 > **Service Name**: `document-audit-service`  
 > **Eureka Application Name**: `DOCUMENT-AUDIT-SERVICE`  
 > **Port**: `8088`  
-> **Framework**: Spring Boot 3.x, **CompletableFuture Cryptographic Hashing**, Spring Data JPA, Java 17  
+> **Framework**: Spring Boot 4.1.1, Spring WebFlux, Spring Data R2DBC, Java 17
 > **Database**: `document_audit_db` (MySQL)
 
 ---

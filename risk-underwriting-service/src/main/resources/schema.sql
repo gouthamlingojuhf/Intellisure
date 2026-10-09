@@ -215,7 +215,6 @@ CREATE TABLE IF NOT EXISTS subjectivity (
 
     evidence_document_ids JSON NULL,
     submitted_at DATETIME(6) NULL,
-    satisfied_at DATETIME(6) NULL,
 
     created_at DATETIME(6) NOT NULL,
     updated_at DATETIME(6) NOT NULL,

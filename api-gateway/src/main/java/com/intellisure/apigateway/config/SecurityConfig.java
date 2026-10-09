@@ -263,6 +263,19 @@ public class SecurityConfig {
                          */
 
                         .pathMatchers(
+                                HttpMethod.POST,
+                                "/api/audit-events"
+                        )
+                        .hasAnyRole(
+                                "UNDERWRITER",
+                                "CLAIMS_ADJUSTER",
+                                "CLAIMS_MANAGER",
+                                "SYSTEM_ADMINISTRATOR",
+                                "ADMIN",
+                                "SYSTEM"
+                        )
+
+                        .pathMatchers(
                                 "/api/documents/**",
                                 "/api/audit/**",
                                 "/api/audit-events/**"

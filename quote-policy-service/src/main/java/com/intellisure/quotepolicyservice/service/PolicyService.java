@@ -259,7 +259,9 @@ public class PolicyService {
                                         + policyId
                         )
                 ))
-                .flatMap(this::buildPolicyResponse);
+                .flatMap(policy -> securityActorService
+                        .assertCustomerAccess(policy.getCustomerId())
+                        .then(Mono.defer(() -> buildPolicyResponse(policy))));
     }
 
     public Mono<PolicyResponse> getPolicyByNumber(
@@ -273,15 +275,19 @@ public class PolicyService {
                                         + policyNumber
                         )
                 ))
-                .flatMap(this::buildPolicyResponse);
+                .flatMap(policy -> securityActorService
+                        .assertCustomerAccess(policy.getCustomerId())
+                        .then(Mono.defer(() -> buildPolicyResponse(policy))));
     }
 
     public Flux<PolicyResponse> getPoliciesByCustomerId(
             UUID customerId
     ) {
-        return policyRepository
-                .findAllByCustomerId(customerId)
-                .flatMap(this::buildPolicyResponse);
+        return securityActorService
+                .assertCustomerAccess(customerId)
+                .thenMany(policyRepository
+                        .findAllByCustomerId(customerId)
+                        .flatMap(this::buildPolicyResponse));
     }
 
 

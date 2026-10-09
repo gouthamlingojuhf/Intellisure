@@ -6,6 +6,8 @@ import com.intellisure.workflownotificationservice.entity.Notification;
 import com.intellisure.workflownotificationservice.entity.NotificationChannel;
 import com.intellisure.workflownotificationservice.entity.NotificationType;
 import com.intellisure.workflownotificationservice.repository.NotificationRepository;
+import com.intellisure.workflownotificationservice.security.SecurityActorService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,7 +24,14 @@ import static org.mockito.Mockito.*;
 class NotificationServiceTest {
     @Mock NotificationRepository repository;
     @Mock AsyncNotificationDispatchService asyncDispatchService;
+    @Mock SecurityActorService securityActorService;
     @InjectMocks NotificationService service;
+
+    @BeforeEach
+    void allowExistingServiceTestsToActAsAuthenticatedUsers() {
+        lenient().when(securityActorService.assertUserAccess(any(UUID.class))).thenReturn(Mono.empty());
+        lenient().when(securityActorService.assertNotificationCreationAccess(any(UUID.class))).thenReturn(Mono.empty());
+    }
 
     @Test
     void creatingNotificationCreatesSentNotification() {

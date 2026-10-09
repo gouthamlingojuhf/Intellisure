@@ -8,6 +8,7 @@ import com.intellisure.workflownotificationservice.entity.Notification;
 import com.intellisure.workflownotificationservice.entity.NotificationChannel;
 import com.intellisure.workflownotificationservice.entity.NotificationType;
 import com.intellisure.workflownotificationservice.repository.NotificationRepository;
+import com.intellisure.workflownotificationservice.security.SecurityActorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,8 +26,15 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final AsyncNotificationDispatchService asyncDispatchService;
+    private final SecurityActorService securityActorService;
 
     public Mono<NotificationResponse> createNotification(CreateNotificationRequest request) {
+        return securityActorService
+            .assertNotificationCreationAccess(request.userId())
+            .then(Mono.defer(() -> createNotificationInternal(request)));
+    }
+
+    private Mono<NotificationResponse> createNotificationInternal(CreateNotificationRequest request) {
         NotificationType type = NotificationType.valueOf(request.type().toUpperCase());
         NotificationChannel channel = request.channel() != null ? 
             NotificationChannel.valueOf(request.channel().toUpperCase()) : NotificationChannel.IN_APP;
@@ -97,6 +105,9 @@ public class NotificationService {
 
     public Mono<NotificationResponse> markRead(MarkNotificationReadRequest request) {
         return notificationRepository.findById(request.notificationId())
+            .switchIfEmpty(Mono.error(new IllegalArgumentException("Notification not found: " + request.notificationId())))
+            .flatMap(notification -> securityActorService.assertUserAccess(notification.getUserId())
+                .thenReturn(notification))
             .flatMap(notification -> {
                 notification.setRead(true);
                 notification.setReadAt(LocalDateTime.now());
@@ -107,30 +118,31 @@ public class NotificationService {
     }
 
     public Mono<NotificationListResponse> getNotifications(UUID userId, boolean read, Integer page, Integer size) {
-        Flux<Notification> notifications;
-        
-        if (read) {
-            notifications = notificationRepository.findByUserIdAndRead(userId, true);
-        } else {
-            notifications = notificationRepository.findByUserIdAndRead(userId, false);
-        }
-        
-        return notifications
-            .map(this::mapToResponse)
-            .collectList()
-            .map(list -> new NotificationListResponse(list, page, size, (long) list.size()));
+        return securityActorService.assertUserAccess(userId)
+            .then(Mono.defer(() -> {
+                Flux<Notification> notifications = read
+                    ? notificationRepository.findByUserIdAndRead(userId, true)
+                    : notificationRepository.findByUserIdAndRead(userId, false);
+
+                return notifications
+                    .map(this::mapToResponse)
+                    .collectList()
+                    .map(list -> new NotificationListResponse(list, page, size, (long) list.size()));
+            }));
     }
 
     public Mono<NotificationListResponse> getNotificationsByType(UUID userId, NotificationType type, Integer page, Integer size) {
-        return notificationRepository.findByUserId(userId)
-            .filter(n -> n.getType() == type)
-            .map(this::mapToResponse)
-            .collectList()
-            .map(list -> new NotificationListResponse(list, page, size, (long) list.size()));
+        return securityActorService.assertUserAccess(userId)
+            .then(Mono.defer(() -> notificationRepository.findByUserId(userId)
+                .filter(n -> n.getType() == type)
+                .map(this::mapToResponse)
+                .collectList()
+                .map(list -> new NotificationListResponse(list, page, size, (long) list.size()))));
     }
 
     public Mono<Long> getUnreadCount(UUID userId) {
-        return notificationRepository.countByUserIdAndRead(userId, false);
+        return securityActorService.assertUserAccess(userId)
+            .then(notificationRepository.countByUserIdAndRead(userId, false));
     }
 
     private NotificationResponse mapToResponse(Notification notification) {

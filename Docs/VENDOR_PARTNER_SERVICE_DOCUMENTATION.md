@@ -3,7 +3,7 @@
 > **Service Name**: `vendor-partner-service`  
 > **Eureka Application Name**: `VENDOR-PARTNER-SERVICE`  
 > **Port**: `8085`  
-> **Framework**: Spring Boot 3.x, Spring Data JPA, Java 17  
+> **Framework**: Spring Boot 4.1.1, Spring WebFlux, Spring Data R2DBC, Java 17
 > **Database**: `vendor_partner_db` (MySQL)
 
 ---

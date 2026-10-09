@@ -1,0 +1,114 @@
+# IntelliSure project status
+
+Last reviewed: 2026-10-09
+
+## Architecture and compatibility
+
+- Angular 17 shell with Auth, Claims, Vendor, and Intelligence Module Federation remotes.
+- Spring Boot 4.1.1 services on Java 17, Spring Cloud 2025.1.3, WebFlux/R2DBC, Eureka, and Gateway.
+- Gateway URL remains `http://localhost:8080` for native development.
+- Locked frontend versions and `frontend/package-lock.json` are preserved. The lockfile received a minimal, explicitly approved consistency repair; `frontend/package.json` and all dependency versions remain unchanged.
+- Existing Windows startup scripts remain authoritative. An additive backend Docker Compose stack now exists; it does not alter native startup behavior or insert business records. Docker requires caller-provided local-only `MYSQL_ROOT_PASSWORD` and Base64-encoded `INTELLISURE_JWT_SECRET` values; no new credential fallback is committed.
+
+## Completed
+
+- Authentication, registration, login, session restoration, guards, profile, and landing experience.
+- Policyholder dashboard, quote creation/list/detail, quote submission/acceptance, policy list/detail, and lifecycle visibility.
+- Real Claims MFE integration, FNOL flow, claim list/detail, policy-to-claim navigation, and explicit claims routes.
+- FNOL now verifies the submitted policy through Quote & Policy with the propagated JWT before persisting a claim.
+- Real Recovery case listing, supported path selection, and progress updates.
+- Recovery case creation now verifies the requested customer against the authenticated JWT before persistence.
+- Claim Detail now performs a real recovery-case lookup and lets the Policyholder start one when none exists; recovery creation is idempotent per claim and does not require a vendor assignment.
+- Real document visibility for customer-owned quote, policy, and claim records.
+- Audit event creation is restricted to employee/system roles and records the authenticated JWT actor rather than trusting a caller-supplied user ID; Policyholders remain excluded from audit retrieval.
+- Quote, policy, underwriting-decision, and subjectivity reads now verify customer ownership for Policyholders while preserving staff/service access.
+- Quote rating no longer contains a fixed 2% placeholder; the rating component now calculates a bounded, product/coverage-aware baseline indication with deductible and waiting-period adjustments. Final offered terms remain underwriter-controlled.
+- Real notification inbox, read state, mark-read actions, and gateway-backed topbar notifications.
+- Notification creation now restricts Policyholders to their own recipient ID while preserving employee/system workflow notification delivery.
+- Docker authenticated runtime check completed with a disposable local account: registration, profile completion, re-login for the customer claim, Gateway quote creation, customer-owned quote read, and customer quote listing all succeeded. The created quote correctly remained in `DRAFT` before submission.
+- Full authenticated Docker journey verified with local-only test identities: quote submission moved to `IN_REVIEW` with an assigned underwriter, an approved underwriting decision produced `QUOTED` terms, the policyholder accepted, the underwriter bound an `IN_FORCE` policy, the policyholder filed and read a claim, selected `CUSTOMER_MANAGED` recovery, recorded 50% progress, viewed an empty claim-document state, created a notification, and marked it read.
+- Added [service documentation index](Docs/SERVICE_DOCUMENTATION_INDEX.md) covering all infrastructure and business services, current ports/databases, Gateway route ownership, endpoint groups, security boundaries, recovery paths, and runtime verification. Corrected stale Spring Boot/JPA metadata in the existing detailed service documents.
+- No Policyholder business-data mocks, fake records, or `X-User-Id` headers in the current implementation.
+
+## Current defects and risks
+
+- Document records remain schema-compatible without a customer column; document-audit-service now resolves QUOTE/POLICY/CLAIM ownership through the existing owning services with the propagated JWT. Unsupported Policyholder entity types are denied, while existing staff roles retain access.
+- The focused Maven suites listed below pass with the existing dependency set. Full Maven verification remains environment-limited on this Mac: Java 25 is active by default, Java 21 is the only alternate installed, the existing Mockito inline mock-maker cannot self-attach without an explicit local agent argument, and `customer-party-service` cannot currently create its Maven cache tracking file for the already-declared Testcontainers BOM. The project still compiles with `--release 17`; no dependency or test-plugin changes were made.
+- A clean install against the configured internal Nexus registry remains unavailable from this Mac because the registry host cannot be resolved. After the explicitly approved minimal lockfile repair, a Node 20 local install using the public npm registry completed without changing `package.json` or regenerating dependency versions. The existing lockfile URLs were preserved.
+- Node 20.20.0 was used for frontend verification. The shared `ui-core` library built successfully, the shell and all four remotes built successfully, and the full configured Karma/ChromeHeadless suite exited successfully. The local install is not a replacement for the office Windows setup; it is isolated to this checkout's development environment.
+- Registration/profile completion followed by re-login is required because the customer ID is embedded in the login JWT. The profile UI now makes this explicit and the auth effect persists/removes the customer ID consistently.
+
+## Roadmap
+
+### P0 — Stability / environment
+
+- Completed: native startup scripts and locked version inventory reviewed; no Windows startup files were changed.
+- Completed: all backend modules except `customer-party-service` compiled with `-DskipTests`; the remaining module was blocked before compilation by local Maven-cache write permissions while resolving an existing BOM.
+- Completed: Maven cache access was restored and `customer-party-service` now compiles; its focused JWT suite passes 3/3.
+- Completed: Docker images for all 11 backend applications built successfully, the Compose stack started, all nine services registered with Eureka, and MySQL, Eureka, every backend service, and Gateway reported healthy.
+- Completed: Docker runtime verification exposed and fixed the Customer & Party numeric JWT-expiration defect and the duplicate Risk/Underwriting `satisfied_at` schema declaration.
+- Completed: each service health endpoint returned HTTP 200 through Docker; an unauthenticated Gateway request to `/api/quotes` returned HTTP 401 as expected.
+- Completed: API Gateway now compiles after replacing one environment-sensitive Lombok logger generation with explicit SLF4J; no dependency or startup-script changes were required.
+- Completed: additive Docker Compose configuration was added after confirming there was no existing Docker support. It uses JDK 17 builder/runtime images, the existing Maven wrappers, existing service ports, schema initialization, and a persistent local-only MySQL volume.
+- Completed: after explicit approval, repaired only the missing lockfile metadata needed for `npm ci` consistency; no package versions were changed.
+- Completed: frontend shared library, shell, all active remotes, and configured unit tests were verified with Node 20.20.0.
+- Risk: a fresh install through the configured internal Nexus still depends on that registry being reachable; do not change registry configuration or dependency versions in the project to work around it.
+- Completed: current service documentation was consolidated and cross-checked against source controllers, security configuration, Compose service definitions, and the verified Docker runtime.
+
+### P1 — Policyholder journey
+
+- Completed: registration through notifications using real Gateway APIs; Recovery and Notifications now enforce caller ownership in their services, including staff-role exceptions where the existing workflow permits them.
+- Completed: Quote & Policy read endpoints now enforce customer ownership by JWT claim for Policyholders, including resource-by-ID, resource-by-number, customer-list, underwriting-history, and subjectivity reads.
+- Completed: authenticated quote-to-policy-to-claim-to-recovery-to-documents/notifications runtime path is verified in Docker using the canonical Policyholder FNOL endpoint `POST /api/claims` and a role-protected underwriter flow. The Claim Detail recovery action and idempotent backend create path are also verified.
+- Remaining: repeat the same journey against the native Windows startup path and replace local disposable identities with approved office test accounts when available.
+- Tests: focused ownership/token-propagation checks pass for Recovery, Notifications, and Documents; Angular builds and the full configured frontend unit-test suite now pass locally. Remaining verification is authenticated cross-service runtime behavior rather than compilation.
+
+### P2 — Employee roles
+
+- Completed: Analytics staff dashboard now uses its persisted-summary contract and honest empty states.
+- Completed: Underwriting now shows the authenticated underwriter's or risk engineer's real assigned assessment queue, with empty/error states and an employee-only route guard. Both role-specific risk-service queue endpoints reject a non-admin request for another user's queue.
+- Completed: Vendor and Analytics deep links now have shell-level role guards aligned with their backend roles; dead static Analytics shell data was removed.
+- Completed: Underwriting review now loads the selected assigned quote and exposes the existing assigned-underwriter decision and offer-terms actions, including live coverage values, expiry, rationale, authority, conditions, and clear server error/success states. The page does not expose binding or underwriting-only operations to Policyholders.
+- Remaining: add deeper assignment, referral, and subjectivity screens only after their existing backend contracts and role boundaries are verified end-to-end.
+- Dependency: preserve role restrictions and avoid exposing employee-only information to Policyholders.
+
+### P3 — Analytics / Intelligence
+
+- Completed: Intelligence MFE dashboard and overview now read the existing Analytics summary endpoint; static portfolio values and Analytics mock fallbacks were removed. Empty/unavailable summaries render explicit states.
+- Completed: Analytics risk-score generation now returns an honest not-implemented response until underwriting data is available; the Intelligence MFE no longer shows static alerts. The Vendor MFE shell no longer renders its previous static vendor directory.
+- Remaining: integrate risk scoring with real underwriting data and add a backend alert contract before showing risk alerts.
+- Remaining: connect the transparent rating indication to an explicit quote/underwriting contract if the product requires customer-visible indications before underwriter terms are offered.
+
+### P4 — Final E2E / demo readiness
+
+- Run native Windows-compatible startup verification, the complete backend test suite, route checks, ownership checks, and zero-mock audit. Docker runtime verification and frontend builds/tests are complete; the remaining high-value item is authenticated cross-service journey verification.
+- Validate the additive Docker environment without changing the native Windows path.
+
+### P5 — Nice-to-have
+
+- Lifecycle timeline, document filtering, richer notification UX, responsive/accessibility polish, and dashboard visualizations.
+
+## Completed batches
+
+- Implemented service-level ownership enforcement for Recovery and Notifications, with focused tests and no contract/version changes.
+- Made initial profile completion explicitly require re-authentication to obtain the backend-issued customer ID claim.
+- Added the Recovery service's exception handler inside its Maven module so ownership failures return HTTP 403.
+- Removed the gateway's stale `X-User-Id` CORS allowance and corrected the gateway documentation to describe Bearer JWT propagation.
+- Replaced Intelligence MFE and Analytics dashboard mock values/fallback generators with the existing persisted-summary API and honest empty states.
+- Removed the unused static Vendor MFE directory records so the remote renders its real routed workflows only.
+- Repaired the API Gateway compile blocker in `CorrelationIdGlobalFilter` without changing the locked dependency set.
+- Added document entity ownership resolution through quote-policy and claims services, with focused customer/staff security coverage and no database migration.
+- Tightened document-audit write authorization and authenticated actor attribution, with Policyholder denial coverage.
+- Replaced the static Underwriting dashboard with the authenticated user's real role-specific assessment queue and tightened queue ownership authorization.
+- Hardened Quote & Policy resource reads with reactive ownership checks and focused cross-customer denial tests.
+- Added Claims-to-Quote & Policy ownership verification for authenticated FNOL requests, with save-prevention coverage on denial.
+- Removed insecure Claims authorization fallbacks that could bypass ownership or assign a random customer when the security actor was unavailable.
+- Added recipient authorization for notification creation and customer ownership verification for recovery-case creation.
+- Connected the Claim Detail recovery action to the real Recovery API, added a duplicate-safe recovery-case create path, and opened only the exact Policyholder case-creation route in Recovery security.
+- Replaced the fixed quote-rating placeholder with a tested, bounded baseline rating calculation that does not fabricate business records or override human underwriting.
+- Replaced the static Underwriting dashboard with the authenticated user's real assessment queue and tightened queue ownership authorization.
+- Added the employee Underwriting review action panel against the existing Quote & Policy decision and offer-terms APIs; shell build and configured frontend tests pass without dependency or startup-script changes.
+
+## Immediate batch
+
+Authenticated Docker journey is complete through quote, underwriting, policy, claim, recovery, documents, and notifications. Employee decision/offer actions are now available in the real frontend flow. The remaining demo-readiness task is native Windows startup verification with approved test identities; the local Docker underwriter pool is intentionally isolated in `.codex-local/` and is not shared configuration.

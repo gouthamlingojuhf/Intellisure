@@ -3,7 +3,7 @@
 > **Service Name**: `risk-underwriting-service`  
 > **Eureka Application Name**: `RISK-UNDERWRITING-SERVICE`  
 > **Port**: `8083`  
-> **Framework**: Spring Boot 3.x, **CompletableFuture Rule Engine**, Spring Data JPA, Java 17  
+> **Framework**: Spring Boot 4.1.1, Spring WebFlux, Spring Data R2DBC, Java 17
 > **Database**: `risk_underwriting_db` (MySQL)
 
 ---

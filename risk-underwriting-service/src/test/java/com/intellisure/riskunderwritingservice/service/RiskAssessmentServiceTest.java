@@ -19,6 +19,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
@@ -106,5 +107,135 @@ class RiskAssessmentServiceTest {
 
         StepVerifier.create(service.createAssessment(request))
                 .expectError();
+    }
+
+    @Test
+    void underwriterQueueRejectsAnotherUsersQueue() {
+        UUID currentUserId = UUID.randomUUID();
+        UUID requestedUserId = UUID.randomUUID();
+
+        when(securityActorService.hasRole("ADMIN")).thenReturn(Mono.just(false));
+        when(securityActorService.currentUserId()).thenReturn(Mono.just(currentUserId));
+
+        StepVerifier.create(service.getAssignedUnderwriterQueue(requestedUserId))
+                .expectErrorSatisfies(error -> assertInstanceOf(
+                        AccessDeniedBusinessException.class,
+                        error
+                ))
+                .verify();
+    }
+
+    @Test
+    void underwriterQueueLoadsOnlyForAuthenticatedUser() {
+        UUID currentUserId = UUID.randomUUID();
+        RiskAssessment assessment = RiskAssessment.builder()
+                .assessmentId(UUID.randomUUID())
+                .quoteId(UUID.randomUUID())
+                .customerId(UUID.randomUUID())
+                .status(RiskAssessmentStatus.UNDER_REVIEW)
+                .assignedUnderwriterId(currentUserId)
+                .build();
+
+        when(securityActorService.hasRole("ADMIN")).thenReturn(Mono.just(false));
+        when(securityActorService.currentUserId()).thenReturn(Mono.just(currentUserId));
+        when(assessmentRepository.findAllByAssignedUnderwriterId(currentUserId))
+                .thenReturn(Flux.just(assessment));
+        when(mapper.toResponse(assessment)).thenReturn(new RiskAssessmentResponse(
+                assessment.getAssessmentId(),
+                null,
+                assessment.getQuoteId(),
+                null,
+                assessment.getCustomerId(),
+                null,
+                assessment.getStatus(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                assessment.getAssignedUnderwriterId(),
+                null,
+                null,
+                null,
+                null,
+                null
+        ));
+
+        StepVerifier.create(service.getAssignedUnderwriterQueue(currentUserId))
+                .expectNextCount(1)
+                .verifyComplete();
+    }
+
+    @Test
+    void riskEngineerQueueRejectsAnotherUsersQueue() {
+        UUID currentUserId = UUID.randomUUID();
+        UUID requestedUserId = UUID.randomUUID();
+
+        when(securityActorService.hasRole("ADMIN")).thenReturn(Mono.just(false));
+        when(securityActorService.currentUserId()).thenReturn(Mono.just(currentUserId));
+
+        StepVerifier.create(service.getAssignedRiskEngineerQueue(requestedUserId))
+                .expectErrorSatisfies(error -> assertInstanceOf(
+                        AccessDeniedBusinessException.class,
+                        error
+                ))
+                .verify();
+    }
+
+    @Test
+    void riskEngineerQueueLoadsOnlyForAuthenticatedUser() {
+        UUID currentUserId = UUID.randomUUID();
+        RiskAssessment assessment = RiskAssessment.builder()
+                .assessmentId(UUID.randomUUID())
+                .quoteId(UUID.randomUUID())
+                .customerId(UUID.randomUUID())
+                .status(RiskAssessmentStatus.RISK_ENGINEERING_REQUIRED)
+                .assignedRiskEngineerId(currentUserId)
+                .build();
+
+        when(securityActorService.hasRole("ADMIN")).thenReturn(Mono.just(false));
+        when(securityActorService.currentUserId()).thenReturn(Mono.just(currentUserId));
+        when(assessmentRepository.findAllByAssignedRiskEngineerId(currentUserId))
+                .thenReturn(Flux.just(assessment));
+        when(mapper.toResponse(assessment)).thenReturn(new RiskAssessmentResponse(
+                assessment.getAssessmentId(),
+                null,
+                assessment.getQuoteId(),
+                null,
+                assessment.getCustomerId(),
+                null,
+                assessment.getStatus(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                assessment.getAssignedRiskEngineerId(),
+                null,
+                null,
+                null,
+                null
+        ));
+
+        StepVerifier.create(service.getAssignedRiskEngineerQueue(currentUserId))
+                .expectNextCount(1)
+                .verifyComplete();
     }
 }

@@ -11,7 +11,9 @@ import com.intellisure.recoveryservice.entity.RecoveryCaseStatus;
 import com.intellisure.recoveryservice.entity.RecoveryPath;
 import com.intellisure.recoveryservice.entity.RecoverySeverity;
 import com.intellisure.recoveryservice.repository.RecoveryCaseRepository;
+import com.intellisure.recoveryservice.security.SecurityActorService;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,6 +31,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,8 +47,18 @@ class RecoveryLifecycleServiceTest {
     @Mock
     private VendorPartnerClient vendorPartnerClient;
 
+    @Mock
+    private SecurityActorService securityActorService;
+
     @InjectMocks
     private RecoveryCaseService service;
+
+    @BeforeEach
+    void allowExistingLifecycleTestsToActAsStaff() {
+        lenient().when(securityActorService.hasAnyRole(any(String[].class))).thenReturn(Mono.just(true));
+        lenient().when(securityActorService.assertCustomerAccess(nullable(UUID.class))).thenReturn(Mono.empty());
+        lenient().when(repository.findByClaimId(any(UUID.class))).thenReturn(Mono.empty());
+    }
 
     @Test
     @DisplayName("Initiating recovery starts at zero percent and default CUSTOMER_MANAGED path")

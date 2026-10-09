@@ -19,6 +19,35 @@ export interface DeclineQuoteRequest {
   reason: string;
 }
 
+export type UnderwritingDecisionType =
+  | 'APPROVED'
+  | 'APPROVED_WITH_MODIFIED_TERMS'
+  | 'MORE_INFORMATION_REQUIRED'
+  | 'REFERRED'
+  | 'DECLINED';
+
+export interface RecordUnderwritingDecisionRequest {
+  decision: UnderwritingDecisionType;
+  decisionReason: string;
+  authorityLevel?: string;
+  conditions?: string;
+}
+
+export interface OfferedCoverageRequest {
+  coverageCode: string;
+  offeredLimit: number;
+  offeredDeductible: number;
+  coveragePremium: number;
+  conditions?: string;
+  exclusions?: string;
+  waitingPeriodDays?: number;
+}
+
+export interface OfferQuoteTermsRequest {
+  quoteExpiresAt: string;
+  coverages: OfferedCoverageRequest[];
+}
+
 export interface QuoteCoverageResponse {
   quoteCoverageId: string;
   quoteId: string;

@@ -4,7 +4,9 @@ import { ApiService } from './api.service';
 import {
   CreateQuoteRequest,
   DeclineQuoteRequest,
+  OfferQuoteTermsRequest,
   QuoteResponse,
+  RecordUnderwritingDecisionRequest,
   SubjectivityResponse,
   UnderwritingDecisionResponse,
 } from '../models/quote.models';
@@ -40,6 +42,14 @@ export class QuoteService {
 
   getUnderwritingDecisions(quoteId: string): Observable<UnderwritingDecisionResponse[]> {
     return this.api.get<UnderwritingDecisionResponse[]>(`/api/quotes/${quoteId}/underwriting-decisions`);
+  }
+
+  recordUnderwritingDecision(quoteId: string, request: RecordUnderwritingDecisionRequest): Observable<UnderwritingDecisionResponse> {
+    return this.api.post<UnderwritingDecisionResponse>(`/api/quotes/${quoteId}/underwriting-decisions`, request);
+  }
+
+  offerQuoteTerms(quoteId: string, request: OfferQuoteTermsRequest): Observable<QuoteResponse> {
+    return this.api.patch<QuoteResponse>(`/api/quotes/${quoteId}/offer-terms`, request);
   }
 
   getSubjectivities(quoteId: string): Observable<SubjectivityResponse[]> {

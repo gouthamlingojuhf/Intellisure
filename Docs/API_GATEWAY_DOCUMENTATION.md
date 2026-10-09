@@ -3,7 +3,7 @@
 > **Service Name**: `api-gateway`  
 > **Eureka Application Name**: `API-GATEWAY`  
 > **Port**: `8080`  
-> **Framework**: Spring Cloud Gateway, **Spring WebFlux (Reactive Stack)**, Java 17  
+> **Framework**: Spring Boot 4.1.1, Spring Cloud Gateway, **Spring WebFlux (Reactive Stack)**, Java 17
 > **Database**: N/A (Stateless Gateway Router)
 
 ---
@@ -31,7 +31,7 @@ The `api-gateway` serves as the single unified entry point for all frontend clie
 
 ### Key Responsibilities:
 1. **Unified API Gateway Routing**: Routes external requests (`/api/v1/...`) to internal microservices registered in Eureka using `lb://<SERVICE-NAME>` dynamic load balancing.
-2. **Reactive Security & JWT Validation**: Uses custom WebFlux reactive filters (`AuthenticationWebFilter`) to inspect HTTP `Authorization: Bearer <token>` headers, validate HMAC-SHA256 signatures, and inject user identity headers (`X-User-Id`, `X-User-Role`) to downstream microservices.
+2. **Reactive Security & JWT Validation**: Uses custom WebFlux reactive filters (`AuthenticationWebFilter`) to inspect HTTP `Authorization: Bearer <token>` headers and validate HMAC-SHA256 signatures. The original Bearer token is propagated to downstream services for their own fine-grained ownership checks.
 3. **CORS Centralization**: Handles Cross-Origin Resource Sharing (CORS) preflight requests for Angular Microfrontends (`http://localhost:4200` to `4206`).
 4. **Global Exception Handling**: Converts unhandled downstream network or routing errors into standardized `ApiError` JSON responses.
 
@@ -90,11 +90,9 @@ classDiagram
 1. User sends `POST /api/quotes` with header `Authorization: Bearer eyJhbGci...`.
 2. `JwtAuthenticationFilter` intercepts request in non-blocking event loop.
 3. Decodes JWT token using secret key; verifies expiration and HMAC signature.
-4. Extracts claims: `sub = "cust-101"`, `role = "CUSTOMER"`.
-5. Mutates `ServerWebExchange` by appending HTTP headers:
-   - `X-User-Id: cust-101`
-   - `X-User-Role: CUSTOMER`
-6. Passes modified exchange to target microservice (`QUOTE-POLICY-SERVICE` on port `8082`).
+4. Extracts claims for coarse gateway authorization.
+5. Preserves the authenticated Bearer token and correlation ID while forwarding the request.
+6. Target microservice validates the propagated JWT and performs its own ownership and role checks.
 
 ---
 
@@ -115,7 +113,7 @@ sequenceDiagram
     else Valid JWT Token
         Gateway->>Eureka: Resolve target for CLAIMS-SERVICE
         Eureka-->>Gateway: 127.0.0.1:8084
-        Gateway->>TargetService: Forward POST /api/claims (X-User-Id, X-User-Role)
+        Gateway->>TargetService: Forward POST /api/claims (Bearer JWT)
         TargetService-->>Gateway: Return 201 Created + Claim DTO
         Gateway-->>Client: Forward 201 Created Response
     end

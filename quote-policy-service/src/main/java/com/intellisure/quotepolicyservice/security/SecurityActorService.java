@@ -76,6 +76,51 @@ public class SecurityActorService {
                 .defaultIfEmpty(false);
     }
 
+    public Mono<Void> assertCustomerAccess(UUID customerId) {
+        return hasAnyRole(
+                "UNDERWRITER",
+                "ADMIN",
+                "SYSTEM_ADMINISTRATOR",
+                "CLAIMS_ADJUSTER",
+                "CLAIMS_MANAGER",
+                "CLAIMS_SERVICE",
+                "SYSTEM"
+        ).flatMap(isStaff -> {
+            if (Boolean.TRUE.equals(isStaff)) {
+                return Mono.empty();
+            }
+
+            return currentCustomerId()
+                    .filter(customerId::equals)
+                    .switchIfEmpty(Mono.error(
+                            new AccessDeniedBusinessException(
+                                    "The authenticated customer does not own this resource"
+                            )
+                    ))
+                    .then();
+        });
+    }
+
+    private Mono<Boolean> hasAnyRole(String... roles) {
+        return ReactiveSecurityContextHolder
+                .getContext()
+                .map(context -> context.getAuthentication()
+                        .getAuthorities()
+                        .stream()
+                        .anyMatch(authority -> {
+                            for (String role : roles) {
+                                String expected = role.startsWith("ROLE_")
+                                        ? role
+                                        : "ROLE_" + role;
+                                if (expected.equals(authority.getAuthority())) {
+                                    return true;
+                                }
+                            }
+                            return false;
+                        }))
+                .defaultIfEmpty(false);
+    }
+
     private Mono<JwtAuthenticationToken> currentToken() {
         return ReactiveSecurityContextHolder
                 .getContext()

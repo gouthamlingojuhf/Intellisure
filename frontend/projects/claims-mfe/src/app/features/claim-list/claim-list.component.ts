@@ -1,6 +1,6 @@
 ﻿import { CurrencyPipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { ClaimResponse } from '../../models/claim.models';
 import { ClaimsService } from '../../services/claims.service';
 
@@ -11,7 +11,6 @@ import { CardComponent, ButtonComponent, BadgeComponent, TableComponent, TableCo
   selector: 'claims-list',
   standalone: true,
   imports: [
-    RouterLink, 
     CurrencyPipe,
     CardComponent,
     ButtonComponent,
@@ -28,7 +27,7 @@ import { CardComponent, ButtonComponent, BadgeComponent, TableComponent, TableCo
           <h1>Claim queue</h1>
           <p class="page-description">Manage and track all claims across the portfolio with real-time status updates from the gateway.</p>
         </div>
-        <is-button variant="primary" routerLink="new">
+        <is-button variant="primary" (click)="goToFileClaim()">
           File new claim
           <span aria-hidden="true">&rarr;</span>
         </is-button>
@@ -237,7 +236,7 @@ export class ClaimListComponent implements OnInit {
         this.loading = false;
       },
       error: (err) => {
-        this.error = err?.error?.message || err?.message || 'Failed to load claims from backend.';
+        this.error = this.describeError(err);
         this.loading = false;
       },
     });
@@ -278,5 +277,12 @@ export class ClaimListComponent implements OnInit {
   renderAmount(row: ClaimResponse, value: number): string {
     const amount = typeof value === 'number' ? value : 0;
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(amount);
+  }
+
+  private describeError(err: { status?: number; error?: { message?: string }; message?: string }): string {
+    if (err?.status === 401) return 'Your session has expired. Please sign in again.';
+    if (err?.status === 403) return 'You do not have permission to view these claims.';
+    if (err?.status === 404) return 'The claims endpoint could not be found.';
+    return err?.error?.message || err?.message || 'Failed to load claims from backend.';
   }
 }

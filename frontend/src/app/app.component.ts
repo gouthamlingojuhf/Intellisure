@@ -3,9 +3,11 @@ import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { filter } from 'rxjs';
+import { filter, forkJoin } from 'rxjs';
+import { NotificationResponse } from './core/models/notification.models';
+import { NotificationService } from './core/services/notification.service';
 import { authActions } from './core/store/auth/auth.actions';
-import { selectIsAuthenticated, selectUserRole } from './core/store/auth/auth.selectors';
+import { selectIsAuthenticated, selectUserId, selectUserRole } from './core/store/auth/auth.selectors';
 import { selectGlobalLoading, selectToasts } from './core/store/ui/ui.selectors';
 import { uiActions } from './core/store/ui/ui.actions';
 
@@ -37,18 +39,20 @@ interface NavigationItem {
 export class AppComponent implements OnInit, OnDestroy {
   private readonly store = inject(Store);
   private readonly router = inject(Router);
+  private readonly notificationService = inject(NotificationService);
   
   readonly navigationItems: NavigationItem[] = [
     { label: 'Overview', path: '/', icon: '🏠' },
     { label: 'Dashboard', path: '/dashboard', icon: '📊', roles: ['Admin', 'ADMIN', 'SYSTEM_ADMINISTRATOR', 'Policyholder', 'POLICYHOLDER'] },
     { label: 'Business Profile', path: '/profile', icon: '🏢', roles: ['Admin', 'ADMIN', 'SYSTEM_ADMINISTRATOR', 'Policyholder', 'POLICYHOLDER'] },
     { label: 'Quotes & Policies', path: '/policy', icon: '📋', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Policyholder', 'POLICYHOLDER'] },
-    { label: 'Underwriting', path: '/underwriting', icon: '🔍', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Risk Engineer'] },
+    { label: 'Underwriting', path: '/underwriting', icon: '🔍', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Risk Engineer', 'RISK_ENGINEER'] },
     { label: 'Claims', path: '/claims', icon: '📄', roles: ['Admin', 'ADMIN', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Policyholder', 'POLICYHOLDER'] },
     { label: 'Vendors', path: '/vendor', icon: '🏢', roles: ['Admin', 'ADMIN', 'Claims Manager', 'VENDOR_MANAGER'] },
-    { label: 'Analytics', path: '/analytics', icon: '📊', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Risk Engineer'] },
+    { label: 'Analytics', path: '/analytics', icon: '📊', roles: ['Admin', 'ADMIN', 'SYSTEM_ADMINISTRATOR', 'Underwriter', 'UNDERWRITER', 'Risk Engineer', 'RISK_ENGINEER', 'Claims Manager', 'CLAIMS_MANAGER'] },
     { label: 'Recovery', path: '/recovery', icon: '💰', roles: ['Admin', 'ADMIN', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Policyholder', 'POLICYHOLDER'] },
     { label: 'Documents', path: '/docs', icon: '📁', roles: ['Admin', 'ADMIN', 'Policyholder', 'POLICYHOLDER'] },
+    { label: 'Notifications', path: '/notifications', icon: '🔔', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Policyholder', 'POLICYHOLDER'] },
   ];
 
   readonly isAuthenticated$ = this.store.select(selectIsAuthenticated);
@@ -64,11 +68,18 @@ export class AppComponent implements OnInit, OnDestroy {
   currentPath = '/';
   breadcrumbs: { label: string; link?: string }[] = [];
   role: string | null = null;
+  notifications: Array<{ id: string; title: string; message: string; time: string; kind: 'success' | 'warning' | 'info' | 'danger'; read?: boolean }> = [];
+  private notificationUserId: string | null = null;
 
   private readonly navigationSubscription = this.router.events
     .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
     .subscribe((event) => this.updateNavigation(event.urlAfterRedirects));
   private readonly roleSubscription = this.store.select(selectUserRole).subscribe((role) => (this.role = role));
+  private readonly notificationSubscription = this.store.select(selectUserId).subscribe((userId) => {
+    this.notificationUserId = userId;
+    if (userId) this.loadNotifications(userId);
+    else this.notifications = [];
+  });
 
   readonly title = 'IntelliSure Shell';
 
@@ -85,14 +96,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
   get userRoleLabel(): string {
     return this.role ?? 'Enterprise workspace';
-  }
-
-  get notifications(): Array<{ id: string; title: string; message: string; time: string; kind: 'success' | 'warning' | 'info' | 'danger'; read?: boolean }> {
-    return [
-      { id: '1', title: 'Policy review complete', message: 'Commercial auto renewal is ready for binding.', time: '5 minutes ago', kind: 'success' },
-      { id: '2', title: 'Review due soon', message: 'One risk submission exceeds the standard SLA.', time: '18 minutes ago', kind: 'warning' },
-      { id: '3', title: 'System maintenance', message: 'Scheduled maintenance window this weekend.', time: '2 hours ago', kind: 'info' },
-    ];
   }
 
   get unreadCount(): number {
@@ -161,6 +164,7 @@ export class AppComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.navigationSubscription.unsubscribe();
     this.roleSubscription.unsubscribe();
+    this.notificationSubscription.unsubscribe();
   }
 
   updateNavigation(url: string): void {
@@ -210,10 +214,40 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   onMarkAllRead(): void {
-    // Mark all notifications as read
+    const unread = this.notifications.filter((notification) => !notification.read);
+    if (!unread.length) return;
+    forkJoin(unread.map((notification) => this.notificationService.markRead(notification.id))).subscribe({
+      next: () => { if (this.notificationUserId) this.loadNotifications(this.notificationUserId); },
+    });
   }
 
   onDismissToast(id: number): void {
     this.dismiss(id);
+  }
+
+  private loadNotifications(userId: string): void {
+    this.notificationService.getAllNotifications(userId).subscribe({
+      next: (notifications) => { this.notifications = notifications.map((notification) => this.toTopbarNotification(notification)); },
+      error: () => { this.notifications = []; },
+    });
+  }
+
+  private toTopbarNotification(notification: NotificationResponse): { id: string; title: string; message: string; time: string; kind: 'success' | 'warning' | 'info' | 'danger'; read?: boolean } {
+    return {
+      id: notification.notificationId,
+      title: notification.title,
+      message: notification.message,
+      time: notification.createdAt ? new Date(notification.createdAt).toLocaleString() : '',
+      kind: this.notificationKind(notification.type),
+      read: notification.read,
+    };
+  }
+
+  private notificationKind(type: string): 'success' | 'warning' | 'info' | 'danger' {
+    const value = type.toUpperCase();
+    if (value.includes('ERROR') || value.includes('DENIED') || value.includes('FAIL')) return 'danger';
+    if (value.includes('REVIEW') || value.includes('ACTION') || value.includes('WARNING')) return 'warning';
+    if (value.includes('SUCCESS') || value.includes('COMPLETE') || value.includes('ISSU')) return 'success';
+    return 'info';
   }
 }

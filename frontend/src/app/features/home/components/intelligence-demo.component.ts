@@ -8,10 +8,10 @@ import { CommonModule } from '@angular/common';
   template: `
     <section id="intelligence" class="intelligence-section" aria-labelledby="intelligence-heading">
       <div class="section-header">
-        <span class="section-kicker">Analytical Decisioning</span>
+          <span class="section-kicker">Illustrative Framework</span>
         <h2 id="intelligence-heading">Explainable Risk Intelligence</h2>
-        <p class="section-subhead">
-          Eliminate black-box decisions. IntelliSure pairs transparent actuarial factors with real-time operational telemetry so underwriters, adjusters, and leaders act with clarity.
+          <p class="section-subhead">
+          Eliminate black-box decisions. IntelliSure pairs transparent actuarial factors with operational signals so underwriters, adjusters, and leaders act with clarity.
         </p>
       </div>
 
@@ -81,9 +81,9 @@ import { CommonModule } from '@angular/common';
               <span class="card-kicker">Continuous Monitoring</span>
               <h3 id="signal-title">Operational Loss Surveillance</h3>
             </div>
-            <span class="live-badge">Reactive Gateway</span>
+            <span class="live-badge">Capability Preview</span>
           </div>
-          <p class="card-desc">Compare loss trajectory benchmarks against active portfolio runoff to preserve target combined ratios.</p>
+          <p class="card-desc">Compare loss trajectory benchmarks against portfolio runoff to support transparent recovery and underwriting decisions.</p>
 
           <!-- SVG Trend visualization -->
           <div class="chart-container" role="img" aria-label="Portfolio loss development comparison curve">
@@ -118,19 +118,19 @@ import { CommonModule } from '@angular/common';
           </div>
 
           <!-- Real-time Decision signals -->
-          <div class="signals-feed">
+            <div class="signals-feed">
             <div class="signal-item">
               <span class="signal-dot claret"></span>
               <div>
-                <strong>Auto-referral threshold verified</strong>
-                <span>Submissions &le; 45 risk score cleared for instant quoting</span>
+                <strong>Transparent referral thresholds</strong>
+                <span>Configured risk signals can guide consistent quote review</span>
               </div>
             </div>
             <div class="signal-item">
               <span class="signal-dot emerald"></span>
               <div>
-                <strong>Vendor assignment dispatched</strong>
-                <span>Salvage estimator assigned within 15 minutes of loss report</span>
+                <strong>Coordinated recovery workflows</strong>
+                <span>Recovery paths remain visible across supported participants</span>
               </div>
             </div>
           </div>

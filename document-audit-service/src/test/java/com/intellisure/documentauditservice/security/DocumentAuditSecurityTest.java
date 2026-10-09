@@ -54,7 +54,20 @@ class DocumentAuditSecurityTest {
 
     private Mono<Boolean> isAuthorizedToPostAuditEvent() {
         return ReactiveSecurityContextHolder.getContext()
-                .map(ctx -> ctx.getAuthentication() != null && ctx.getAuthentication().isAuthenticated())
+                .map(ctx -> {
+                    var auth = ctx.getAuthentication();
+                    if (auth == null || !auth.isAuthenticated()) return false;
+                    return auth.getAuthorities().stream()
+                            .map(GrantedAuthority::getAuthority)
+                            .anyMatch(Set.of(
+                                    "ROLE_UNDERWRITER",
+                                    "ROLE_CLAIMS_ADJUSTER",
+                                    "ROLE_CLAIMS_MANAGER",
+                                    "ROLE_SYSTEM_ADMINISTRATOR",
+                                    "ROLE_ADMIN",
+                                    "ROLE_SYSTEM"
+                            )::contains);
+                })
                 .defaultIfEmpty(false);
     }
 
@@ -94,8 +107,8 @@ class DocumentAuditSecurityTest {
     }
 
     @Test
-    @DisplayName("Audit event creation allows any authenticated service caller")
-    void auditCreationAllowedForAuthenticatedCaller() {
+    @DisplayName("Audit event creation is restricted to employee and system roles")
+    void auditCreationRestrictedToEmployeeAndSystemRoles() {
         Jwt jwt = new Jwt(
                 "token-svc",
                 Instant.now(),
@@ -112,6 +125,23 @@ class DocumentAuditSecurityTest {
             )
             .assertNext(authorized -> assertTrue(authorized, "Authenticated caller must be authorized to post audit events"))
             .verifyComplete();
+
+        Jwt policyholderJwt = new Jwt(
+                "token-policyholder",
+                Instant.now(),
+                Instant.now().plusSeconds(300),
+                Map.of("alg", "HS256"),
+                Map.of("sub", "policyholder-1", "role", "POLICYHOLDER")
+        );
+        JwtAuthenticationToken policyholderAuth = converter.convert(policyholderJwt).block();
+        assertNotNull(policyholderAuth);
+
+        StepVerifier.create(
+                        isAuthorizedToPostAuditEvent()
+                                .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(
+                                        Mono.just(new SecurityContextImpl(policyholderAuth)))))
+                .assertNext(authorized -> assertFalse(authorized, "Policyholder must not create audit events"))
+                .verifyComplete();
     }
 
     @Test
