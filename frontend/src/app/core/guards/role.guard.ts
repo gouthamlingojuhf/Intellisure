@@ -14,7 +14,8 @@ export function roleGuard(allowed: string[]): CanActivateFn {
     return store.select(selectUserRole).pipe(
       take(1),
       map((role) => {
-        if (role && roles.includes(role)) return true;
+        const normalizedRole = (role ?? '').toUpperCase();
+        if (normalizedRole && roles.some((allowedRole) => allowedRole.toUpperCase() === normalizedRole)) return true;
         store.dispatch(uiActions.showToast({ message: 'Access denied: insufficient role privileges', kind: 'error' }));
         return router.createUrlTree(['/']);
       })

@@ -33,9 +33,9 @@ Last reviewed: 2026-10-09
 ## Current defects and risks
 
 - Document records remain schema-compatible without a customer column; document-audit-service now resolves QUOTE/POLICY/CLAIM ownership through the existing owning services with the propagated JWT. Unsupported Policyholder entity types are denied, while existing staff roles retain access.
-- The focused Maven suites listed below pass with the existing dependency set. Full Maven verification remains environment-limited on this Mac: Java 25 is active by default, Java 21 is the only alternate installed, the existing Mockito inline mock-maker cannot self-attach without an explicit local agent argument, and `customer-party-service` cannot currently create its Maven cache tracking file for the already-declared Testcontainers BOM. The project still compiles with `--release 17`; no dependency or test-plugin changes were made.
+- Full Maven verification remains environment-limited on this Mac: Java 25 is active by default and Java 21 is the only alternate installed, so the supported Java 17 run still belongs on the office laptop. The latest `quote-policy-service` test suite exits successfully under Java 25; `customer-party-service` compiles, but its full test run has one application-context error because the local R2DBC/MySQL database is unavailable. No dependency or test-plugin changes were made.
 - A clean install against the configured internal Nexus registry remains unavailable from this Mac because the registry host cannot be resolved. After the explicitly approved minimal lockfile repair, a Node 20 local install using the public npm registry completed without changing `package.json` or regenerating dependency versions. The existing lockfile URLs were preserved.
-- Node 20.20.0 was used for frontend verification. The shared `ui-core` library built successfully, the shell and all four remotes built successfully, and the full configured Karma/ChromeHeadless suite exited successfully. The local install is not a replacement for the office Windows setup; it is isolated to this checkout's development environment.
+- The frontend was previously verified with Node 20.20.0; the final audit was also rerun with the currently installed Node 25.6.0. The shared `ui-core` library, shell, Claims and Vendor remotes built successfully, and the configured Karma/ChromeHeadless suite exited successfully. Node 25 reports the expected non-LTS warning; no project dependency or version was changed.
 - Registration/profile completion followed by re-login is required because the customer ID is embedded in the login JWT. The profile UI now makes this explicit and the auth effect persists/removes the customer ID consistently.
 
 ## Roadmap
@@ -83,7 +83,7 @@ Last reviewed: 2026-10-09
 - Completed: coverage entry now shows one catalogue selector and displays the standard coverage name automatically; a free-text field appears only for Custom coverage.
 - Completed: quote, policy, claim, recovery, profile, and claim-list screens no longer expose internal UUID/customer-ID fields. FNOL policy selection now uses the policy number while retaining the internal policy identifier only in the API request.
 - Completed: the workspace topbar is fixed during scrolling, Ctrl/Cmd+K focuses the search field, partial search terms resolve to permitted workspace areas, and toast notifications auto-dismiss after 30 seconds.
-- Completed: Vendor assignment screens no longer expose raw payloads or literal UUID instructions in the user-facing workflow; backend references remain internal to the existing assignment contract pending reference-selector wiring.
+- Completed: Vendor assignment screens no longer expose raw payloads or literal UUID instructions in the user-facing workflow; live claim-number and recovery-case selectors keep backend references internal to the existing assignment contract.
 - Completed: public `/help` and authenticated `/docs/guide` now provide HTML-rendered platform, Policyholder, Vendor, and employee operating guides with role-aware content and no business-data placeholders.
 - Completed: System Administrator/Admin now have a guarded `/admin` workspace with live customer-party directory search, employee account creation, role/status management, and live quote/policy/claim summary navigation.
 - Remaining: add deeper assignment referral and subjectivity screens only after their existing backend contracts and role boundaries are verified end-to-end.
@@ -91,7 +91,6 @@ Last reviewed: 2026-10-09
 - Completed: Vendor applicants are onboarding-only in the remote route tree. Assignment list/create/detail paths now require Vendor Manager, Claims operations, Admin, or System Administrator roles, matching the backend assignment policy.
 - Completed: Claims FNOL is now Policyholder-only at the remote route boundary, while claim list/detail remain limited to Policyholder and claims operational roles. Policyholder quote creation is also protected at the shell route boundary for direct deep links.
 - Completed: final responsive header offsets are aligned between the shell and shared ui-core styles so the fixed topbar remains full-width on tablet/mobile layouts.
-- Remaining: System Administrator user-management actions have backend create/role/status endpoints but no list/search endpoint or frontend administration workspace. A UI should not be fabricated around manually supplied IDs; this is the next contract-level employee batch.
 - Completed: customer-party now exposes an authorized administrative account directory endpoint with role/status/search filters; Quote & Policy now exposes authorized all-quote/all-policy read endpoints for the Admin workspace.
 - Dependency: preserve role restrictions and avoid exposing employee-only information to Policyholders.
 
@@ -104,12 +103,15 @@ Last reviewed: 2026-10-09
 
 ### P4 — Final E2E / demo readiness
 
-- Run native Windows-compatible startup verification, the complete backend test suite, route checks, ownership checks, and zero-mock audit. Docker runtime verification and frontend builds/tests are complete; the remaining high-value item is authenticated cross-service journey verification.
-- Validate the additive Docker environment without changing the native Windows path.
+- Added [role-based E2E verification checklist](Docs/ROLE_BASED_E2E_CHECKLIST.md) with native startup commands, the role matrix, ownership checks, lifecycle acceptance, and evidence requirements.
+- Local verification complete: shared ui-core, shell, Claims, and Vendor builds; configured frontend Karma/ChromeHeadless suite; customer-party and quote-policy Java compilation; quote-policy focused Maven suite. Customer-party full tests remain blocked only by the unavailable local R2DBC/MySQL test context.
+- Remaining external verification: run the checklist on the office Windows laptop with approved test identities, run the complete backend test suite on supported Java 17, and retain the evidence listed in the checklist.
+- Completed: additive Docker environment was validated without changing the native Windows path; repeat only when the office environment needs a fresh runtime check.
 
 ### P5 — Nice-to-have
 
-- Lifecycle timeline, document filtering, richer notification UX, responsive/accessibility polish, and dashboard visualizations.
+- Completed: fixed responsive topbar offsets, public/role-aware documentation layout, keyboard search access, semantic live-region states, and role-restricted deep links.
+- Remaining: lifecycle timeline, document filtering, richer notification UX, and dashboard visualizations.
 
 ## Completed batches
 
@@ -136,4 +138,4 @@ Last reviewed: 2026-10-09
 
 ## Immediate batch
 
-The authenticated Docker journey is complete through quote, underwriting, policy, claim, recovery, documents, notifications, and recovery-linked Vendor dispatch/fulfillment. The UI-stability, documentation/administrator, Vendor access/reference, and deep-link role-boundary batches are verified with Java compilation, shared ui-core/shell builds, Claims/Vendor builds, and the configured frontend suite. The next meaningful batch is authenticated role-by-role verification plus final responsive/accessibility review. Native Windows startup verification with approved office test identities remains a demo-readiness task; local Docker underwriter/vendor records are isolated in local database state and are not shared configuration.
+The authenticated Docker journey is complete through quote, underwriting, policy, claim, recovery, documents, notifications, and recovery-linked Vendor dispatch/fulfillment. The UI-stability, documentation/administrator, Vendor access/reference, responsive, and deep-link role-boundary batches are verified with Java compilation, shared ui-core/shell builds, Claims/Vendor builds, and the configured frontend suite. The only remaining evidence-dependent work is the native Windows run, supported Java 17 full backend test run, and authenticated role/ownership execution using approved office accounts; the exact procedure is in `Docs/ROLE_BASED_E2E_CHECKLIST.md`.

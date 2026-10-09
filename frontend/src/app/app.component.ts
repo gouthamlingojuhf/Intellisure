@@ -47,7 +47,7 @@ export class AppComponent implements OnInit, OnDestroy {
     { label: 'Overview', path: '/', icon: '🏠' },
     { label: 'Dashboard', path: '/dashboard', icon: '📊', roles: ['Policyholder', 'POLICYHOLDER'] },
     { label: 'Business Profile', path: '/profile', icon: '🏢', roles: ['Policyholder', 'POLICYHOLDER'] },
-    { label: 'Quotes & Policies', path: '/policy', icon: '📋', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Policyholder', 'POLICYHOLDER'] },
+    { label: 'Quotes & Policies', path: '/policy', icon: '📋', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Policyholder', 'POLICYHOLDER', 'SYSTEM_ADMINISTRATOR'] },
     { label: 'Underwriting', path: '/underwriting', icon: '🔍', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Risk Engineer', 'RISK_ENGINEER'] },
     { label: 'Claims', path: '/claims', icon: '📄', roles: ['Admin', 'ADMIN', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Policyholder', 'POLICYHOLDER'] },
     { label: 'Vendors', path: '/vendor', icon: '🏢', roles: ['Admin', 'ADMIN', 'Vendor Applicant', 'VENDOR_APPLICANT', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Vendor Manager', 'VENDOR_MANAGER', 'SYSTEM_ADMINISTRATOR'] },

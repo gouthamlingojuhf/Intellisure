@@ -89,12 +89,15 @@ export interface DashboardConfig {
           kicker="Live operations"
           class="activity-panel"
         >
-          <div class="activity-list">
-            @for (item of dashboard.timeline; track item.title) {
-              <div class="activity-item"><span class="activity-dot" [ngClass]="getActivityDotClass(item.tone)"></span><div><strong>{{ item.title }}</strong><p>{{ item.detail }}</p><time>{{ item.time }}</time></div></div>
-            }
-          </div>
-          <div class="activity-summary"><span>System health</span><strong>98.7%</strong><div><i style="width: 98.7%"></i></div></div>
+          @if (dashboard.timeline.length > 0) {
+            <div class="activity-list">
+              @for (item of dashboard.timeline; track item.title) {
+                <div class="activity-item"><span class="activity-dot" [ngClass]="getActivityDotClass(item.tone)"></span><div><strong>{{ item.title }}</strong><p>{{ item.detail }}</p><time>{{ item.time }}</time></div></div>
+              }
+            </div>
+          } @else {
+            <p class="empty-state">No live activity is available for this workspace.</p>
+          }
           <ng-template slot="footer">
             <is-button variant="ghost" size="sm">View all activity</is-button>
           </ng-template>
@@ -341,26 +344,12 @@ export class FeatureDashboardComponent implements OnInit {
   @Input() dashboard: DashboardConfig = {
     eyebrow: 'Operations',
     title: 'Feature dashboard',
-    description: 'A live operational view for the current insurance workflow.',
+    description: 'A live operational view for the current insurance workflow. Data appears when the host workspace provides it.',
     actionLabel: 'Open workspace',
     actionLink: '/',
-    stats: [
-      { label: 'Open items', value: '12', delta: '+8%', tone: 'blue' },
-      { label: 'Complete', value: '89%', delta: '+4%', tone: 'emerald' },
-      { label: 'At risk', value: '3', delta: '-2%', tone: 'amber' },
-      { label: 'Escalations', value: '1', delta: '0%', tone: 'slate' },
-    ],
-    timeline: [
-      { title: 'Workflow running normally', detail: 'No critical issues detected across the domain.', time: '2 mins ago', tone: 'emerald' },
-      { title: 'Next review due', detail: 'One task requires action before SLA threshold.', time: '18 mins ago', tone: 'amber' },
-      { title: 'API gateway healthy', detail: 'Request latency remains within expected bounds.', time: '42 mins ago', tone: 'blue' },
-    ],
-    rows: [
-      { name: 'Claims scoring', status: 'Healthy', note: 'Risk rules synchronized', value: '99.2%' },
-      { name: 'Vendor dispatch', status: 'Queued', note: 'Two assignments waiting for approval', value: '2' },
-      { name: 'Document audit', status: 'Monitoring', note: 'One stale record pending review', value: '1' },
-      { name: 'Coverage checks', status: 'Review', note: 'Manual review required', value: '3' },
-    ],
+    stats: [],
+    timeline: [],
+    rows: [],
   };
 
   tableColumns: TableColumn<DashboardTableRow>[] = [

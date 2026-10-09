@@ -107,6 +107,7 @@ public class PolicyController {
                     'POLICYHOLDER',
                     'UNDERWRITER',
                     'ADMIN',
+                    'SYSTEM_ADMINISTRATOR',
                     'CLAIMS_ADJUSTER',
                     'CLAIMS_MANAGER',
                     'CLAIMS_SERVICE'
@@ -125,6 +126,7 @@ public class PolicyController {
                     'POLICYHOLDER',
                     'UNDERWRITER',
                     'ADMIN',
+                    'SYSTEM_ADMINISTRATOR',
                     'CLAIMS_ADJUSTER',
                     'CLAIMS_MANAGER',
                     'CLAIMS_SERVICE'
