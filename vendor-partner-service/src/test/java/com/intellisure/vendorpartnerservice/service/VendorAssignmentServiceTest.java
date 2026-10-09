@@ -360,4 +360,76 @@ class VendorAssignmentServiceTest {
                 .expectNextCount(0)
                 .verifyComplete();
     }
+
+    @Test
+    void queriesAssignmentsByEveryFilterAndReadsMissingAssignmentAsError() {
+        UUID vendor = UUID.randomUUID(), claim = UUID.randomUUID(), recovery = UUID.randomUUID();
+        VendorAssignment assignment = VendorAssignment.builder().assignmentId(UUID.randomUUID()).vendorId(vendor)
+                .claimId(claim).recoveryCaseId(recovery).assignmentType(AssignmentType.RESTORATION)
+                .status(AssignmentStatus.DISPATCHED).priority("HIGH").evidenceDocumentIds(null).build();
+        when(assignmentRepository.findByClaimId(claim)).thenReturn(Flux.just(assignment));
+        when(assignmentRepository.findByRecoveryCaseId(recovery)).thenReturn(Flux.just(assignment));
+        when(assignmentRepository.findByStatus(AssignmentStatus.DISPATCHED)).thenReturn(Flux.just(assignment));
+        when(assignmentRepository.findAll()).thenReturn(Flux.just(assignment));
+        StepVerifier.create(service.getAssignments(new VendorAssignmentFilterRequest(null, claim, null, null, null, null, null, 0, 20))).expectNextCount(1).verifyComplete();
+        StepVerifier.create(service.getAssignments(new VendorAssignmentFilterRequest(null, null, recovery, null, null, null, null, 0, 20))).expectNextCount(1).verifyComplete();
+        StepVerifier.create(service.getAssignments(new VendorAssignmentFilterRequest(null, null, null, null, "DISPATCHED", null, null, 0, 20))).expectNextCount(1).verifyComplete();
+        StepVerifier.create(service.getAssignments(new VendorAssignmentFilterRequest(null, null, null, null, null, null, null, 0, 20))).expectNextCount(1).verifyComplete();
+        UUID missing = UUID.randomUUID(); when(assignmentRepository.findById(missing)).thenReturn(Mono.empty());
+        StepVerifier.create(service.getAssignment(missing)).expectError(IllegalArgumentException.class).verify();
+    }
+
+    @Test
+    void validatesRecoveryPathTypeAndEvidenceBranches() {
+        UUID vendorId = UUID.randomUUID();
+        Vendor vendor = createVerifiedActiveVendor(vendorId);
+        when(vendorRepository.findById(vendorId)).thenReturn(Mono.just(vendor));
+        when(assignmentRepository.save(any(VendorAssignment.class))).thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+        CreateVendorAssignmentRequest invalidPath = new CreateVendorAssignmentRequest(vendorId, "UNKNOWN", null, null, "OTHER", "Task", null, "HIGH");
+        StepVerifier.create(service.createAssignment(invalidPath)).expectError(IllegalArgumentException.class).verify();
+        CreateVendorAssignmentRequest noType = new CreateVendorAssignmentRequest(vendorId, "UNKNOWN", null, null, null, "Task", null, "HIGH");
+        StepVerifier.create(service.createAssignment(noType)).assertNext(r -> assertEquals("OTHER", r.assignmentType())).verifyComplete();
+        CreateVendorAssignmentRequest blankType = new CreateVendorAssignmentRequest(vendorId, " ", null, null, null, "Task", null, "HIGH");
+        StepVerifier.create(service.createAssignment(blankType)).assertNext(r -> assertEquals("OTHER", r.assignmentType())).verifyComplete();
+        CreateVendorAssignmentRequest nullType = new CreateVendorAssignmentRequest(vendorId, null, null, null, null, "Task", null, "HIGH");
+        StepVerifier.create(service.createAssignment(nullType)).assertNext(r -> assertEquals("OTHER", r.assignmentType())).verifyComplete();
+        UUID id = UUID.randomUUID();
+        VendorAssignment accepted = VendorAssignment.builder().assignmentId(id).vendorId(vendorId).status(AssignmentStatus.ACCEPTED).build();
+        when(assignmentRepository.findById(id)).thenReturn(Mono.just(accepted));
+        StepVerifier.create(service.updateAssignmentStatus(id, new UpdateAssignmentStatusRequest("COMPLETED", "done", null, null)))
+                .assertNext(r -> assertTrue(r.evidenceDocumentIds().isEmpty())).verifyComplete();
+        StepVerifier.create(service.updateAssignmentStatus(id, null)).expectError(IllegalArgumentException.class).verify();
+        StepVerifier.create(service.updateAssignmentStatus(id, new UpdateAssignmentStatusRequest("BAD", null, null, null)))
+                .expectError(IllegalArgumentException.class).verify();
+    }
+
+    @Test
+    void exercisesEveryAssignmentStatusTransitionRuleAndResponseMappingBranch() {
+        assertThrows(IllegalArgumentException.class, () -> service.validateStatusTransition(null, AssignmentStatus.ACCEPTED));
+        assertThrows(IllegalArgumentException.class, () -> service.validateStatusTransition(AssignmentStatus.DISPATCHED, null));
+        assertDoesNotThrow(() -> service.validateStatusTransition(AssignmentStatus.ACCEPTED, AssignmentStatus.ACCEPTED));
+        assertThrows(IllegalStateException.class, () -> service.validateStatusTransition(AssignmentStatus.COMPLETED, AssignmentStatus.ACCEPTED));
+        assertThrows(IllegalStateException.class, () -> service.validateStatusTransition(AssignmentStatus.CANCELLED, AssignmentStatus.ACCEPTED));
+        assertThrows(IllegalStateException.class, () -> service.validateStatusTransition(AssignmentStatus.DECLINED, AssignmentStatus.ACCEPTED));
+        assertThrows(IllegalStateException.class, () -> service.validateStatusTransition(AssignmentStatus.DISPATCHED, AssignmentStatus.IN_PROGRESS));
+        assertDoesNotThrow(() -> service.validateStatusTransition(AssignmentStatus.ACCEPTED, AssignmentStatus.IN_PROGRESS));
+        assertThrows(IllegalStateException.class, () -> service.validateStatusTransition(AssignmentStatus.DISPATCHED, AssignmentStatus.COMPLETED));
+        assertDoesNotThrow(() -> service.validateStatusTransition(AssignmentStatus.ACCEPTED, AssignmentStatus.COMPLETED));
+        assertDoesNotThrow(() -> service.validateStatusTransition(AssignmentStatus.IN_PROGRESS, AssignmentStatus.COMPLETED));
+        for (AssignmentStatus source : new AssignmentStatus[] {AssignmentStatus.DISPATCHED, AssignmentStatus.OFFERED,
+                AssignmentStatus.ASSIGNED, AssignmentStatus.PENDING, AssignmentStatus.REQUESTED}) {
+            assertDoesNotThrow(() -> service.validateStatusTransition(source, AssignmentStatus.ACCEPTED));
+            assertDoesNotThrow(() -> service.validateStatusTransition(source, AssignmentStatus.DECLINED));
+        }
+        assertThrows(IllegalStateException.class, () -> service.validateStatusTransition(AssignmentStatus.IN_PROGRESS, AssignmentStatus.ACCEPTED));
+        assertThrows(IllegalStateException.class, () -> service.validateStatusTransition(AssignmentStatus.IN_PROGRESS, AssignmentStatus.DECLINED));
+
+        UUID id = UUID.randomUUID();
+        VendorAssignment mapped = VendorAssignment.builder().assignmentId(id).vendorId(UUID.randomUUID()).assignmentType(null)
+                .status(null).evidenceDocumentIds(java.util.Arrays.asList(null, " ", id.toString())).build();
+        when(assignmentRepository.findById(id)).thenReturn(Mono.just(mapped));
+        StepVerifier.create(service.getAssignment(id)).assertNext(response -> {
+            assertNull(response.assignmentType()); assertNull(response.status()); assertEquals(List.of(id), response.evidenceDocumentIds());
+        }).verifyComplete();
+    }
 }

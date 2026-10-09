@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
 class VendorServiceTest {
@@ -120,5 +121,43 @@ class VendorServiceTest {
         // Vendor repository only read, no mutating calls
         verify(vendorRepository).findByServiceTypesContaining("RESTORATION");
         verify(vendorRepository, never()).save(any());
+    }
+
+    @Test
+    void searchesByCapabilityLocationAndAllVendorsWithEligibilityFiltering() {
+        Vendor eligible = vendor(VendorVerificationStatus.VERIFIED, VendorActiveStatus.ACTIVE);
+        Vendor inactive = vendor(VendorVerificationStatus.VERIFIED, VendorActiveStatus.INACTIVE);
+        when(vendorRepository.findByServiceTypesContaining("FIRE")).thenReturn(Flux.just(eligible));
+        when(vendorRepository.findByServiceAreasContaining("NORTH")).thenReturn(Flux.just(eligible, inactive));
+        when(vendorRepository.findAll()).thenReturn(Flux.just(eligible, inactive));
+        StepVerifier.create(service.searchVendors(new com.intellisure.vendorpartnerservice.dto.VendorSearchRequest(null, null, null, "FIRE", null, null, null)))
+                .assertNext(r -> { assertEquals(0, r.page()); assertEquals(20, r.size()); assertEquals(1, r.items().size()); }).verifyComplete();
+        StepVerifier.create(service.searchVendors(new com.intellisure.vendorpartnerservice.dto.VendorSearchRequest(null, "NORTH", null, null, null, 1, 2)))
+                .assertNext(r -> { assertEquals(1, r.page()); assertEquals(2, r.size()); assertEquals(1, r.items().size()); }).verifyComplete();
+        StepVerifier.create(service.searchVendors(new com.intellisure.vendorpartnerservice.dto.VendorSearchRequest(null, null, null, null, null, 0, 20)))
+                .assertNext(r -> assertEquals(1, r.items().size())).verifyComplete();
+    }
+
+    @Test
+    void updatesAllVendorFieldsAndHandlesMissingOrInvalidStatus() {
+        Vendor vendor = vendor(VendorVerificationStatus.PENDING, VendorActiveStatus.INACTIVE);
+        when(vendorRepository.findById(vendor.getVendorId())).thenReturn(Mono.just(vendor));
+        when(vendorRepository.save(vendor)).thenReturn(Mono.just(vendor));
+        var request = new com.intellisure.vendorpartnerservice.dto.UpdateVendorRequest(
+                "Updated", List.of("A"), List.of("B"), List.of("C"), "Name", "Phone", "Email");
+        StepVerifier.create(service.updateVendor(vendor.getVendorId(), request)).assertNext(r -> assertEquals("Updated", r.displayName())).verifyComplete();
+        StepVerifier.create(service.updateVendorStatus(vendor.getVendorId(), new com.intellisure.vendorpartnerservice.dto.UpdateVendorStatusRequest("ACTIVE", "ready")))
+                .assertNext(r -> assertEquals("ACTIVE", r.activeStatus())).verifyComplete();
+        StepVerifier.create(service.updateVendorStatus(vendor.getVendorId(), new com.intellisure.vendorpartnerservice.dto.UpdateVendorStatusRequest("UNKNOWN", null)))
+                .expectError(IllegalArgumentException.class).verify();
+        when(vendorRepository.findById(vendor.getVendorId())).thenReturn(Mono.empty());
+        StepVerifier.create(service.getVendor(vendor.getVendorId())).expectError(IllegalArgumentException.class).verify();
+    }
+
+    private Vendor vendor(VendorVerificationStatus verification, VendorActiveStatus active) {
+        return Vendor.builder().vendorId(UUID.randomUUID()).legalName("Vendor").displayName("Vendor")
+                .vendorType(VendorType.TOWING).serviceTypes(List.of("TOWING")).capabilities(List.of("FIRE"))
+                .serviceAreas(List.of("NORTH")).contactName("Name").contactPhone("Phone").contactEmail("Email")
+                .verificationStatus(verification).activeStatus(active).build();
     }
 }
