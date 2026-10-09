@@ -18,4 +18,8 @@ export class PolicyService {
   getPolicyByNumber(policyNumber: string): Observable<PolicyResponse> {
     return this.api.get<PolicyResponse>(`/api/policies/number/${policyNumber}`);
   }
+
+  getAllPolicies(): Observable<PolicyResponse[]> {
+    return this.api.get<PolicyResponse[]>('/api/policies/admin');
+  }
 }

@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,7 +26,7 @@ public class UserStatusController {
     @PreAuthorize("hasAnyRole('SYSTEM_ADMINISTRATOR', 'ADMIN')")
     @PutMapping("/{id}/status")
     public Mono<ResponseEntity<UserStatusResponse>> updateStatus(
-            java.util.UUID id,
+            @PathVariable("id") UUID id,
             @Valid @RequestBody UserStatusRequest request) {
         return userStatusService.updateStatus(id, request)
                 .map(ResponseEntity::ok);

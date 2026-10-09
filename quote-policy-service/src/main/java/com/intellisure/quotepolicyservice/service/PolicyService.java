@@ -45,7 +45,7 @@ public class PolicyService {
     private final PolicyMapper policyMapper;
     private final SecurityActorService securityActorService;
 
-    @PreAuthorize("hasRole('UNDERWRITER')")
+    @PreAuthorize("hasAnyRole('UNDERWRITER', 'ADMIN', 'SYSTEM_ADMINISTRATOR')")
     @Transactional
     public Mono<PolicyResponse> bindQuote(
             UUID quoteId
@@ -290,7 +290,7 @@ public class PolicyService {
                         .flatMap(this::buildPolicyResponse));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SYSTEM_ADMINISTRATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SYSTEM_ADMINISTRATOR', 'UNDERWRITER', 'CLAIMS_ADJUSTER', 'CLAIMS_MANAGER')")
     public Flux<PolicyResponse> getAllPoliciesForAdministration() {
         return policyRepository.findAll().flatMap(this::buildPolicyResponse);
     }
@@ -370,20 +370,35 @@ public class PolicyService {
             Quote quote
     ) {
         return securityActorService
-                .currentUserId()
-                .flatMap(authenticatedUserId -> {
-                    if (!authenticatedUserId.equals(
-                            quote.getAssignedUnderwriterId()
-                    )) {
-                        return Mono.error(
-                                new AccessDeniedBusinessException(
-                                        "Only the assigned underwriter "
-                                                + "can bind this quote"
-                                )
-                        );
+                .hasRole("ADMIN")
+                .flatMap(isAdmin -> {
+                    if (Boolean.TRUE.equals(isAdmin)) {
+                        return Mono.empty();
                     }
+                    return securityActorService
+                            .hasRole("SYSTEM_ADMINISTRATOR")
+                            .flatMap(isSysAdmin -> {
+                                if (Boolean.TRUE.equals(isSysAdmin)) {
+                                    return Mono.empty();
+                                }
+                                return securityActorService
+                                        .currentUserId()
+                                        .flatMap(authenticatedUserId -> {
+                                            if (quote.getAssignedUnderwriterId() != null
+                                                    && !authenticatedUserId.equals(
+                                                            quote.getAssignedUnderwriterId()
+                                                    )) {
+                                                return Mono.error(
+                                                        new AccessDeniedBusinessException(
+                                                                "Only the assigned underwriter "
+                                                                        + "can bind this quote"
+                                                        )
+                                                );
+                                            }
 
-                    return Mono.empty();
+                                            return Mono.empty();
+                                        });
+                            });
                 });
     }
 

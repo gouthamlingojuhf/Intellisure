@@ -73,8 +73,39 @@ interface OfferedCoverageForm extends OfferedCoverageRequest {
                 <div class="inline-state error" role="alert">{{ reviewError }}</div>
               } @else if (reviewQuote) {
                 @if (canManageQuote) {
-                <div class="review-grid">
-                  <div class="review-section">
+                  @if (reviewQuote.status === 'ACCEPTED') {
+                    <div class="review-grid" style="grid-template-columns: 1fr;">
+                      <div class="review-section">
+                        <h3>Customer Accepted Terms — Ready for Binding</h3>
+                        <p class="helper">The customer accepted the terms on {{ reviewQuote.acceptedAt | date:'medium' }}. You can now bind this quote into an active commercial policy.</p>
+                        <div style="display: flex; gap: 12px; align-items: center; margin-top: 10px;">
+                          <button type="button" class="primary-button" [disabled]="actionLoading" (click)="bindPolicy()">
+                            {{ actionLoading === 'bind' ? 'Binding policy…' : 'Bind & Issue Policy →' }}
+                          </button>
+                          <a class="secondary-button" [routerLink]="['/policy', reviewQuote.quoteId]" style="text-decoration: none; display: inline-block;">
+                            View full quote specifications
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  } @else if (reviewQuote.status === 'BOUND' || reviewQuote.status === 'ISSUED') {
+                    <div class="review-grid" style="grid-template-columns: 1fr;">
+                      <div class="review-section">
+                        <h3>Coverage Bound & Active</h3>
+                        <p class="helper">This quote has been bound into an active policy contract. Commercial coverage is in effect.</p>
+                        <div style="display: flex; gap: 12px; align-items: center; margin-top: 10px;">
+                          <a class="secondary-button" [routerLink]="['/policy', reviewQuote.quoteId]" style="text-decoration: none; display: inline-block;">
+                            View quote details
+                          </a>
+                          <a class="primary-button" routerLink="/policy" style="text-decoration: none; display: inline-block;">
+                            View policy portfolio
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  } @else {
+                  <div class="review-grid">
+                    <div class="review-section">
                     <h3>Decision</h3>
                     <label>Outcome
                       <select [value]="decision" (change)="setDecision(readValue($event))">
@@ -124,6 +155,7 @@ interface OfferedCoverageForm extends OfferedCoverageRequest {
                     </button>
                   </div>
                 </div>
+                }
                 } @else {
                   <div class="read-only-note" role="status">
                     <strong>Risk review access</strong>
@@ -234,7 +266,7 @@ export class UnderwritingDashboardComponent {
   offeredCoverages: OfferedCoverageForm[] = [];
   reviewLoading = false;
   reviewError: string | null = null;
-  actionLoading: 'decision' | 'terms' | false = false;
+  actionLoading: 'decision' | 'terms' | 'bind' | false = false;
   actionMessage: string | null = null;
   actionError: string | null = null;
   decision: UnderwritingDecisionType = 'APPROVED';
@@ -341,6 +373,24 @@ export class UnderwritingDashboardComponent {
         this.actionLoading = false;
         this.reviewQuote = quote;
         this.actionMessage = 'Quote terms published. The policyholder can now review and accept the offer.';
+        this.reload();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.actionLoading = false;
+        this.actionError = this.errorMessage(error);
+      },
+    });
+  }
+
+  bindPolicy(): void {
+    if (!this.reviewQuote) return;
+    this.actionLoading = 'bind';
+    this.actionError = null;
+    this.quotes.bindQuote(this.reviewQuote.quoteId).subscribe({
+      next: (policy) => {
+        this.actionLoading = false;
+        this.actionMessage = `Policy ${policy.policyNumber} bound successfully! Coverage is now active.`;
+        this.refreshReviewQuote();
         this.reload();
       },
       error: (error: HttpErrorResponse) => {

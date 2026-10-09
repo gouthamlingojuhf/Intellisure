@@ -10,6 +10,7 @@ import {
   SubjectivityResponse,
   UnderwritingDecisionResponse,
 } from '../models/quote.models';
+import { PolicyResponse } from '../models/policy.models';
 
 @Injectable({ providedIn: 'root' })
 export class QuoteService {
@@ -54,5 +55,13 @@ export class QuoteService {
 
   getSubjectivities(quoteId: string): Observable<SubjectivityResponse[]> {
     return this.api.get<SubjectivityResponse[]>(`/api/quotes/${quoteId}/subjectivities`);
+  }
+
+  bindQuote(quoteId: string): Observable<PolicyResponse> {
+    return this.api.post<PolicyResponse>(`/api/quotes/${quoteId}/bind`, {});
+  }
+
+  getAllQuotes(): Observable<QuoteResponse[]> {
+    return this.api.get<QuoteResponse[]>('/api/quotes/admin');
   }
 }

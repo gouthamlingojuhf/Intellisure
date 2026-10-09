@@ -2,13 +2,15 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, switchMap, take } from 'rxjs/operators';
+import { Store } from '@ngrx/store';
 
 import { QuoteService } from '../../core/services/quote.service';
 import { PolicyService } from '../../core/services/policy.service';
 import { CustomerProfileService } from '../../core/services/customer-profile.service';
 import { QuoteResponse } from '../../core/models/quote.models';
 import { PolicyResponse } from '../../core/models/policy.models';
+import { selectUserRole } from '../../core/store/auth/auth.selectors';
 
 // ui-core components
 import {
@@ -49,11 +51,13 @@ import {
             Manage your commercial insurance contracts, track quotes in underwriting review, and initiate new coverage applications.
           </p>
         </div>
-        <div class="header-actions">
-          <is-button variant="primary" routerLink="/policy/quotes/new">
-            Request New Quote &rarr;
-          </is-button>
-        </div>
+        @if (!isEmployee) {
+          <div class="header-actions">
+            <is-button variant="primary" routerLink="/policy/quotes/new">
+              Request New Quote &rarr;
+            </is-button>
+          </div>
+        }
       </header>
 
       @if (loading) {
@@ -62,7 +66,7 @@ import {
           <is-skeleton variant="card" />
           <is-skeleton variant="card" />
         </div>
-      } @else if (profileMissing) {
+      } @else if (profileMissing && !isEmployee) {
         <div class="notice-card warning">
           <div class="notice-icon" aria-hidden="true">🏢</div>
           <div>
@@ -80,10 +84,10 @@ import {
           @if (policies.length === 0) {
             <is-empty-state
               title="No active policies"
-              description="You do not have any active or bound policies. Once a quote is accepted and issued, it will appear here."
+              description="No active or bound policies were found."
               icon="📋"
-              actionLabel="Create Insurance Quote"
-              (action)="navigate('/policy/quotes/new')"
+              [actionLabel]="isEmployee ? '' : 'Create Insurance Quote'"
+              (action)="isEmployee ? null : navigate('/policy/quotes/new')"
             />
           } @else {
             <div class="table-container">
@@ -143,10 +147,10 @@ import {
           @if (quotes.length === 0) {
             <is-empty-state
               title="No quotes found"
-              description="Submit a commercial insurance application to receive custom limits and pricing."
+              description="No commercial quote applications are currently available."
               icon="📝"
-              actionLabel="Start a Quote"
-              (action)="navigate('/policy/quotes/new')"
+              [actionLabel]="isEmployee ? '' : 'Start a Quote'"
+              (action)="isEmployee ? null : navigate('/policy/quotes/new')"
             />
           } @else {
             <div class="table-container">
@@ -333,6 +337,7 @@ import {
   `],
 })
 export class PolicyListComponent implements OnInit {
+  private readonly store = inject(Store);
   private readonly quoteService = inject(QuoteService);
   private readonly policyService = inject(PolicyService);
   private readonly profileService = inject(CustomerProfileService);
@@ -341,6 +346,7 @@ export class PolicyListComponent implements OnInit {
   customerId: string | null = null;
   loading = true;
   profileMissing = false;
+  isEmployee = false;
 
   quotes: QuoteResponse[] = [];
   policies: PolicyResponse[] = [];
@@ -353,31 +359,42 @@ export class PolicyListComponent implements OnInit {
     this.loading = true;
     this.profileMissing = false;
 
-    this.profileService.getProfile().subscribe({
-      next: (profile) => {
-        if (!profile?.customerId) {
-          this.profileMissing = true;
-          this.loading = false;
-          return;
+    this.store.select(selectUserRole).pipe(
+      take(1),
+      switchMap((role) => {
+        this.isEmployee = ['UNDERWRITER', 'RISK_ENGINEER', 'CLAIMS_ADJUSTER', 'CLAIMS_MANAGER', 'VENDOR_MANAGER', 'ADMIN', 'SYSTEM_ADMINISTRATOR'].includes((role ?? '').toUpperCase());
+        if (this.isEmployee) {
+          return forkJoin({
+            quotes: this.quoteService.getAllQuotes().pipe(catchError(() => of([]))),
+            policies: this.policyService.getAllPolicies().pipe(catchError(() => of([]))),
+          });
         }
 
-        this.customerId = profile.customerId;
-        forkJoin({
-          quotes: this.quoteService.getQuotesByCustomerId(this.customerId).pipe(catchError(() => of([]))),
-          policies: this.policyService.getPoliciesByCustomerId(this.customerId).pipe(catchError(() => of([]))),
-        }).subscribe({
-          next: ({ quotes, policies }) => {
-            this.quotes = quotes || [];
-            this.policies = policies || [];
-            this.loading = false;
-          },
-          error: () => {
-            this.loading = false;
-          },
-        });
+        return this.profileService.getProfile().pipe(
+          switchMap((profile) => {
+            if (!profile?.customerId) {
+              this.profileMissing = true;
+              return of({ quotes: [], policies: [] });
+            }
+            this.customerId = profile.customerId;
+            return forkJoin({
+              quotes: this.quoteService.getQuotesByCustomerId(this.customerId).pipe(catchError(() => of([]))),
+              policies: this.policyService.getPoliciesByCustomerId(this.customerId).pipe(catchError(() => of([]))),
+            });
+          }),
+          catchError(() => {
+            this.profileMissing = true;
+            return of({ quotes: [], policies: [] });
+          })
+        );
+      })
+    ).subscribe({
+      next: ({ quotes, policies }) => {
+        this.quotes = quotes || [];
+        this.policies = policies || [];
+        this.loading = false;
       },
       error: () => {
-        this.profileMissing = true;
         this.loading = false;
       },
     });

@@ -22,7 +22,22 @@ export const loginRemoteEffect = createEffect(
               if (res.customerId) localStorage.setItem('is_customer_id', res.customerId);
               if (res.email) localStorage.setItem('is_email', res.email);
             }
-            router.navigateByUrl(res?.role === 'VENDOR_APPLICANT' ? '/vendor/onboarding' : res?.customerId ? '/dashboard' : '/profile');
+            const role = (res?.role ?? '').toUpperCase();
+            if (role === 'VENDOR_APPLICANT') {
+              router.navigateByUrl('/vendor/onboarding');
+            } else if (role === 'ADMIN' || role === 'SYSTEM_ADMINISTRATOR') {
+              router.navigateByUrl('/admin');
+            } else if (role === 'UNDERWRITER' || role === 'RISK_ENGINEER') {
+              router.navigateByUrl('/underwriting');
+            } else if (role === 'CLAIMS_ADJUSTER' || role === 'CLAIMS_MANAGER') {
+              router.navigateByUrl('/claims');
+            } else if (role === 'VENDOR_MANAGER') {
+              router.navigateByUrl('/vendor');
+            } else if (res?.customerId) {
+              router.navigateByUrl('/dashboard');
+            } else {
+              router.navigateByUrl('/profile');
+            }
           }),
           map((response) => authRemoteActions.loginSuccess({ response })),
           catchError((err) =>

@@ -12,6 +12,7 @@ import {
   UnderwritingDecisionResponse,
 } from '../../core/models/quote.models';
 import { uiActions } from '../../core/store/ui/ui.actions';
+import { selectUserRole } from '../../core/store/auth/auth.selectors';
 
 // ui-core components
 import {
@@ -168,12 +169,23 @@ import {
                 <div>
                   <h3>Quote Accepted by Policyholder</h3>
                   <p>
-                    You accepted the offered terms on {{ quote.acceptedAt | date:'medium' }}. The underwriting desk is now binding the policy contract.
+                    @if (isEmployee) {
+                      Terms accepted on {{ quote.acceptedAt | date:'medium' }}. You can now bind this quote into an in-force commercial policy.
+                    } @else {
+                      You accepted the offered terms on {{ quote.acceptedAt | date:'medium' }}. The underwriting desk is now binding the policy contract.
+                    }
                   </p>
                 </div>
-                <is-button variant="secondary" size="sm" (click)="loadQuoteData()">
-                  Check Binding Status ⟳
-                </is-button>
+                <div class="status-action-buttons">
+                  @if (canBindQuote) {
+                    <is-button variant="primary" size="sm" [disabled]="actionLoading" (click)="onBindQuote()">
+                      {{ actionLoading ? 'Binding…' : 'Bind & Issue Policy →' }}
+                    </is-button>
+                  }
+                  <is-button variant="secondary" size="sm" (click)="loadQuoteData()">
+                    Check Binding Status ⟳
+                  </is-button>
+                </div>
               </div>
             }
 
@@ -478,6 +490,13 @@ import {
       flex-wrap: wrap;
     }
 
+    .status-action-buttons {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
     .status-action-row h3 {
       margin: 0 0 4px;
       font-size: 15px;
@@ -747,10 +766,56 @@ export class QuoteDetailComponent implements OnInit {
 
   showDeclineBox = false;
   declineReason = '';
+  userRole: string | null = null;
+
+  get isEmployee(): boolean {
+    const role = (this.userRole || '').toUpperCase();
+    return (
+      role === 'UNDERWRITER' ||
+      role === 'ADMIN' ||
+      role === 'SYSTEM_ADMINISTRATOR' ||
+      role === 'RISK_ENGINEER' ||
+      role.startsWith('CLAIMS_')
+    );
+  }
+
+  get canBindQuote(): boolean {
+    const role = (this.userRole || '').toUpperCase();
+    return (
+      (role === 'UNDERWRITER' || role === 'ADMIN' || role === 'SYSTEM_ADMINISTRATOR') &&
+      this.quote?.status === 'ACCEPTED'
+    );
+  }
 
   ngOnInit(): void {
     this.quoteId = this.route.snapshot.paramMap.get('quoteId') ?? '';
+    this.store.select(selectUserRole).subscribe((role) => {
+      this.userRole = role;
+    });
     this.loadQuoteData();
+  }
+
+  onBindQuote(): void {
+    if (!this.quoteId) return;
+
+    this.actionLoading = true;
+    this.quoteService.bindQuote(this.quoteId).subscribe({
+      next: (policy) => {
+        this.actionLoading = false;
+        this.store.dispatch(
+          uiActions.showToast({
+            message: `Policy ${policy.policyNumber} bound successfully! Coverage is now active.`,
+            kind: 'success',
+          })
+        );
+        this.loadQuoteData();
+      },
+      error: (err) => {
+        this.actionLoading = false;
+        const msg = err?.error?.message || err?.message || 'Failed to bind quote.';
+        this.store.dispatch(uiActions.showToast({ message: msg, kind: 'error' }));
+      },
+    });
   }
 
   loadQuoteData(): void {
