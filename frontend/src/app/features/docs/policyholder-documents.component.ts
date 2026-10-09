@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { forkJoin, map, of, switchMap, take } from 'rxjs';
 import { BadgeComponent, ButtonComponent, CardComponent, EmptyStateComponent, SkeletonComponent } from 'ui-core';
@@ -17,7 +18,7 @@ interface ClaimReference { claimId: string; }
 @Component({
   selector: 'is-policyholder-documents',
   standalone: true,
-  imports: [DatePipe, BadgeComponent, ButtonComponent, CardComponent, EmptyStateComponent, SkeletonComponent],
+  imports: [DatePipe, RouterLink, BadgeComponent, ButtonComponent, CardComponent, EmptyStateComponent, SkeletonComponent],
   template: `
     <section class="enterprise-page">
       <header class="page-header">
@@ -26,7 +27,7 @@ interface ClaimReference { claimId: string; }
           <h1>Documents</h1>
           <p class="page-description">{{ isEmployee ? 'Review documents attached to operational claim records.' : 'View documents attached to your quotes, policies, and claims.' }}</p>
         </div>
-        <is-button variant="secondary" size="sm" (click)="loadDocuments()" [disabled]="loading">Refresh</is-button>
+        <div class="header-actions"><a routerLink="guide" class="guide-link">Open role guides</a><is-button variant="secondary" size="sm" (click)="loadDocuments()" [disabled]="loading">Refresh</is-button></div>
       </header>
 
       @if (error) {
@@ -69,6 +70,8 @@ interface ClaimReference { claimId: string; }
     .page-eyebrow { margin: 0 0 7px; color: var(--claret, #75013f); font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
     .page-header h1 { margin: 0; color: var(--ink, #000); font-size: clamp(25px, 2.5vw, 34px); letter-spacing: -.045em; }
     .page-description { max-width: 720px; margin: 9px 0 0; color: var(--muted, #6f6a6d); font-size: 12px; line-height: 1.6; }
+    .header-actions { display: flex; align-items: center; gap: 10px; }
+    .guide-link { color: var(--claret, #75013f); font-size: 10px; font-weight: 700; text-decoration: none; }
     .document-list { display: grid; gap: 0; }
     .document-row { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto 36px; align-items: center; gap: 14px; padding: 15px 0; border-bottom: 1px solid var(--border, #eae5df); }
     .document-row:last-child { border-bottom: 0; }

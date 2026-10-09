@@ -290,6 +290,11 @@ public class PolicyService {
                         .flatMap(this::buildPolicyResponse));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SYSTEM_ADMINISTRATOR')")
+    public Flux<PolicyResponse> getAllPoliciesForAdministration() {
+        return policyRepository.findAll().flatMap(this::buildPolicyResponse);
+    }
+
 
 
     private boolean isDateWithinCoveragePeriod(

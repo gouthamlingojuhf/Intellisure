@@ -84,9 +84,12 @@ Last reviewed: 2026-10-09
 - Completed: quote, policy, claim, recovery, profile, and claim-list screens no longer expose internal UUID/customer-ID fields. FNOL policy selection now uses the policy number while retaining the internal policy identifier only in the API request.
 - Completed: the workspace topbar is fixed during scrolling, Ctrl/Cmd+K focuses the search field, partial search terms resolve to permitted workspace areas, and toast notifications auto-dismiss after 30 seconds.
 - Completed: Vendor assignment screens no longer expose raw payloads or literal UUID instructions in the user-facing workflow; backend references remain internal to the existing assignment contract pending reference-selector wiring.
+- Completed: public `/help` and authenticated `/docs/guide` now provide HTML-rendered platform, Policyholder, Vendor, and employee operating guides with role-aware content and no business-data placeholders.
+- Completed: System Administrator/Admin now have a guarded `/admin` workspace with live customer-party directory search, employee account creation, role/status management, and live quote/policy/claim summary navigation.
 - Remaining: add deeper assignment referral and subjectivity screens only after their existing backend contracts and role boundaries are verified end-to-end.
 - Remaining: replace Vendor assignment reference text inputs with live claim/recovery/document selectors so operators never need to handle internal identifiers manually.
 - Remaining: System Administrator user-management actions have backend create/role/status endpoints but no list/search endpoint or frontend administration workspace. A UI should not be fabricated around manually supplied IDs; this is the next contract-level employee batch.
+- Completed: customer-party now exposes an authorized administrative account directory endpoint with role/status/search filters; Quote & Policy now exposes authorized all-quote/all-policy read endpoints for the Admin workspace.
 - Dependency: preserve role restrictions and avoid exposing employee-only information to Policyholders.
 
 ### P3 — Analytics / Intelligence
@@ -130,4 +133,4 @@ Last reviewed: 2026-10-09
 
 ## Immediate batch
 
-The authenticated Docker journey is complete through quote, underwriting, policy, claim, recovery, documents, notifications, and recovery-linked Vendor dispatch/fulfillment. The current UI-stability batch is verified with the shared ui-core build, shell build, Claims MFE build, and full configured Karma/ChromeHeadless suite. The next meaningful batch is the live documentation and administrator workspace, followed by Vendor reference selectors and authenticated role-by-role verification. Native Windows startup verification with approved office test identities remains a demo-readiness task; local Docker underwriter/vendor records are isolated in local database state and are not shared configuration.
+The authenticated Docker journey is complete through quote, underwriting, policy, claim, recovery, documents, notifications, and recovery-linked Vendor dispatch/fulfillment. The UI-stability batch and live documentation/administrator workspace are verified with Java compilation, shared ui-core/shell builds, Claims and Vendor builds, and the configured frontend suite. The next meaningful batch is Vendor reference selectors plus authenticated role-by-role verification. Native Windows startup verification with approved office test identities remains a demo-readiness task; local Docker underwriter/vendor records are isolated in local database state and are not shared configuration.

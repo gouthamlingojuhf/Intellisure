@@ -149,6 +149,12 @@ public class PolicyController {
         );
     }
 
+    @GetMapping("/admin")
+    @Operation(summary = "Get all policies for administrators")
+    public Flux<PolicyResponse> getAllPoliciesForAdministration() {
+        return policyService.getAllPoliciesForAdministration();
+    }
+
 
 
     @GetMapping("/number/{policyNumber}/coverage-check")

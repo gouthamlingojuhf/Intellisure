@@ -20,6 +20,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -82,6 +83,33 @@ public class UserAccountService {
         return userAccountRepo.findByRole(normalizedRole)
                 .filter(user -> "ACTIVE".equalsIgnoreCase(user.getAccountStatus()))
                 .map(userAccountMapper::toUserResponse);
+    }
+
+    public Flux<UserResponse> getUsersForAdministration(String role, String status, String search) {
+        String normalizedRole = role == null || role.isBlank() ? null : normalizeRole(role);
+        String normalizedStatus = status == null || status.isBlank() ? null : status.trim().toUpperCase(Locale.ROOT);
+        String normalizedSearch = search == null ? "" : search.trim().toLowerCase(Locale.ROOT);
+
+        return userAccountRepo.findAll()
+                .filter(user -> normalizedRole == null || normalizedRole.equalsIgnoreCase(user.getRole()))
+                .filter(user -> normalizedStatus == null || normalizedStatus.equalsIgnoreCase(user.getAccountStatus()))
+                .filter(user -> normalizedSearch.isBlank()
+                        || contains(user.getEmail(), normalizedSearch)
+                        || contains(user.getDisplayName(), normalizedSearch)
+                        || contains(user.getRole(), normalizedSearch))
+                .sort((left, right) -> {
+                    LocalDateTime leftCreated = left.getCreatedAt();
+                    LocalDateTime rightCreated = right.getCreatedAt();
+                    if (leftCreated == null && rightCreated == null) return 0;
+                    if (leftCreated == null) return 1;
+                    if (rightCreated == null) return -1;
+                    return rightCreated.compareTo(leftCreated);
+                })
+                .map(userAccountMapper::toUserResponse);
+    }
+
+    private boolean contains(String value, String search) {
+        return value != null && value.toLowerCase(Locale.ROOT).contains(search);
     }
 
     private String normalizeRole(String role) {

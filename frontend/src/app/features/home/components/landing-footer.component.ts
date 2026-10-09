@@ -59,6 +59,7 @@ import { RouterLink } from '@angular/router';
               <li><span>Reserve Adequacy Audit</span></li>
               <li><span>Credentialed Partners</span></li>
               <li><a routerLink="/auth/login">Enterprise Login</a></li>
+              <li><a routerLink="/help">Public platform guides</a></li>
             </ul>
           </div>
         </div>

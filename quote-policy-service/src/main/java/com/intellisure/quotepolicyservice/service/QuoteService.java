@@ -256,6 +256,11 @@ public class QuoteService {
                         .flatMap(this::buildQuoteResponse));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SYSTEM_ADMINISTRATOR')")
+    public Flux<QuoteResponse> getAllQuotesForAdministration() {
+        return quoteRepository.findAll().flatMap(this::buildQuoteResponse);
+    }
+
 
     @PreAuthorize("hasRole('UNDERWRITER')")
     @Transactional

@@ -7,6 +7,7 @@ import { NotFoundComponent } from './features/not-found/not-found.component';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
+  { path: 'help', loadComponent: () => import('./features/docs/platform-guide.component').then((m) => m.PlatformGuideComponent) },
   {
     path: 'dashboard',
     canActivate: [authGuard, roleGuard(['POLICYHOLDER', 'USER'])],
@@ -22,6 +23,11 @@ export const routes: Routes = [
       import('./features/profile/customer-profile.component').then(
         (m) => m.CustomerProfileComponent
       ),
+  },
+  {
+    path: 'admin',
+    canActivate: [authGuard, roleGuard(['ADMIN', 'SYSTEM_ADMINISTRATOR'])],
+    loadComponent: () => import('./features/admin/admin-workspace.component').then((m) => m.AdminWorkspaceComponent),
   },
   // Remote MFEs mount here via Module Federation (loadRemoteModule).
   // Placeholders keep deep links stable until each remote lands:

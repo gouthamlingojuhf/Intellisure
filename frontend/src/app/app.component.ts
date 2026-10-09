@@ -55,6 +55,7 @@ export class AppComponent implements OnInit, OnDestroy {
     { label: 'Recovery', path: '/recovery', icon: '💰', roles: ['Admin', 'ADMIN', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Policyholder', 'POLICYHOLDER'] },
     { label: 'Documents', path: '/docs', icon: '📁', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Risk Engineer', 'RISK_ENGINEER', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Vendor Manager', 'VENDOR_MANAGER', 'SYSTEM_ADMINISTRATOR', 'Policyholder', 'POLICYHOLDER'] },
     { label: 'Notifications', path: '/notifications', icon: '🔔', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Risk Engineer', 'RISK_ENGINEER', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Vendor Manager', 'VENDOR_MANAGER', 'SYSTEM_ADMINISTRATOR', 'Policyholder', 'POLICYHOLDER'] },
+    { label: 'Administration', path: '/admin', icon: '⚙️', roles: ['Admin', 'ADMIN', 'SYSTEM_ADMINISTRATOR'] },
   ];
 
   readonly isAuthenticated$ = this.store.select(selectIsAuthenticated);
@@ -196,7 +197,7 @@ export class AppComponent implements OnInit, OnDestroy {
       policy: '/policy', policies: '/policy', quote: '/policy', quotes: '/policy',
       claim: '/claims', claims: '/claims', vendor: '/vendor', vendors: '/vendor',
       recovery: '/recovery', document: '/docs', documents: '/docs',
-      notification: '/notifications', notifications: '/notifications',
+      notification: '/notifications', notifications: '/notifications', admin: '/admin', administration: '/admin',
       underwriting: '/underwriting', analytics: '/analytics', profile: '/profile', dashboard: '/dashboard',
     };
     const aliasMatch = Object.entries(aliases).find(([alias]) => alias.startsWith(term));

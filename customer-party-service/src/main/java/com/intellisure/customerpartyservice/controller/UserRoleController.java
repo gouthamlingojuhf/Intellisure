@@ -22,7 +22,7 @@ public class UserRoleController {
 
     private final UserRoleService userRoleService;
 
-    @PreAuthorize("hasRole('SYSTEM_ADMINISTRATOR')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMINISTRATOR', 'ADMIN')")
     @PutMapping("/{id}/roles")
     public Mono<ResponseEntity<RoleAssignmentResponse>> assignRoles(
             java.util.UUID id,

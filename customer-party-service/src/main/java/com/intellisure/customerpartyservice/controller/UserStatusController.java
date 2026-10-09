@@ -22,7 +22,7 @@ public class UserStatusController {
 
     private final UserStatusService userStatusService;
 
-    @PreAuthorize("hasRole('SYSTEM_ADMINISTRATOR')")
+    @PreAuthorize("hasAnyRole('SYSTEM_ADMINISTRATOR', 'ADMIN')")
     @PutMapping("/{id}/status")
     public Mono<ResponseEntity<UserStatusResponse>> updateStatus(
             java.util.UUID id,
