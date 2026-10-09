@@ -105,4 +105,29 @@ class CustomerPartyAdjusterClientTest {
                 .expectNextCount(0)
                 .verifyComplete();
     }
+
+    @Test
+    void findAvailableAdjustersFiltersNullEntriesAndNullUserIds() {
+        UUID valid = UUID.randomUUID();
+        ClientResponse response = ClientResponse.create(HttpStatus.OK)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .body("[{\"userId\": null}, {\"userId\": \"" + valid + "\"}]")
+                .build();
+        responseSupplier.set(Mono.just(response));
+
+        StepVerifier.create(client.findAvailableAdjusters())
+                .expectNext(valid)
+                .verifyComplete();
+    }
+
+    @Test
+    void findAvailableAdjustersSkipsNullArrayEntries() {
+        ClientResponse response = ClientResponse.create(HttpStatus.OK)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .body("[null]")
+                .build();
+        responseSupplier.set(Mono.just(response));
+
+        StepVerifier.create(client.findAvailableAdjusters()).verifyComplete();
+    }
 }

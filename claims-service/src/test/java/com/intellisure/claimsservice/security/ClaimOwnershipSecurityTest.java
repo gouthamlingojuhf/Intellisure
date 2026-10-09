@@ -172,6 +172,49 @@ class ClaimOwnershipSecurityTest {
 
         StepVerifier.create(securityActorService.assertClaimAccess(claim))
                 .expectError(AccessDeniedBusinessException.class)
-                .verify();
+        .verify();
+    }
+
+    @Test
+    @DisplayName("Customer identity falls back to subject when customerId claim is blank or malformed")
+    void currentCustomerIdFallsBackToSubject() {
+        UUID subject = UUID.randomUUID();
+        SecurityActorService service = new SecurityActorService();
+        for (String customerClaim : List.of("", "not-a-uuid")) {
+            Jwt jwt = new Jwt("token", Instant.now(), Instant.now().plusSeconds(300), Map.of("alg", "HS256"),
+                    Map.of("sub", subject.toString(), "customerId", customerClaim));
+            JwtAuthenticationToken auth = new JwtAuthenticationToken(jwt, List.of(), subject.toString());
+            StepVerifier.create(service.currentCustomerId()
+                            .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(reactor.core.publisher.Mono.just(new SecurityContextImpl(auth)))))
+                    .expectNext(subject).verifyComplete();
+        }
+    }
+
+    @Test
+    @DisplayName("Claim ownership accepts a matching subject when customer id is unavailable")
+    void claimOwnershipFallsBackToSubject() {
+        UUID subject = UUID.randomUUID();
+        Claim claim = Claim.builder().claimId(UUID.randomUUID()).customerId(subject).build();
+        Jwt jwt = new Jwt("token", Instant.now(), Instant.now().plusSeconds(300), Map.of("alg", "HS256"),
+                Map.of("sub", subject.toString(), "customerId", UUID.randomUUID().toString(), "role", "POLICYHOLDER"));
+        JwtAuthenticationToken auth = new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority("ROLE_POLICYHOLDER")), subject.toString());
+        StepVerifier.create(new SecurityActorService().assertClaimAccess(claim)
+                        .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(reactor.core.publisher.Mono.just(new SecurityContextImpl(auth)))))
+                .verifyComplete();
+    }
+
+    @Test
+    void hasAnyRoleHandlesNullAuthenticationAndPrefixedRoleInput() {
+        SecurityActorService service = new SecurityActorService();
+        SecurityContextImpl emptyContext = new SecurityContextImpl(null);
+        StepVerifier.create(service.hasAnyRole("ADMIN")
+                        .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(reactor.core.publisher.Mono.just(emptyContext))))
+                .expectNext(false).verifyComplete();
+        UUID admin = UUID.randomUUID();
+        Jwt jwt = new Jwt("token", Instant.now(), Instant.now().plusSeconds(300), Map.of("alg", "HS256"), Map.of("sub", admin.toString()));
+        JwtAuthenticationToken auth = new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority("ROLE_ADMIN")), admin.toString());
+        StepVerifier.create(service.hasAnyRole("ROLE_ADMIN")
+                        .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(reactor.core.publisher.Mono.just(new SecurityContextImpl(auth)))))
+                .expectNext(true).verifyComplete();
     }
 }

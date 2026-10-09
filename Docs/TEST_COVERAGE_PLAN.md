@@ -20,7 +20,7 @@ Generated Spring Boot bootstrap code and Angular framework bootstrap files may b
 | 4 | Workflow & Notification | Complete: 98.6% instruction, 99.3% line, 92.2% branch, 97.3% method, 100% class; 55 tests | Keep threshold checks green on Java 17 |
 | 5 | Recovery | Complete: 99.2% instruction, 99.3% line, 90.2% branch, 100% method/class; 60 tests | Keep threshold checks green on Java 17 |
 | 6 | Vendor & Partner | Complete: 98.0% line, 90.5% branch, 97.4% method, 95.7% class; 44 tests | Keep threshold checks green on Java 17 |
-| 7 | Claims | Broad service/security tests exist | Cover FNOL validation, policy verification, claim lifecycle, recovery integration, controller branches |
+| 7 | Claims | Complete: 64 tests; 99.36% line, 92.41% branch, 99.69% method, 100% class; `bash mvnw -q verify` passes | Keep threshold checks green on Java 17 |
 | 8 | Risk & Underwriting | Workflow tests exist | Cover queues, assessment/decision/referral/subjectivity branches, ownership and authorization |
 | 9 | Quote & Policy | Largest existing suite | Measure current coverage, fill all service/controller/scheduler/mapper/security branches, keep lifecycle contract tests |
 | 10 | Customer & Party | Broadest existing suite | Fix environment-dependent application-context test setup, cover admin/profile/auth/JWT/error branches |
