@@ -611,6 +611,7 @@ export interface UserMenuItem {
         flex: 1;
       }
       .topbar {
+        left: 0;
         padding: 0 18px;
         gap: 10px;
       }

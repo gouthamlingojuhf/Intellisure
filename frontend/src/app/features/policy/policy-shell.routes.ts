@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { roleGuard } from '../../core/guards/role.guard';
 
 export const POLICY_SHELL_ROUTES: Routes = [
   {
@@ -9,6 +10,7 @@ export const POLICY_SHELL_ROUTES: Routes = [
   },
   {
     path: 'quotes/new',
+    canActivate: [roleGuard(['POLICYHOLDER', 'USER'])],
     loadComponent: () =>
       import('./quote-create.component').then((m) => m.QuoteCreateComponent),
   },
