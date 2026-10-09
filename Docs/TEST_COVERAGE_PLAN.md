@@ -17,7 +17,7 @@ Generated Spring Boot bootstrap code and Angular framework bootstrap files may b
 | 1 | Eureka + API Gateway | Complete: 100% Eureka line/method/class; 99.35% Gateway line, 94.44% branch, 100% method/class | Keep threshold checks green on Java 17 |
 | 2 | Analytics & Intelligence | Complete: 100% line/method/class; 94.44% branch | Keep threshold checks green on Java 17 |
 | 3 | Document & Audit | Complete: 99.39% line; 94.44% branch; 100% method/class | Keep threshold checks green on Java 17 |
-| 4 | Workflow & Notification | Service/security tests exist | Cover notification ownership, read state, workflow orchestration, controller/error branches |
+| 4 | Workflow & Notification | Complete: 98.6% instruction, 99.3% line, 92.2% branch, 97.3% method, 100% class; 55 tests | Keep threshold checks green on Java 17 |
 | 5 | Recovery | Core tests exist | Cover all recovery paths, idempotency, ownership, controller and WebClient behavior |
 | 6 | Vendor & Partner | Differentiator tests exist | Cover onboarding, verification, discovery, assignment lifecycle, evidence/performance, role boundaries |
 | 7 | Claims | Broad service/security tests exist | Cover FNOL validation, policy verification, claim lifecycle, recovery integration, controller branches |

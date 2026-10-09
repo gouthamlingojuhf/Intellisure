@@ -70,6 +70,37 @@ class NotificationOwnershipSecurityTest {
                 .verifyComplete();
     }
 
+    @Test
+    void currentUserIdReadsSubjectAndRejectsMissingOrInvalidToken() {
+        UUID userId = UUID.randomUUID();
+        JwtAuthenticationToken authentication = authentication(userId);
+        StepVerifier.create(service.currentUserId().contextWrite(ReactiveSecurityContextHolder.withSecurityContext(
+                        Mono.just(new SecurityContextImpl(authentication)))))
+                .expectNext(userId).verifyComplete();
+
+        StepVerifier.create(service.currentUserId())
+                .expectError(AccessDeniedBusinessException.class).verify();
+
+        Jwt invalid = new Jwt("token", Instant.now(), Instant.now().plusSeconds(300),
+                Map.of("alg", "HS256"), Map.of("sub", "not-a-uuid"));
+        StepVerifier.create(service.currentUserId().contextWrite(ReactiveSecurityContextHolder.withSecurityContext(
+                        Mono.just(new SecurityContextImpl(new JwtAuthenticationToken(invalid, List.of(), "not-a-uuid"))))))
+                .expectErrorMatches(error -> error instanceof AccessDeniedBusinessException
+                        && error.getMessage().contains("invalid")).verify();
+    }
+
+    @Test
+    void nullNotificationRecipientIsRejectedAndExplicitRolePrefixIsSupported() {
+        StepVerifier.create(service.assertNotificationCreationAccess(null))
+                .expectError(AccessDeniedBusinessException.class).verify();
+
+        UUID staff = UUID.randomUUID();
+        StepVerifier.create(service.assertNotificationCreationAccess(UUID.randomUUID())
+                        .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(
+                                Mono.just(new SecurityContextImpl(authentication(staff, "ROLE_ADMIN"))))))
+                .verifyComplete();
+    }
+
     private JwtAuthenticationToken authentication(UUID userId) {
         return authentication(userId, "ROLE_POLICYHOLDER");
     }

@@ -18,6 +18,7 @@ import reactor.test.StepVerifier;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -102,5 +103,90 @@ class NotificationServiceTest {
                 .verifyComplete();
 
         verify(repository, never()).save(any(Notification.class));
+    }
+
+    @Test
+    void createsInAppNotificationWhenChannelIsMissing() {
+        UUID recipient = UUID.randomUUID();
+        Notification saved = notification(recipient, NotificationChannel.IN_APP, NotificationType.GENERAL_ALERT);
+        when(repository.save(any(Notification.class))).thenReturn(Mono.just(saved));
+
+        StepVerifier.create(service.createNotification(new CreateNotificationRequest(
+                        recipient, "GENERAL_ALERT", "Title", "Message", null, null, null)))
+                .assertNext(response -> org.junit.jupiter.api.Assertions.assertEquals("IN_APP", response.channel()))
+                .verifyComplete();
+        verify(asyncDispatchService, never()).sendEmailAsync(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void createsSmsPushAndWebhookNotificationsThroughDispatchService() {
+        UUID recipient = UUID.randomUUID();
+        for (String channel : new String[] {"SMS", "PUSH", "WEBHOOK"}) {
+            Notification saved = notification(recipient, NotificationChannel.valueOf(channel), NotificationType.GENERAL_ALERT);
+            when(repository.save(any(Notification.class))).thenReturn(Mono.just(saved));
+            lenient().when(asyncDispatchService.sendSmsAsync(any(), any(), any(), any()))
+                    .thenReturn(CompletableFuture.completedFuture(null));
+            lenient().when(asyncDispatchService.sendPushAsync(any(), any(), any(), any(), any()))
+                    .thenReturn(CompletableFuture.completedFuture(null));
+            lenient().when(asyncDispatchService.sendWebhookAsync(any(), any(), any(), any()))
+                    .thenReturn(CompletableFuture.completedFuture(null));
+
+            StepVerifier.create(service.createNotification(new CreateNotificationRequest(
+                            recipient, "GENERAL_ALERT", "Title", "Message", "CLAIM", UUID.randomUUID(), channel)))
+                    .assertNext(response -> org.junit.jupiter.api.Assertions.assertEquals(channel, response.channel()))
+                    .verifyComplete();
+        }
+        verify(asyncDispatchService, times(1)).sendSmsAsync(any(), any(), any(), any());
+        verify(asyncDispatchService, times(1)).sendPushAsync(any(), any(), any(), any(), any());
+        verify(asyncDispatchService, times(1)).sendWebhookAsync(any(), any(), any(), any());
+    }
+
+    @Test
+    void listsByTypeAndUnreadCount() {
+        UUID recipient = UUID.randomUUID();
+        Notification matching = notification(recipient, NotificationChannel.IN_APP, NotificationType.QUOTE_SUBMITTED);
+        Notification other = notification(recipient, NotificationChannel.IN_APP, NotificationType.CLAIM_REJECTED);
+        when(repository.findByUserId(recipient)).thenReturn(reactor.core.publisher.Flux.just(matching, other));
+        when(repository.countByUserIdAndRead(recipient, false)).thenReturn(Mono.just(2L));
+
+        StepVerifier.create(service.getNotificationsByType(recipient, NotificationType.QUOTE_SUBMITTED, 1, 5))
+                .assertNext(result -> {
+                    org.junit.jupiter.api.Assertions.assertEquals(1, result.items().size());
+                    org.junit.jupiter.api.Assertions.assertEquals(1, result.page());
+                }).verifyComplete();
+        StepVerifier.create(service.getUnreadCount(recipient))
+                .expectNext(2L).verifyComplete();
+    }
+
+    @Test
+    void marksMissingNotificationAsError() {
+        UUID id = UUID.randomUUID();
+        when(repository.findById(id)).thenReturn(Mono.empty());
+
+        StepVerifier.create(service.markRead(new MarkNotificationReadRequest(id)))
+                .expectErrorMatches(error -> error instanceof IllegalArgumentException
+                        && error.getMessage().contains(id.toString()))
+                .verify();
+    }
+
+    @Test
+    void delegatesAccessChecksForNotificationQueries() {
+        UUID recipient = UUID.randomUUID();
+        when(securityActorService.assertUserAccess(recipient))
+                .thenReturn(Mono.error(new SecurityException("denied")));
+        when(repository.countByUserIdAndRead(recipient, false)).thenReturn(Mono.just(0L));
+
+        StepVerifier.create(service.getNotifications(recipient, true, 0, 20))
+                .expectError(SecurityException.class).verify();
+        StepVerifier.create(service.getNotificationsByType(recipient, NotificationType.GENERAL_ALERT, 0, 20))
+                .expectError(SecurityException.class).verify();
+        StepVerifier.create(service.getUnreadCount(recipient))
+                .expectError(SecurityException.class).verify();
+    }
+
+    private Notification notification(UUID userId, NotificationChannel channel, NotificationType type) {
+        return Notification.builder().notificationId(UUID.randomUUID()).userId(userId)
+                .title("Title").message("Message").channel(channel).type(type)
+                .read(false).createdAt(java.time.LocalDateTime.now()).isNew(true).build();
     }
 }
