@@ -6,6 +6,10 @@ import com.intellisure.recoveryservice.dto.RecordRecoveryProgressRequest;
 import com.intellisure.recoveryservice.dto.RecoveryCaseFilterRequest;
 import com.intellisure.recoveryservice.dto.SelectRecoveryPathRequest;
 import com.intellisure.recoveryservice.dto.UpdateRecoveryStatusRequest;
+import com.intellisure.recoveryservice.dto.UpdateRecoveryCaseRequest;
+import com.intellisure.recoveryservice.dto.CompleteRecoveryCaseRequest;
+import com.intellisure.recoveryservice.dto.RecoveryEstimationRequest;
+import com.intellisure.recoveryservice.dto.RecoveryEstimationResponse;
 import com.intellisure.recoveryservice.entity.RecoveryCase;
 import com.intellisure.recoveryservice.entity.RecoveryCaseStatus;
 import com.intellisure.recoveryservice.entity.RecoveryPath;
@@ -377,5 +381,174 @@ class RecoveryLifecycleServiceTest {
                 .verifyComplete();
         verify(repository).findAll();
         verify(repository, never()).findByCustomerId(any());
+    }
+
+    @Test
+    void progressMovesCasesThroughInProgressPartialAndRestoredStates() {
+        UUID id = UUID.randomUUID();
+        RecoveryCase recoveryCase = baseCase(id, RecoveryCaseStatus.INITIATED);
+        when(repository.findById(id)).thenReturn(Mono.just(recoveryCase));
+        when(repository.save(any(RecoveryCase.class))).thenAnswer(i -> Mono.just(i.getArgument(0)));
+
+        StepVerifier.create(service.recordProgress(id, new RecordRecoveryProgressRequest(BigDecimal.valueOf(10), "started")))
+                .assertNext(r -> assertEquals(RecoveryCaseStatus.IN_PROGRESS, r.status())).verifyComplete();
+        recoveryCase.setStatus(RecoveryCaseStatus.IN_PROGRESS);
+        StepVerifier.create(service.recordProgress(id, new RecordRecoveryProgressRequest(BigDecimal.valueOf(50), "half")))
+                .assertNext(r -> assertEquals(RecoveryCaseStatus.BUSINESS_PARTIALLY_RESTORED, r.status())).verifyComplete();
+        recoveryCase.setStatus(RecoveryCaseStatus.BUSINESS_PARTIALLY_RESTORED);
+        recoveryCase.setActualRestorationDate(LocalDate.now());
+        StepVerifier.create(service.recordProgress(id, new RecordRecoveryProgressRequest(BigDecimal.valueOf(100), "done")))
+                .assertNext(r -> assertEquals(RecoveryCaseStatus.BUSINESS_RESTORED, r.status())).verifyComplete();
+    }
+
+    @Test
+    void updateCaseAppliesOnlyProvidedFieldsAndCompleteCaseAddsSummary() {
+        UUID id = UUID.randomUUID();
+        RecoveryCase recoveryCase = baseCase(id, RecoveryCaseStatus.PLANNING);
+        when(repository.findById(id)).thenReturn(Mono.just(recoveryCase));
+        when(repository.save(any(RecoveryCase.class))).thenAnswer(i -> Mono.just(i.getArgument(0)));
+
+        StepVerifier.create(service.updateCase(id, new UpdateRecoveryCaseRequest(
+                        RecoverySeverity.CRITICAL, "New objective", LocalDate.now().plusDays(10), BigDecimal.valueOf(20), UUID.randomUUID())))
+                .assertNext(r -> {
+                    assertEquals(RecoverySeverity.CRITICAL, r.severity());
+                    assertEquals(BigDecimal.valueOf(20), r.currentRestorePercent());
+                }).verifyComplete();
+
+        StepVerifier.create(service.completeCase(id, new CompleteRecoveryCaseRequest("Restored operations", "SUCCESS")))
+                .assertNext(r -> {
+                    assertEquals(RecoveryCaseStatus.COMPLETED, r.status());
+                    assertEquals(BigDecimal.valueOf(100), r.currentRestorePercent());
+                    assertTrue(r.recoveryObjective().contains("COMPLETION"));
+                }).verifyComplete();
+    }
+
+    @Test
+    void statusUpdateCompletesAndRejectsInvalidRequests() {
+        UUID id = UUID.randomUUID();
+        RecoveryCase recoveryCase = baseCase(id, RecoveryCaseStatus.PLANNING);
+        when(repository.findById(id)).thenReturn(Mono.just(recoveryCase));
+        when(repository.save(any(RecoveryCase.class))).thenAnswer(i -> Mono.just(i.getArgument(0)));
+        StepVerifier.create(service.updateStatus(id, new UpdateRecoveryStatusRequest(RecoveryCaseStatus.BUSINESS_RESTORED)))
+                .assertNext(r -> {
+                    assertEquals(BigDecimal.valueOf(100), r.currentRestorePercent());
+                    assertNotNull(r.actualRestorationDate());
+                }).verifyComplete();
+
+        StepVerifier.create(service.updateStatus(id, null)).expectError(IllegalArgumentException.class).verify();
+        StepVerifier.create(service.recordProgress(id, null)).expectError(IllegalArgumentException.class).verify();
+        assertThrows(IllegalArgumentException.class, () -> service.validateStatusTransition((RecoveryCaseStatus) null, RecoveryCaseStatus.PLANNING));
+        assertThrows(IllegalArgumentException.class, () -> service.validateStatusTransition("bad", "PLANNING"));
+    }
+
+    @Test
+    void stringAndEnumPathOverloadsAndEstimationDelegateCorrectly() {
+        UUID id = UUID.randomUUID();
+        RecoveryCase recoveryCase = baseCase(id, RecoveryCaseStatus.PLANNING);
+        when(repository.findById(id)).thenReturn(Mono.just(recoveryCase));
+        when(repository.save(any(RecoveryCase.class))).thenAnswer(i -> Mono.just(i.getArgument(0)));
+        StepVerifier.create(service.selectRecoveryPath(id, " customer_managed "))
+                .assertNext(r -> assertEquals(RecoveryPath.CUSTOMER_MANAGED, r.recoveryPath())).verifyComplete();
+        StepVerifier.create(service.selectRecoveryPath(id, (RecoveryPath) null)).expectError(IllegalArgumentException.class).verify();
+        StepVerifier.create(service.selectRecoveryPath(id, " ")).expectError(IllegalArgumentException.class).verify();
+
+        RecoveryEstimationResponse estimation = new RecoveryEstimationResponse(UUID.randomUUID(), UUID.randomUUID(),
+                BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ZERO, BigDecimal.ZERO, "notes", java.time.LocalDateTime.now());
+        when(estimationService.estimateRecoveryAsync(any())).thenReturn(java.util.concurrent.CompletableFuture.completedFuture(estimation));
+        StepVerifier.create(service.estimateRecoveryAsync(new RecoveryEstimationRequest(UUID.randomUUID(), UUID.randomUUID(),
+                        BigDecimal.TEN, 0.2, RecoverySeverity.LOW, null, null)))
+                .expectNext(estimation).verifyComplete();
+    }
+
+    @Test
+    void terminalCasesRejectProgressAndPathChange() {
+        UUID id = UUID.randomUUID();
+        for (RecoveryCaseStatus status : new RecoveryCaseStatus[] {RecoveryCaseStatus.COMPLETED, RecoveryCaseStatus.CANCELLED}) {
+            RecoveryCase recoveryCase = baseCase(id, status);
+            when(repository.findById(id)).thenReturn(Mono.just(recoveryCase));
+            StepVerifier.create(service.recordProgress(id, new RecordRecoveryProgressRequest(BigDecimal.TEN, null)))
+                    .expectError(IllegalStateException.class).verify();
+            StepVerifier.create(service.selectRecoveryPath(id, RecoveryPath.CUSTOMER_MANAGED))
+                    .expectError(IllegalStateException.class).verify();
+        }
+    }
+
+    @Test
+    void coversRemainingProgressStatusAndPathValidationBranches() {
+        UUID id = UUID.randomUUID();
+        RecoveryCase recoveryCase = baseCase(id, RecoveryCaseStatus.IN_PROGRESS);
+        when(repository.findById(id)).thenReturn(Mono.just(recoveryCase));
+        when(repository.save(any(RecoveryCase.class))).thenAnswer(i -> Mono.just(i.getArgument(0)));
+        StepVerifier.create(service.recordProgress(id, new RecordRecoveryProgressRequest(null, null)))
+                .expectError(IllegalArgumentException.class).verify();
+        StepVerifier.create(service.recordProgress(id, new RecordRecoveryProgressRequest(BigDecimal.valueOf(10), " ")))
+                .assertNext(r -> assertEquals(RecoveryCaseStatus.IN_PROGRESS, r.status())).verifyComplete();
+        recoveryCase.setStatus(RecoveryCaseStatus.ON_HOLD);
+        StepVerifier.create(service.recordProgress(id, new RecordRecoveryProgressRequest(BigDecimal.valueOf(50), null)))
+                .assertNext(r -> assertEquals(RecoveryCaseStatus.ON_HOLD, r.status())).verifyComplete();
+        recoveryCase.setStatus(RecoveryCaseStatus.PLANNING);
+        StepVerifier.create(service.recordProgress(id, new RecordRecoveryProgressRequest(BigDecimal.ZERO, null)))
+                .assertNext(r -> assertEquals(RecoveryCaseStatus.PLANNING, r.status())).verifyComplete();
+        StepVerifier.create(service.selectRecoveryPath(id, (String) null)).expectError(IllegalArgumentException.class).verify();
+
+        assertDoesNotThrow(() -> service.validateStatusTransition(RecoveryCaseStatus.PLANNING, RecoveryCaseStatus.PLANNING));
+        assertThrows(IllegalArgumentException.class, () -> service.validateStatusTransition(RecoveryCaseStatus.PLANNING, null));
+        assertThrows(IllegalStateException.class, () -> service.validateStatusTransition(RecoveryCaseStatus.IN_PROGRESS, RecoveryCaseStatus.REOPENED));
+        assertDoesNotThrow(() -> service.validateStatusTransition(" planning ", "in_progress"));
+        assertThrows(IllegalArgumentException.class, () -> service.validateStatusTransition("planning", "bad"));
+        assertThrows(IllegalArgumentException.class, () -> service.validateStatusTransition((String) null, "planning"));
+    }
+
+    @Test
+    void coversStaffFilterPriorityAndDefaultPaginationBranches() {
+        RecoveryCase recoveryCase = baseCase(UUID.randomUUID(), RecoveryCaseStatus.PLANNING);
+        when(securityActorService.hasAnyRole(any(String[].class))).thenReturn(Mono.just(true));
+        when(repository.findByOwnerId(any())).thenReturn(Flux.just(recoveryCase));
+        when(repository.findByStatus(RecoveryCaseStatus.PLANNING)).thenReturn(Flux.just(recoveryCase));
+        when(repository.findBySeverity(RecoverySeverity.MEDIUM)).thenReturn(Flux.just(recoveryCase));
+        when(repository.findAll()).thenReturn(Flux.just(recoveryCase));
+        UUID owner = UUID.randomUUID();
+        StepVerifier.create(service.getCases(new RecoveryCaseFilterRequest(null, owner, null, null, null, null, null, null)))
+                .assertNext(r -> { assertEquals(0, r.page()); assertEquals(20, r.size()); }).verifyComplete();
+        StepVerifier.create(service.getCases(new RecoveryCaseFilterRequest(null, null, RecoveryCaseStatus.PLANNING, null, null, null, 0, 20))).expectNextCount(1).verifyComplete();
+        StepVerifier.create(service.getCases(new RecoveryCaseFilterRequest(null, null, null, RecoverySeverity.MEDIUM, null, null, 0, 20))).expectNextCount(1).verifyComplete();
+        StepVerifier.create(service.getCases(new RecoveryCaseFilterRequest(null, null, null, null, null, null, 0, 20))).expectNextCount(1).verifyComplete();
+    }
+
+    @Test
+    void coversCompletionWithoutSummaryAndAlreadyRestoredDate() {
+        UUID id = UUID.randomUUID();
+        RecoveryCase recoveryCase = baseCase(id, RecoveryCaseStatus.PLANNING);
+        recoveryCase.setRecoveryObjective(null);
+        recoveryCase.setActualRestorationDate(LocalDate.now());
+        when(repository.findById(id)).thenReturn(Mono.just(recoveryCase));
+        when(repository.save(any(RecoveryCase.class))).thenAnswer(i -> Mono.just(i.getArgument(0)));
+        StepVerifier.create(service.completeCase(id, null)).assertNext(r -> assertEquals(RecoveryCaseStatus.COMPLETED, r.status())).verifyComplete();
+        recoveryCase.setStatus(RecoveryCaseStatus.PLANNING);
+        StepVerifier.create(service.completeCase(id, new CompleteRecoveryCaseRequest(null, null)))
+                .assertNext(r -> assertEquals(RecoveryCaseStatus.COMPLETED, r.status())).verifyComplete();
+    }
+
+    @Test
+    void coversNoOpUpdateFieldsAndNonCompletingStatusUpdate() {
+        UUID id = UUID.randomUUID();
+        RecoveryCase recoveryCase = baseCase(id, RecoveryCaseStatus.PLANNING);
+        recoveryCase.setActualRestorationDate(LocalDate.now());
+        when(repository.findById(id)).thenReturn(Mono.just(recoveryCase));
+        when(repository.save(any(RecoveryCase.class))).thenAnswer(i -> Mono.just(i.getArgument(0)));
+        StepVerifier.create(service.updateCase(id, new UpdateRecoveryCaseRequest(null, null, null, null, null)))
+                .assertNext(r -> assertEquals(RecoveryCaseStatus.PLANNING, r.status())).verifyComplete();
+        StepVerifier.create(service.updateStatus(id, new UpdateRecoveryStatusRequest(RecoveryCaseStatus.IN_PROGRESS)))
+                .assertNext(r -> assertEquals(RecoveryCaseStatus.IN_PROGRESS, r.status())).verifyComplete();
+        recoveryCase.setStatus(RecoveryCaseStatus.PLANNING);
+        StepVerifier.create(service.updateStatus(id, new UpdateRecoveryStatusRequest(RecoveryCaseStatus.BUSINESS_RESTORED)))
+                .assertNext(r -> assertEquals(RecoveryCaseStatus.BUSINESS_RESTORED, r.status())).verifyComplete();
+    }
+
+    private RecoveryCase baseCase(UUID id, RecoveryCaseStatus status) {
+        return RecoveryCase.builder().recoveryCaseId(id).claimId(UUID.randomUUID()).customerId(UUID.randomUUID())
+                .severity(RecoverySeverity.MEDIUM).status(status).recoveryPath(RecoveryPath.CUSTOMER_MANAGED)
+                .recoveryObjective("Restore operations").currentRestorePercent(BigDecimal.ZERO)
+                .createdAt(java.time.LocalDateTime.now()).updatedAt(java.time.LocalDateTime.now()).isNew(false).build();
     }
 }

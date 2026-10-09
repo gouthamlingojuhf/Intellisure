@@ -18,7 +18,7 @@ Generated Spring Boot bootstrap code and Angular framework bootstrap files may b
 | 2 | Analytics & Intelligence | Complete: 100% line/method/class; 94.44% branch | Keep threshold checks green on Java 17 |
 | 3 | Document & Audit | Complete: 99.39% line; 94.44% branch; 100% method/class | Keep threshold checks green on Java 17 |
 | 4 | Workflow & Notification | Complete: 98.6% instruction, 99.3% line, 92.2% branch, 97.3% method, 100% class; 55 tests | Keep threshold checks green on Java 17 |
-| 5 | Recovery | Core tests exist | Cover all recovery paths, idempotency, ownership, controller and WebClient behavior |
+| 5 | Recovery | Complete: 99.2% instruction, 99.3% line, 90.2% branch, 100% method/class; 60 tests | Keep threshold checks green on Java 17 |
 | 6 | Vendor & Partner | Differentiator tests exist | Cover onboarding, verification, discovery, assignment lifecycle, evidence/performance, role boundaries |
 | 7 | Claims | Broad service/security tests exist | Cover FNOL validation, policy verification, claim lifecycle, recovery integration, controller branches |
 | 8 | Risk & Underwriting | Workflow tests exist | Cover queues, assessment/decision/referral/subjectivity branches, ownership and authorization |

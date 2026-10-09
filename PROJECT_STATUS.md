@@ -39,6 +39,7 @@ Last reviewed: 2026-10-09
 - Registration/profile completion followed by re-login is required because the customer ID is embedded in the login JWT. The profile UI now makes this explicit and the auth effect persists/removes the customer ID consistently.
 - Test coverage is not yet near the requested target across all modules. Existing tests are uneven; Eureka, API Gateway, Analytics & Intelligence, and Document & Audit now have JaCoCo reports and regression gates, while the remaining services and frontend projects are scheduled in the service-by-service execution plan in [TEST_COVERAGE_PLAN.md](Docs/TEST_COVERAGE_PLAN.md).
 - Workflow & Notification is now covered by a JaCoCo regression gate and 55 passing tests: 98.6% instruction, 99.3% line, 92.2% branch, 97.3% method, and 100% class coverage. The measured run used local Java 25; the required Java 17 confirmation remains part of the office-laptop final gate.
+- Recovery is now covered by a JaCoCo regression gate and 60 passing tests: 99.2% instruction, 99.3% line, 90.2% branch, and 100% method/class coverage. The measured run used local Java 25; the required Java 17 confirmation remains part of the office-laptop final gate.
 
 ## Roadmap
 
@@ -59,6 +60,7 @@ Last reviewed: 2026-10-09
 - Completed: Eureka and API Gateway now generate JaCoCo reports and enforce regression thresholds of 95% line/method/class and 90% branch coverage. Batch results are Eureka 100% line/method/class and API Gateway 99.35% line, 94.44% branch, 100% method/class.
 - Completed: Analytics & Intelligence and Document & Audit now have full unit/controller/security/entity/client coverage batches, JaCoCo reports, and the same regression gates. Analytics measured 100% line/method/class and 94.44% branch; Document & Audit measured 99.39% line, 94.44% branch, and 100% method/class. Their context smoke tests no longer require local MySQL schema initialization.
 - Completed: Workflow & Notification now has JaCoCo reporting/enforcement and service-by-service tests for notification channels, duplicate/read/ownership behavior, workflow-type task creation, task lifecycle/status transitions, SLA escalation/warnings, controllers, reactive security, JWT/UUID converters, correlation IDs, exceptions, DTOs, and persistence entities. `bash mvnw -q verify` passes with 55 tests and the measured thresholds above.
+- Completed: Recovery now has JaCoCo reporting/enforcement and tests for idempotent case creation, all three recovery paths, optional Vendor dispatch, progress/status transition rules, ownership, recovery estimation, plan/support services, controllers, converters, correlation IDs, exception handling, entities, and downstream error fallback. `bash mvnw -q verify` passes with 60 tests and the measured thresholds above.
 
 ### P1 — Policyholder journey
 
@@ -144,4 +146,4 @@ Last reviewed: 2026-10-09
 
 ## Immediate batch
 
-The authenticated Docker journey is complete through quote, underwriting, policy, claim, recovery, documents, notifications, and recovery-linked Vendor dispatch/fulfillment. Coverage gates are complete for Eureka, API Gateway, Analytics & Intelligence, Document & Audit, and Workflow & Notification. The next meaningful batch is Recovery, followed by Vendor, Claims, Risk, Quote/Policy, Customer/Party, and the frontend projects. The complete sequence is in `Docs/TEST_COVERAGE_PLAN.md`; native Windows, Java 17, and final role E2E evidence remain the final gate after coverage batches.
+The authenticated Docker journey is complete through quote, underwriting, policy, claim, recovery, documents, notifications, and recovery-linked Vendor dispatch/fulfillment. Coverage gates are complete for Eureka, API Gateway, Analytics & Intelligence, Document & Audit, Workflow & Notification, and Recovery. The next meaningful batch is Vendor & Partner, followed by Claims, Risk, Quote/Policy, Customer/Party, and the frontend projects. The complete sequence is in `Docs/TEST_COVERAGE_PLAN.md`; native Windows, Java 17, and final role E2E evidence remain the final gate after coverage batches.

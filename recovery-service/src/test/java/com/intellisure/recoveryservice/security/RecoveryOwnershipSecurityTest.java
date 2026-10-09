@@ -45,6 +45,41 @@ class RecoveryOwnershipSecurityTest {
                 .verifyComplete();
     }
 
+    @Test
+    void currentIdsPreferCustomerClaimAndRejectMissingOrMalformedTokens() {
+        UUID userId = UUID.randomUUID();
+        UUID customerId = UUID.randomUUID();
+        JwtAuthenticationToken auth = token(userId, customerId, "ROLE_POLICYHOLDER");
+        StepVerifier.create(service.currentUserId().contextWrite(ReactiveSecurityContextHolder.withSecurityContext(
+                        Mono.just(new SecurityContextImpl(auth)))))
+                .expectNext(userId).verifyComplete();
+        StepVerifier.create(service.currentCustomerId().contextWrite(ReactiveSecurityContextHolder.withSecurityContext(
+                        Mono.just(new SecurityContextImpl(auth)))))
+                .expectNext(customerId).verifyComplete();
+        StepVerifier.create(service.currentCustomerId().contextWrite(ReactiveSecurityContextHolder.withSecurityContext(
+                        Mono.just(new SecurityContextImpl(token(userId, null, "ROLE_POLICYHOLDER"))))))
+                .expectNext(userId).verifyComplete();
+        StepVerifier.create(service.currentUserId()).expectError(AccessDeniedBusinessException.class).verify();
+
+        Jwt invalid = new Jwt("token", Instant.now(), Instant.now().plusSeconds(300), Map.of("alg", "HS256"), Map.of("sub", "bad"));
+        StepVerifier.create(service.currentUserId().contextWrite(ReactiveSecurityContextHolder.withSecurityContext(
+                        Mono.just(new SecurityContextImpl(new JwtAuthenticationToken(invalid, List.of(), "bad"))))))
+                .expectError(AccessDeniedBusinessException.class).verify();
+    }
+
+    @Test
+    void roleChecksSupportUnprefixedRolesAndNullCustomerIsDenied() {
+        UUID userId = UUID.randomUUID();
+        StepVerifier.create(service.hasAnyRole("ADMIN")
+                        .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(
+                                Mono.just(new SecurityContextImpl(token(userId, null, "ROLE_ADMIN"))))))
+                .expectNext(true).verifyComplete();
+        StepVerifier.create(service.hasAnyRole("CLAIMS_MANAGER"))
+                .expectNext(false).verifyComplete();
+        StepVerifier.create(service.assertCustomerAccess(null))
+                .expectError(AccessDeniedBusinessException.class).verify();
+    }
+
     private JwtAuthenticationToken policyholder(UUID customerId) {
         return token(UUID.randomUUID(), customerId, "ROLE_POLICYHOLDER");
     }
