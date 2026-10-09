@@ -7,6 +7,7 @@ import { AssignmentCreateComponent } from './features/assignments/assignment-cre
 import { AssignmentDetailComponent } from './features/assignments/assignment-detail.component';
 import { AssignmentListComponent } from './features/assignments/assignment-list.component';
 import { OnboardingListComponent } from './features/onboarding/onboarding-list.component';
+import { vendorRoleGuard } from './vendor-role.guard';
 
 /** Exposed to the shell host as `vendorMfe/Routes`. */
 export const VENDOR_REMOTE_ROUTES: Routes = [
@@ -17,10 +18,10 @@ export const VENDOR_REMOTE_ROUTES: Routes = [
       provideEffects(AssignmentEffects),
     ],
     children: [
-      { path: '', pathMatch: 'full', component: AssignmentListComponent },
-      { path: 'new', component: AssignmentCreateComponent },
-      { path: 'onboarding', component: OnboardingListComponent },
-      { path: ':assignmentId', component: AssignmentDetailComponent },
+      { path: '', pathMatch: 'full', canActivate: [vendorRoleGuard(['VENDOR_MANAGER', 'CLAIMS_ADJUSTER', 'CLAIMS_MANAGER', 'SYSTEM_ADMINISTRATOR', 'ADMIN'])], component: AssignmentListComponent },
+      { path: 'new', canActivate: [vendorRoleGuard(['VENDOR_MANAGER', 'CLAIMS_ADJUSTER', 'CLAIMS_MANAGER', 'SYSTEM_ADMINISTRATOR', 'ADMIN'])], component: AssignmentCreateComponent },
+      { path: 'onboarding', canActivate: [vendorRoleGuard(['VENDOR_APPLICANT', 'VENDOR_MANAGER', 'SYSTEM_ADMINISTRATOR', 'ADMIN'])], component: OnboardingListComponent },
+      { path: ':assignmentId', canActivate: [vendorRoleGuard(['VENDOR_MANAGER', 'CLAIMS_ADJUSTER', 'CLAIMS_MANAGER', 'SYSTEM_ADMINISTRATOR', 'ADMIN'])], component: AssignmentDetailComponent },
     ],
   },
 ];

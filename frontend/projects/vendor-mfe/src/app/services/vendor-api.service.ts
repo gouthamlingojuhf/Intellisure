@@ -15,6 +15,8 @@ import {
   VendorPerformanceResponse,
   VendorResponse,
   VerifyVendorRequest,
+  ClaimReference,
+  RecoveryCaseReference,
 } from '../models/vendor.models';
 
 const CORRELATION_ID_HEADER = 'X-Correlation-ID';
@@ -142,5 +144,13 @@ export class VendorApiService {
     return this.http.get<VendorPerformanceResponse[]>(`${this.base}/api/vendors/${vendorId}/performance`, {
       headers: authHeaders(),
     });
+  }
+
+  getClaimReferences(): Observable<ClaimReference[]> {
+    return this.http.get<ClaimReference[]>(`${this.base}/api/claims`, { headers: authHeaders() });
+  }
+
+  getRecoveryCaseReferences(): Observable<{ items: RecoveryCaseReference[] }> {
+    return this.http.get<{ items: RecoveryCaseReference[] }>(`${this.base}/api/recovery/cases?page=0&size=100`, { headers: authHeaders() });
   }
 }

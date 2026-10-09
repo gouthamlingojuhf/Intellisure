@@ -67,6 +67,19 @@ export interface VendorResponse {
   contactEmail: string;
 }
 
+export interface ClaimReference {
+  claimId: string;
+  claimNumber: string;
+  status: string;
+}
+
+export interface RecoveryCaseReference {
+  recoveryCaseId: string;
+  claimId: string;
+  status: string;
+  recoveryPath?: string | null;
+}
+
 export interface VendorOnboardingResponse {
   onboardingRequestId: string;
   vendorId: string;

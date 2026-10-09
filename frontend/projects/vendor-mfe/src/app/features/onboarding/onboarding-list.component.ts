@@ -36,7 +36,7 @@ import { VendorApiService } from '../../services/vendor-api.service';
         <tbody>
           @for (r of items; track r.onboardingRequestId) {
             <tr>
-              <td>{{ r.vendorId }}</td>
+              <td>Vendor onboarding request</td>
               <td>{{ r.status }}</td>
               <td>{{ r.submittedAt }}</td>
               <td class="flex gap-2">
@@ -53,6 +53,7 @@ import { VendorApiService } from '../../services/vendor-api.service';
       </table>
       }
 
+      @if (isApplicant) {
       <h2 class="mt-6 font-bold">Submit onboarding request</h2>
       <form [formGroup]="form" (ngSubmit)="submit()" class="mt-2 grid grid-cols-2 gap-2">
         <input class="input-field" placeholder="Legal name" formControlName="legalName" />
@@ -73,6 +74,7 @@ import { VendorApiService } from '../../services/vendor-api.service';
         />
         <button class="btn-primary col-span-2" type="submit" [disabled]="form.invalid">Submit</button>
       </form>
+      }
     </section>
   `,
 })

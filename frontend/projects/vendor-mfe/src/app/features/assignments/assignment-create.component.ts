@@ -5,7 +5,7 @@ import { Store } from '@ngrx/store';
 import { assignmentActions } from '../../store/assignments.actions';
 import { selectAssignmentsError, selectAssignmentsLoading } from '../../store/assignments.selectors';
 import { VendorApiService } from '../../services/vendor-api.service';
-import { VendorResponse } from '../../models/vendor.models';
+import { ClaimReference, RecoveryCaseReference, VendorResponse } from '../../models/vendor.models';
 
 /** Dispatch a work order. Backend: POST /api/vendor-assignments (gateway :8080). */
 @Component({
@@ -53,13 +53,21 @@ import { VendorResponse } from '../../models/vendor.models';
         </div>
         <div>
           <label class="block text-sm font-semibold">Claim reference (optional)</label>
-          <input class="input-field" formControlName="claimId" placeholder="Enter the claim reference" />
+          <select class="input-field" formControlName="claimId">
+            <option value="">No claim reference</option>
+            @for (claim of claims; track claim.claimId) { <option [value]="claim.claimId">{{ claim.claimNumber }} · {{ claim.status }}</option> }
+          </select>
         </div>
         <div>
           <label class="block text-sm font-semibold">Recovery case reference (optional)</label>
-          <input class="input-field" formControlName="recoveryCaseId" placeholder="Enter the recovery case reference" />
+          <select class="input-field" formControlName="recoveryCaseId">
+            <option value="">No recovery case reference</option>
+            @for (recoveryCase of recoveryCases; track recoveryCase.recoveryCaseId) { <option [value]="recoveryCase.recoveryCaseId">{{ recoveryCaseLabel(recoveryCase) }} · {{ recoveryCase.status }}</option> }
+          </select>
           <p class="mt-1 text-xs text-gray-500">A recovery assignment is created only for the explicit network-vendor path. Customer-owned paths never dispatch here.</p>
         </div>
+        @if (referencesLoading) { <p class="text-xs text-gray-500">Loading live claim and recovery references…</p> }
+        @if (referencesError) { <p class="text-xs text-rose-600" role="alert">{{ referencesError }}</p> }
         <div>
           <label class="block text-sm font-semibold">Task description</label>
           <input class="input-field" formControlName="taskDescription" />
@@ -94,8 +102,12 @@ export class AssignmentCreateComponent implements OnInit {
   readonly loading$ = this.store.select(selectAssignmentsLoading);
   readonly error$ = this.store.select(selectAssignmentsError);
   vendors: VendorResponse[] = [];
+  claims: ClaimReference[] = [];
+  recoveryCases: RecoveryCaseReference[] = [];
   vendorsLoading = false;
   vendorsError: string | null = null;
+  referencesLoading = false;
+  referencesError: string | null = null;
 
   readonly form = inject(FormBuilder).nonNullable.group({
     vendorId: ['', Validators.required],
@@ -112,6 +124,24 @@ export class AssignmentCreateComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadVendors();
+    this.loadReferences();
+  }
+
+  private loadReferences(): void {
+    this.referencesLoading = true;
+    this.vendorApi.getClaimReferences().subscribe({
+      next: (claims) => { this.claims = claims; this.referencesLoading = false; },
+      error: () => { this.referencesLoading = false; this.referencesError = 'Claim references could not be loaded.'; },
+    });
+    this.vendorApi.getRecoveryCaseReferences().subscribe({
+      next: (response) => { this.recoveryCases = response.items ?? []; },
+      error: () => { this.referencesError = 'Recovery case references could not be loaded.'; },
+    });
+  }
+
+  recoveryCaseLabel(recoveryCase: RecoveryCaseReference): string {
+    const claim = this.claims.find((item) => item.claimId === recoveryCase.claimId);
+    return claim?.claimNumber || 'Recovery case';
   }
 
   loadVendors(): void {
