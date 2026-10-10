@@ -37,7 +37,7 @@ public class ChatService {
     private final Sinks.Many<ChatMessageResponse> messageSink = Sinks.many().multicast().directBestEffort();
 
     private static final List<String> EMPLOYEE_ROLES = List.of(
-            "UNDERWRITER", "CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "RISK_ENGINEER", "ADMIN", "SYSTEM_ADMINISTRATOR"
+            "UNDERWRITER", "CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "RISK_ENGINEER", "ADMIN", "SYSTEM_ADMINISTRATOR", "VENDOR_MANAGER"
     );
 
     @PostConstruct
@@ -46,6 +46,7 @@ public class ChatService {
         ensureTeamChannel("#general-staff", "All Employees general discussion").subscribe();
         ensureTeamChannel("#underwriting-desk", "Underwriting risk & quote triage").subscribe();
         ensureTeamChannel("#claims-operations", "Claims adjusters and recovery desk").subscribe();
+        ensureTeamChannel("#vendor-operations", "Vendor network management, dispatch & performance").subscribe();
     }
 
     private Mono<Void> ensureTeamChannel(String name, String description) {
@@ -259,22 +260,32 @@ public class ChatService {
             String role = tuple.getT2();
             UUID customerId = tuple.getT3();
             boolean isEmployee = isEmployeeRole(role);
+            boolean isVendor = isVendorRole(role);
 
             if (isEmployee) {
                 // Employees see available internal colleagues
-                return fetchAvailableEmployees()
+                Flux<ChatContactResponse> colleagues = fetchAvailableEmployees()
                         .filter(emp -> !emp.userId().equals(userId))
                         .map(emp -> new ChatContactResponse(
                                 emp.userId(),
                                 emp.displayName() != null ? emp.displayName() : emp.email(),
                                 emp.email(),
                                 emp.role(),
-                                null,
+                                "Internal Staff",
                                 null,
                                 null
                         ));
+
+                if (role.toUpperCase().contains("VENDOR_MANAGER") || role.toUpperCase().contains("ADMIN")) {
+                    Flux<ChatContactResponse> vendors = fetchActiveVendors();
+                    return Flux.concat(colleagues, vendors);
+                }
+                return colleagues;
+            } else if (isVendor) {
+                // Vendors can chat with Vendor Managers and assigned Policyholders
+                return fetchContactsForVendor(userId);
             } else {
-                // Policyholder sees their assigned underwriters & claims adjusters
+                // Policyholder sees their assigned underwriters, claims adjusters, and assigned service vendors
                 return fetchAssignedStaffForPolicyholder(customerId);
             }
         });
@@ -295,10 +306,94 @@ public class ChatService {
                         u.displayName() != null ? u.displayName() : u.email(),
                         u.email(),
                         u.role(),
-                        null,
+                        "Internal Operations",
                         null,
                         null
                 ));
+    }
+
+    private Flux<ChatContactResponse> fetchActiveVendors() {
+        return webClientBuilder.build()
+                .get()
+                .uri("http://vendor-partner-service/api/vendors")
+                .retrieve()
+                .bodyToMono(VendorListDto.class)
+                .onErrorResume(err -> {
+                    log.warn("Could not fetch vendors from vendor-partner-service: {}", err.getMessage());
+                    return Mono.empty();
+                })
+                .flatMapMany(resp -> Flux.fromIterable(resp.items() != null ? resp.items() : List.<VendorItemDto>of()))
+                .map(v -> new ChatContactResponse(
+                        v.vendorId(),
+                        v.displayName() != null ? v.displayName() : v.legalName(),
+                        v.contactEmail(),
+                        "VENDOR",
+                        "Network Partner (" + (v.vendorType() != null ? v.vendorType() : "Service Provider") + ")",
+                        null,
+                        null
+                ));
+    }
+
+    private Flux<ChatContactResponse> fetchContactsForVendor(UUID vendorUserId) {
+        // 1. Vendor Manager contacts
+        Flux<ChatContactResponse> vendorManagers = webClientBuilder.build()
+                .get()
+                .uri("http://customer-party-service/api/users/role/VENDOR_MANAGER")
+                .retrieve()
+                .bodyToFlux(UserDto.class)
+                .onErrorResume(err -> {
+                    log.warn("Could not fetch vendor managers: {}", err.getMessage());
+                    return Flux.empty();
+                })
+                .map(u -> new ChatContactResponse(
+                        u.userId(),
+                        u.displayName() != null ? u.displayName() : "Vendor Operations Manager",
+                        u.email(),
+                        "VENDOR_MANAGER",
+                        "Vendor Operations & Performance Desk",
+                        null,
+                        null
+                ));
+
+        // 2. Query vendor assignments for this vendor to connect with assigned policyholders
+        Flux<ChatContactResponse> policyholderContacts = webClientBuilder.build()
+                .get()
+                .uri("http://vendor-partner-service/api/vendor-assignments")
+                .retrieve()
+                .bodyToMono(VendorAssignmentListDto.class)
+                .onErrorResume(err -> {
+                    log.warn("Could not fetch vendor assignments for vendor: {}", err.getMessage());
+                    return Mono.empty();
+                })
+                .flatMapMany(resp -> Flux.fromIterable(resp.items() != null ? resp.items() : List.<VendorAssignmentItemDto>of()))
+                .filter(a -> a.claimId() != null)
+                .flatMap(a -> webClientBuilder.build()
+                        .get()
+                        .uri("http://claims-service/api/claims/" + a.claimId())
+                        .retrieve()
+                        .bodyToMono(ClaimDetailDto.class)
+                        .onErrorResume(err -> Mono.empty())
+                        .flatMap(c -> {
+                            if (c.customerId() == null) return Mono.empty();
+                            return webClientBuilder.build()
+                                    .get()
+                                    .uri("http://customer-party-service/api/customers/" + c.customerId())
+                                    .retrieve()
+                                    .bodyToMono(CustomerDetailDto.class)
+                                    .onErrorResume(err -> Mono.empty())
+                                    .map(cust -> new ChatContactResponse(
+                                            cust.userId() != null ? cust.userId() : c.customerId(),
+                                            cust.businessName() != null ? cust.businessName() : "Policyholder (Claim " + c.claimNumber() + ")",
+                                            cust.phone(),
+                                            "POLICYHOLDER",
+                                            "CLAIM",
+                                            c.claimId(),
+                                            "Assigned Work Order for Claim " + c.claimNumber()
+                                    ));
+                        }))
+                .distinct(ChatContactResponse::userId);
+
+        return Flux.concat(vendorManagers, policyholderContacts);
     }
 
     private Flux<ChatContactResponse> fetchAssignedStaffForPolicyholder(UUID customerId) {
@@ -324,19 +419,22 @@ public class ChatService {
                         "UNDERWRITER",
                         "QUOTE",
                         q.quoteId(),
-                        q.quoteNumber() != null ? q.quoteNumber() : "Quote " + q.quoteId().toString().substring(0, 8)
+                        "Quote Triage Desk (" + (q.quoteNumber() != null ? q.quoteNumber() : "Active Quote") + ")"
                 ));
 
         // 2. Fetch assigned Adjusters from claims-service
-        Flux<ChatContactResponse> adjusterContacts = webClientBuilder.build()
+        Flux<ClaimDetailDto> customerClaims = webClientBuilder.build()
                 .get()
                 .uri("http://claims-service/api/claims")
                 .retrieve()
-                .bodyToFlux(ClaimDto.class)
+                .bodyToFlux(ClaimDetailDto.class)
                 .onErrorResume(err -> {
                     log.warn("Could not fetch customer claims for chat: {}", err.getMessage());
                     return Flux.empty();
                 })
+                .filter(c -> customerId.equals(c.customerId()));
+
+        Flux<ChatContactResponse> adjusterContacts = customerClaims
                 .filter(c -> c.assignedAdjusterId() != null)
                 .map(c -> new ChatContactResponse(
                         c.assignedAdjusterId(),
@@ -345,18 +443,43 @@ public class ChatService {
                         "CLAIMS_ADJUSTER",
                         "CLAIM",
                         c.claimId(),
-                        c.claimNumber() != null ? c.claimNumber() : "Claim " + c.claimId().toString().substring(0, 8)
+                        "Claims Examination (" + (c.claimNumber() != null ? c.claimNumber() : "Active Claim") + ")"
                 ));
 
-        return Flux.concat(underwriterContacts, adjusterContacts)
-                .distinct(ChatContactResponse::contextId);
+        // 3. Fetch assigned Service Vendors on policyholder's claims
+        Flux<ChatContactResponse> vendorContacts = customerClaims
+                .flatMap(c -> webClientBuilder.build()
+                        .get()
+                        .uri("http://vendor-partner-service/api/vendor-assignments?claimId=" + c.claimId())
+                        .retrieve()
+                        .bodyToMono(VendorAssignmentListDto.class)
+                        .onErrorResume(err -> Mono.empty())
+                        .flatMapMany(resp -> Flux.fromIterable(resp.items() != null ? resp.items() : List.<VendorAssignmentItemDto>of()))
+                        .flatMap(a -> webClientBuilder.build()
+                                .get()
+                                .uri("http://vendor-partner-service/api/vendors/" + a.vendorId())
+                                .retrieve()
+                                .bodyToMono(VendorItemDto.class)
+                                .onErrorResume(err -> Mono.empty())
+                                .map(v -> new ChatContactResponse(
+                                        v.vendorId(),
+                                        v.displayName() != null ? v.displayName() : v.legalName(),
+                                        v.contactEmail(),
+                                        "VENDOR",
+                                        "CLAIM",
+                                        c.claimId(),
+                                        "Assigned Service Partner for Claim " + c.claimNumber()
+                                ))));
+
+        return Flux.concat(underwriterContacts, adjusterContacts, vendorContacts)
+                .distinct(ChatContactResponse::userId);
     }
 
     private Mono<Void> assertAccessToChannel(ChatChannel channel, UUID userId, String role) {
         boolean isEmployee = isEmployeeRole(role);
         if (channel.getChannelType() == ChatChannelType.INTERNAL_GROUP) {
             if (isEmployee) return Mono.empty();
-            return Mono.error(new AccessDeniedBusinessException("Policyholders do not have access to internal channels"));
+            return Mono.error(new AccessDeniedBusinessException("External users do not have access to internal channels"));
         }
 
         return participantRepository.existsByChannelIdAndUserId(channel.getChannelId(), userId)
@@ -428,8 +551,19 @@ public class ChatService {
         return EMPLOYEE_ROLES.contains(normalized);
     }
 
+    private boolean isVendorRole(String role) {
+        if (role == null) return false;
+        String normalized = role.toUpperCase().replaceFirst("^ROLE_", "");
+        return normalized.equals("VENDOR") || normalized.equals("VENDOR_APPLICANT") || normalized.equals("VENDOR_PARTNER");
+    }
+
     // Client DTO records for reactive inter-service queries
     private record UserDto(UUID userId, String email, String role, String displayName) {}
     private record QuoteDto(UUID quoteId, String quoteNumber, UUID assignedUnderwriterId) {}
-    private record ClaimDto(UUID claimId, String claimNumber, UUID assignedAdjusterId) {}
+    private record ClaimDetailDto(UUID claimId, String claimNumber, UUID customerId, UUID policyId, UUID assignedAdjusterId) {}
+    private record CustomerDetailDto(UUID customerId, UUID userId, String businessName, String phone) {}
+    private record VendorItemDto(UUID vendorId, String legalName, String displayName, String vendorType, String contactEmail) {}
+    private record VendorListDto(List<VendorItemDto> items) {}
+    private record VendorAssignmentItemDto(UUID assignmentId, UUID vendorId, UUID claimId, String status) {}
+    private record VendorAssignmentListDto(List<VendorAssignmentItemDto> items) {}
 }

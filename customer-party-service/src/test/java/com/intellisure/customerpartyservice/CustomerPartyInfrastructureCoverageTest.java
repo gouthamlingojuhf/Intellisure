@@ -185,15 +185,18 @@ class CustomerPartyInfrastructureCoverageTest {
         CustomerProfileService profile = mock(CustomerProfileService.class);
         CustomerResponse customerResponse = mock(CustomerResponse.class);
         when(profile.getCustomerProfileByUserId(userId)).thenReturn(Mono.just(customerResponse));
+        when(profile.getCustomerProfileByCustomerId(userId)).thenReturn(Mono.just(customerResponse));
         when(profile.updateCustomerProfile(any(), any())).thenReturn(Mono.just(customerResponse));
         CustomerProfileController profileController = new CustomerProfileController(profile);
         StepVerifier.create(profileController.getMyProfile(jwt)).expectNext(customerResponse).verifyComplete();
+        StepVerifier.create(profileController.getCustomerById(userId)).expectNext(customerResponse).verifyComplete();
         StepVerifier.create(profileController.updateMyProfile(jwt, mock(UpdateCustomerProfileRequest.class))).expectNext(customerResponse).verifyComplete();
 
         UserAccountService account = mock(UserAccountService.class);
         UserResponse userResponse = mock(UserResponse.class);
         when(account.getUserById(userId)).thenReturn(Mono.just(userResponse));
         when(account.getUsersByRole(any())).thenReturn(reactor.core.publisher.Flux.just(userResponse));
+        when(account.findAvailableEmployees(any(), any())).thenReturn(reactor.core.publisher.Flux.just(userResponse));
         UserAccountController accountController = new UserAccountController(account);
         StepVerifier.create(accountController.getCurrentUser(jwt)).expectNext(userResponse).verifyComplete();
         StepVerifier.create(accountController.getAvailableClaimsAdjusters()).expectNext(userResponse).verifyComplete();

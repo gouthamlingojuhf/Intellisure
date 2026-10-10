@@ -81,7 +81,10 @@ public class UserAccountService {
     public Flux<UserResponse> getUsersByRole(String role) {
         String normalizedRole = normalizeRole(role);
         return userAccountRepo.findByRole(normalizedRole)
-                .switchIfEmpty(userAccountRepo.findByRole("ROLE_" + normalizedRole))
+                .switchIfEmpty(Flux.defer(() -> {
+                    Flux<com.intellisure.customerpartyservice.entity.UserAccount> fallback = userAccountRepo.findByRole("ROLE_" + normalizedRole);
+                    return fallback != null ? fallback : Flux.empty();
+                }))
                 .filter(user -> "ACTIVE".equalsIgnoreCase(user.getAccountStatus()))
                 .map(userAccountMapper::toUserResponse);
     }
@@ -95,7 +98,10 @@ public class UserAccountService {
         }
         String normalizedRole = normalizeRole(role);
         return userAccountRepo.findByRoleAndAccountStatus(normalizedRole, normalizedStatus)
-                .switchIfEmpty(userAccountRepo.findByRoleAndAccountStatus("ROLE_" + normalizedRole, normalizedStatus))
+                .switchIfEmpty(Flux.defer(() -> {
+                    Flux<com.intellisure.customerpartyservice.entity.UserAccount> fallback = userAccountRepo.findByRoleAndAccountStatus("ROLE_" + normalizedRole, normalizedStatus);
+                    return fallback != null ? fallback : Flux.empty();
+                }))
                 .map(userAccountMapper::toUserResponse);
     }
 

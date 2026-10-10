@@ -1,7 +1,7 @@
 import { AsyncPipe, DatePipe } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { assignmentActions } from '../../store/assignments.actions';
 import { selectAssignmentsError, selectSelectedAssignment } from '../../store/assignments.selectors';
@@ -42,6 +42,10 @@ import { VendorPerformanceResponse } from '../../models/vendor.models';
           }
           @if (a.status === 'ACCEPTED' || a.status === 'IN_PROGRESS') {
             <button class="btn-secondary" (click)="complete(a.assignmentId)">Complete work</button>
+          }
+          <button class="btn-secondary" type="button" (click)="messageVendorManager(a)">💬 Message Vendor Manager</button>
+          @if (a.claimId) {
+            <button class="btn-secondary" type="button" (click)="messagePolicyholder(a)">💬 Message Policyholder</button>
           }
         </div>
 
@@ -224,5 +228,29 @@ export class AssignmentDetailComponent implements OnInit {
 
   canAccept(status: string): boolean {
     return ['DISPATCHED', 'OFFERED', 'ASSIGNED', 'PENDING', 'REQUESTED'].includes(status);
+  }
+
+  private readonly router = inject(Router);
+
+  messageVendorManager(assignment: any): void {
+    this.router.navigate(['/chat'], {
+      queryParams: {
+        role: 'VENDOR_MANAGER',
+        name: 'Vendor Operations Desk',
+        entityType: 'ASSIGNMENT',
+        entityId: assignment.assignmentId,
+      },
+    });
+  }
+
+  messagePolicyholder(assignment: any): void {
+    this.router.navigate(['/chat'], {
+      queryParams: {
+        role: 'POLICYHOLDER',
+        name: 'Assigned Policyholder',
+        entityType: 'CLAIM',
+        entityId: assignment.claimId,
+      },
+    });
   }
 }

@@ -31,4 +31,9 @@ public class CustomerProfileController {
         UUID userId = UUID.fromString(jwt.getSubject());
         return customerProfileService.updateCustomerProfile(userId, request);
     }
+
+    @GetMapping("/{customerId}")
+    public Mono<CustomerResponse> getCustomerById(@PathVariable UUID customerId) {
+        return customerProfileService.getCustomerProfileByCustomerId(customerId);
+    }
 }

@@ -29,6 +29,12 @@ public class CustomerProfileService {
                 .switchIfEmpty(Mono.error(new ResourceNotFoundException("Customer profile not found for user")));
     }
 
+    public Mono<CustomerResponse> getCustomerProfileByCustomerId(UUID customerId) {
+        return customerRepository.findById(customerId)
+                .map(customerMapper::toCustomerResponse)
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException("Customer profile not found")));
+    }
+
     public Mono<CustomerResponse> updateCustomerProfile(UUID userId, UpdateCustomerProfileRequest request) {
         return customerRepository.findByUserId(userId)
                 .map(existing -> {
