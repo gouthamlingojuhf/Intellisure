@@ -68,9 +68,11 @@ import {
               <strong>{{ policy.totalPremium | currency:'INR':'symbol':'1.0-0' }}</strong>.
             </p>
           </div>
-          <is-button variant="primary" (click)="goToClaim(policy.policyId)">
-            Report a Claim (FNOL) &rarr;
-          </is-button>
+          @if (isPolicyholder) {
+            <is-button variant="primary" (click)="goToClaim(policy.policyId)">
+              Report a Claim (FNOL) &rarr;
+            </is-button>
+          }
         </section>
 
         <!-- Main Content -->
@@ -392,8 +394,12 @@ export class PolicyDetailComponent implements OnInit {
   policy: PolicyResponse | null = null;
   loading = true;
   errorMessage: string | null = null;
+  isPolicyholder = false;
 
   ngOnInit(): void {
+    const rawRole = typeof localStorage !== 'undefined' ? localStorage.getItem('is_role') : null;
+    const role = (rawRole ?? '').toUpperCase().replace(/^ROLE_/, '');
+    this.isPolicyholder = ['POLICYHOLDER', 'USER'].includes(role);
     this.policyId = this.route.snapshot.paramMap.get('policyId') ?? '';
     this.loadPolicy();
   }

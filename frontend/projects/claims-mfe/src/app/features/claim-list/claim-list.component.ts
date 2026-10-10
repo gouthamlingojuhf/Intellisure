@@ -1,4 +1,4 @@
-﻿import { CurrencyPipe } from '@angular/common';
+import { CurrencyPipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { ClaimResponse } from '../../models/claim.models';
@@ -226,8 +226,9 @@ export class ClaimListComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    const role = typeof localStorage !== 'undefined' ? localStorage.getItem('is_role') : null;
-    this.isPolicyholder = ['POLICYHOLDER', 'USER'].includes((role ?? '').toUpperCase());
+    const rawRole = typeof localStorage !== 'undefined' ? localStorage.getItem('is_role') : null;
+    const role = (rawRole ?? '').toUpperCase().replace(/^ROLE_/, '');
+    this.isPolicyholder = ['POLICYHOLDER', 'USER'].includes(role);
     this.loadClaims();
   }
 

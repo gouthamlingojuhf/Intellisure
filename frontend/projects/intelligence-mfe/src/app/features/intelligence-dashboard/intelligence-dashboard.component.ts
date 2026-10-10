@@ -17,8 +17,8 @@ import { ExecutiveDashboardSummary } from '../../models/analytics.models';
           <p class="page-description">Persisted portfolio metrics from the Analytics service.</p>
         </div>
         <div class="header-actions">
-          <is-button variant="secondary" routerLink="overview">Portfolio overview</is-button>
-          <is-button variant="primary" routerLink="alerts">Risk alerts</is-button>
+          <is-button variant="secondary" routerLink="/analytics/overview">Portfolio overview</is-button>
+          <is-button variant="primary" routerLink="/analytics/alerts">Risk alerts</is-button>
         </div>
       </header>
 

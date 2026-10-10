@@ -23,7 +23,9 @@ public class AuditController {
     }
 
     @GetMapping
-    public Flux<AuditEvent> list(@RequestParam UUID entityId, @RequestParam String entityType) {
+    public Flux<AuditEvent> list(
+            @RequestParam(required = false) UUID entityId,
+            @RequestParam(required = false) String entityType) {
         return auditEventService.getAuditEvents(entityId, entityType);
     }
 

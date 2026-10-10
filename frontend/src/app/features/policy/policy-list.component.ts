@@ -85,7 +85,7 @@ import {
               description="No active or bound policies were found."
               icon="📋"
               [actionLabel]="isEmployee ? '' : 'Create Insurance Quote'"
-              (action)="isEmployee ? null : navigate('/policy/quotes/new')"
+              (action)="isEmployee ? null : navigate('/quotes/new')"
             />
           } @else {
             <div class="table-container">

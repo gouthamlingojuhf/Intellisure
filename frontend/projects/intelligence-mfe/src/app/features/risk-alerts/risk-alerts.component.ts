@@ -7,7 +7,7 @@ import { RouterLink } from '@angular/router';
   imports: [RouterLink],
   template: `
     <section class="card page">
-      <div class="heading"><div><p class="eyebrow">Risk alerts</p><h2>Escalations & watchlist</h2></div><a routerLink="/" class="btn-secondary">Back to dashboard</a></div>
+      <div class="heading"><div><p class="eyebrow">Risk alerts</p><h2>Escalations & watchlist</h2></div><a routerLink="/analytics" class="btn-secondary">Back to dashboard</a></div>
       <p>No alert feed is exposed by the current Analytics API contract. Alerts will appear here when the backend publishes them.</p>
     </section>
   `,

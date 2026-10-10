@@ -26,6 +26,7 @@ import {
 interface UnderwriterUser {
   userId: string;
   email?: string;
+  displayName?: string;
   firstName?: string;
   lastName?: string;
   accountStatus?: string;
@@ -71,7 +72,7 @@ interface UnderwriterUser {
         </div>
         @if (!isEmployee) {
           <div class="header-actions">
-            <is-button variant="primary" routerLink="/policy/quotes/new">
+            <is-button variant="primary" routerLink="/quotes/new">
               Request New Quote &rarr;
             </is-button>
           </div>
@@ -129,7 +130,7 @@ interface UnderwriterUser {
               [description]="searchQuery || statusFilter ? 'No quotes matched your current filter criteria.' : 'No quotes currently available.'"
               icon="📝"
               [actionLabel]="isEmployee ? '' : 'Request New Quote'"
-              (action)="isEmployee ? null : navigate('/policy/quotes/new')"
+              (action)="isEmployee ? null : navigate('/quotes/new')"
             />
           } @else {
             <div class="table-container">
@@ -196,7 +197,7 @@ interface UnderwriterUser {
                         <is-button
                           variant="text"
                           size="sm"
-                          (click)="navigate('/policy/quotes/' + quote.quoteId)"
+                          (click)="navigate('/quotes/' + quote.quoteId)"
                         >
                           View Details &rarr;
                         </is-button>
@@ -248,7 +249,7 @@ interface UnderwriterUser {
                   <option value="" disabled>Choose an underwriter</option>
                   @for (uw of underwriters; track uw.userId) {
                     <option [value]="uw.userId">
-                      {{ uw.firstName ? (uw.firstName + ' ' + (uw.lastName || '')) : (uw.email || uw.userId) }}
+                      {{ uw.displayName ? uw.displayName : (uw.firstName ? (uw.firstName + ' ' + (uw.lastName || '')) : (uw.email || uw.userId)) }}
                     </option>
                   }
                 </select>
@@ -442,7 +443,7 @@ export class QuotesListComponent implements OnInit {
   getUnderwriterLabel(underwriterId: string): string {
     const found = this.underwriters.find((uw) => uw.userId === underwriterId);
     if (found) {
-      return found.firstName ? `${found.firstName} ${found.lastName || ''}`.trim() : (found.email || underwriterId.substring(0, 8));
+      return found.displayName ? found.displayName : (found.firstName ? `${found.firstName} ${found.lastName || ''}`.trim() : (found.email || underwriterId.substring(0, 8)));
     }
     return underwriterId.substring(0, 8) + '…';
   }

@@ -47,7 +47,7 @@ export class AppComponent implements OnInit, OnDestroy {
     { label: 'Overview', path: '/', icon: '🏠' },
     { label: 'Dashboard', path: '/dashboard', icon: '📊', roles: ['Policyholder', 'POLICYHOLDER'] },
     { label: 'Business Profile', path: '/profile', icon: '🏢', roles: ['Policyholder', 'POLICYHOLDER'] },
-    { label: 'Quotes', path: '/quotes', icon: '📋', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Policyholder', 'POLICYHOLDER', 'SYSTEM_ADMINISTRATOR', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER'] },
+    { label: 'Quotes', path: '/quotes', icon: '📋', roles: ['Admin', 'ADMIN', 'Policyholder', 'POLICYHOLDER', 'SYSTEM_ADMINISTRATOR', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER'] },
     { label: 'Policies', path: '/policy', icon: '🛡️', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Policyholder', 'POLICYHOLDER', 'SYSTEM_ADMINISTRATOR', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER'] },
     { label: 'Underwriting', path: '/underwriting', icon: '🔍', roles: ['Underwriter', 'UNDERWRITER', 'Risk Engineer', 'RISK_ENGINEER'] },
     { label: 'Claims', path: '/claims', icon: '📄', roles: ['Admin', 'ADMIN', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Policyholder', 'POLICYHOLDER'] },

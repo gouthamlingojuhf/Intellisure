@@ -31,6 +31,10 @@ public class CustomerProfileService {
 
     public Mono<CustomerResponse> updateCustomerProfile(UUID userId, UpdateCustomerProfileRequest request) {
         return customerRepository.findByUserId(userId)
+                .map(existing -> {
+                    existing.setNew(false);
+                    return existing;
+                })
                 .switchIfEmpty(Mono.defer(() -> {
                     BusinessCustomer newCustomer = BusinessCustomer.builder()
                             .customerId(UUID.randomUUID())
@@ -64,10 +68,6 @@ public class CustomerProfileService {
                     if (isMaterialChange) {
                         customer.setLastMaterialChangeAt(now);
                         customer.setMaterialChangePending(true);
-                    }
-
-                    if (!customer.isNew()) {
-                        customer.setNew(false);
                     }
 
                     return customerRepository.save(customer);

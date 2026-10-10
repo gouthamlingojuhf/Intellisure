@@ -4,7 +4,7 @@ import { loadRemoteModule } from '@angular-architects/module-federation';
 /** Shell mounts the intelligence MFE remote (dev: http://localhost:4203/remoteEntry.js). */
 export const ANALYTICS_SHELL_ROUTES: Routes = [
   {
-    path: '**',
+    path: '',
     loadChildren: () =>
       loadRemoteModule({
         type: 'module',

@@ -9,7 +9,7 @@ import { ExecutiveDashboardSummary } from '../../models/analytics.models';
   imports: [RouterLink],
   template: `
     <section class="card page">
-      <div class="heading"><div><p class="eyebrow">Portfolio overview</p><h2>Operational snapshot</h2></div><a routerLink="/" class="btn-secondary">Back to dashboard</a></div>
+      <div class="heading"><div><p class="eyebrow">Portfolio overview</p><h2>Operational snapshot</h2></div><a routerLink="/analytics" class="btn-secondary">Back to dashboard</a></div>
       @if (loading) {
         <p>Loading persisted analytics…</p>
       } @else if (summary) {

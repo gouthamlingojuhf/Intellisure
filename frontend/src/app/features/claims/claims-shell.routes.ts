@@ -4,7 +4,7 @@ import { loadRemoteModule } from '@angular-architects/module-federation';
 /** Shell mounts the claims-ops MFE remote (dev: http://localhost:4202/remoteEntry.js). */
 export const CLAIMS_SHELL_ROUTES: Routes = [
   {
-    path: '**',
+    path: '',
     loadChildren: () =>
       loadRemoteModule({
         type: 'module',

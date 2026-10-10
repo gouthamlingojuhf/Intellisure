@@ -79,7 +79,11 @@ public class UserAccountService {
     }
 
     public Flux<UserResponse> getUsersByRole(String role) {
-        return findAvailableEmployees(role, "ACTIVE");
+        String normalizedRole = normalizeRole(role);
+        return userAccountRepo.findByRole(normalizedRole)
+                .switchIfEmpty(userAccountRepo.findByRole("ROLE_" + normalizedRole))
+                .filter(user -> "ACTIVE".equalsIgnoreCase(user.getAccountStatus()))
+                .map(userAccountMapper::toUserResponse);
     }
 
     public Flux<UserResponse> findAvailableEmployees(String role, String status) {
@@ -91,6 +95,7 @@ public class UserAccountService {
         }
         String normalizedRole = normalizeRole(role);
         return userAccountRepo.findByRoleAndAccountStatus(normalizedRole, normalizedStatus)
+                .switchIfEmpty(userAccountRepo.findByRoleAndAccountStatus("ROLE_" + normalizedRole, normalizedStatus))
                 .map(userAccountMapper::toUserResponse);
     }
 

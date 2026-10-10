@@ -1094,7 +1094,7 @@ export class QuoteCreateComponent implements OnInit {
             kind: 'success',
           })
         );
-        this.router.navigate(['/policy/quotes', created.quoteId]);
+        this.router.navigate(['/quotes', created.quoteId]);
       },
       error: (err) => {
         this.submitting = false;

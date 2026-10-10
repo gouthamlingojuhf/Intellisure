@@ -50,7 +50,7 @@ import {
           </p>
         </div>
         <div class="header-actions">
-          <is-button variant="primary" routerLink="/policy/quotes/new">
+          <is-button variant="primary" routerLink="/quotes/new">
             Start Quote <span aria-hidden="true">&rarr;</span>
           </is-button>
         </div>
@@ -152,7 +152,7 @@ import {
                   title="No quotes requested yet"
                   description="Begin a commercial insurance quote to protect your property, liability, and business operations."
                   actionLabel="Create Insurance Quote"
-                  (action)="navigate('/policy/quotes/new')"
+                  (action)="navigate('/quotes/new')"
                 />
               } @else {
                 <div class="table-container">
@@ -185,7 +185,7 @@ import {
                             <is-button
                               variant="text"
                               size="sm"
-                              (click)="navigate('/policy/quotes/' + quote.quoteId)"
+                              (click)="navigate('/quotes/' + quote.quoteId)"
                             >
                               Review &rarr;
                             </is-button>
@@ -264,7 +264,7 @@ import {
           <aside class="split-side">
             <is-card title="Quick Actions" subtitle="Direct access to policyholder tools">
               <div class="action-list">
-                <a routerLink="/policy/quotes/new" class="action-item">
+                <a routerLink="/quotes/new" class="action-item">
                   <span class="action-icon">➕</span>
                   <div>
                     <strong>New Commercial Quote</strong>
