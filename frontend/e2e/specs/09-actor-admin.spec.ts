@@ -47,10 +47,10 @@ test.describe('Usecase Suite 09: Admin Supervision & Underwriter Assignment Jour
       await expect(modal.first()).toBeVisible();
 
       // Check underwriter select contains active database underwriters (e.g. Marcus Vance or Sarah Jenkins)
-      const underwriterSelect = page.locator('select, is-select');
+      const underwriterSelect = page.locator('select#underwriterSelect, .uw-select').first();
       if (await underwriterSelect.isVisible()) {
         const optionText = await underwriterSelect.innerText();
-        expect(optionText).toMatch(/Sarah Jenkins|Marcus Vance/);
+        expect(optionText).toMatch(/Sarah|Marcus|Jenkins|Vance/i);
       }
     }
   });

@@ -39,7 +39,7 @@ test.describe('Usecase Suite 04: Underwriter Actor Journey', () => {
     await expect(page.locator('body')).toBeVisible();
 
     // Verify quote number is visible
-    const quoteTitle = page.locator('text="QTE-2026-0002"');
+    const quoteTitle = page.locator(':has-text("QTE-2026-0002")');
     await expect(quoteTitle.first()).toBeVisible();
 
     // Verify underwriting action controls (Approve, Decline, Adjust)

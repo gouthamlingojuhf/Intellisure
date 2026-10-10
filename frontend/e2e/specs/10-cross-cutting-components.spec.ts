@@ -18,12 +18,8 @@ test.describe('Usecase Suite 10: Cross-Cutting Components & Design System Primit
     await expect(shortcutBadge).toBeVisible();
 
     const text = await shortcutBadge.innerText();
-    const isMac = process.platform === 'darwin';
-    if (isMac) {
-      expect(text).toMatch(/⌘\s*K|⌘K/);
-    } else {
-      expect(text).toMatch(/Ctrl\+K|Ctrl\s*\+\s*K/);
-    }
+    // Allow either ⌘K or Ctrl+K across operating systems and browser engine emulations (e.g. WebKit)
+    expect(text).toMatch(/⌘\s*K|Ctrl\+K/i);
   });
 
   test('COMPONENT: Pressing keyboard shortcut focuses topbar search input', async ({

@@ -185,9 +185,23 @@ export async function setupApiMocks(page: Page, currentUser: TestUser): Promise<
     }
   });
 
+  await page.route('**/api/quotes/customer/*', async (route) => {
+    const customerQuotes = MOCK_QUOTES.filter((q) => q.customerId === currentUser.customerId);
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(customerQuotes),
+    });
+  });
+
   await page.route('**/api/quotes/admin*', async (route) => {
-    // Admin quotes endpoint filters out DRAFTs
-    const nonDraftQuotes = MOCK_QUOTES.filter((q) => q.status !== 'DRAFT');
+    // Admin/employee quotes endpoint filters out DRAFTs
+    let nonDraftQuotes = MOCK_QUOTES.filter((q) => q.status !== 'DRAFT');
+    if (currentUser.role === 'UNDERWRITER') {
+      nonDraftQuotes = nonDraftQuotes.filter(
+        (q) => q.assignedUnderwriterId === currentUser.userId
+      );
+    }
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -195,8 +209,80 @@ export async function setupApiMocks(page: Page, currentUser: TestUser): Promise<
     });
   });
 
-  await page.route(/.*\/api\/quotes\/[0-9a-f-]{36}$/, async (route) => {
-    const url = route.request().url();
+  await page.route('**/api/quotes/*/underwriting-decisions*', async (route) => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            underwritingDecisionId: 'ud-001',
+            quoteId: 'q0000003-0000-0000-0000-000000000003',
+            decision: 'APPROVED',
+            decisionReason: 'Risk factors within commercial safety profile guidelines.',
+            decidedByUserId: '22222222-2222-2222-2222-222222222222',
+            decidedAt: '2026-02-18T16:00:00Z',
+          },
+        ]),
+      });
+    } else {
+      const decision = route.request().postDataJSON() || {};
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          underwritingDecisionId: `ud-${Date.now()}`,
+          decision: decision.decision || 'APPROVED',
+          decisionReason: decision.decisionReason || 'Underwriting assessment recorded',
+          decidedByUserId: currentUser.userId,
+          decidedAt: new Date().toISOString(),
+        }),
+      });
+    }
+  });
+
+  await page.route('**/api/quotes/*/subjectivities*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([]),
+    });
+  });
+
+  // Re-assign underwriter endpoints
+  await page.route(/.*\/api\/quotes\/[^/]+\/(underwriter\/reassign|assign).*/, async (route) => {
+    const updates = route.request().postDataJSON() || {};
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...MOCK_QUOTES[1],
+        assignedUnderwriterId: updates.underwriterId || '22222222-2222-2222-2222-333333333333',
+        status: 'UNDER_REVIEW',
+        updatedAt: new Date().toISOString(),
+      }),
+    });
+  });
+
+  // Quote lifecycle actions
+  await page.route(/.*\/api\/quotes\/[^/]+\/(submit|accept|decline|offer-terms)/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_QUOTES[2]),
+    });
+  });
+
+  await page.route(/.*\/api\/quotes\/[^/]+\/bind/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(MOCK_POLICIES[0]),
+    });
+  });
+
+  await page.route(/.*\/api\/quotes\/[0-9a-fA-F0-9-]+(\?.*)?$/, async (route) => {
+    const url = route.request().url().split('?')[0];
     const id = url.split('/').pop();
     const quote = MOCK_QUOTES.find((q) => q.quoteId === id) || MOCK_QUOTES[1];
     if (route.request().method() === 'GET') {
@@ -213,21 +299,6 @@ export async function setupApiMocks(page: Page, currentUser: TestUser): Promise<
         body: JSON.stringify({ ...quote, ...updates, updatedAt: new Date().toISOString() }),
       });
     }
-  });
-
-  // Re-assign underwriter endpoint
-  await page.route(/.*\/api\/quotes\/[0-9a-f-]{36}\/assign.*/, async (route) => {
-    const updates = route.request().postDataJSON() || {};
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        ...MOCK_QUOTES[1],
-        assignedUnderwriterId: updates.underwriterId || '22222222-2222-2222-2222-333333333333',
-        status: 'UNDER_REVIEW',
-        updatedAt: new Date().toISOString(),
-      }),
-    });
   });
 
   // 5. Policies

@@ -25,7 +25,7 @@ test.describe('Usecase Suite 02: Role Access Control & Employee Profile Guarding
   test('CRITICAL: Underwriter is NEVER shown Business Profile link and cannot access /profile', async ({
     underwriterPage: page,
   }) => {
-    await navigateTo(page, '/');
+    await navigateTo(page, '/dashboard');
 
     // 1. Assert navigation sidebar DOES NOT contain 'Business Profile'
     const profileNavLink = page.locator('nav a:has-text("Business Profile"), a[href="/profile"]');
@@ -42,7 +42,7 @@ test.describe('Usecase Suite 02: Role Access Control & Employee Profile Guarding
   test('CRITICAL: Risk Engineer is NEVER shown Business Profile link and cannot access /profile', async ({
     riskEngineerPage: page,
   }) => {
-    await navigateTo(page, '/');
+    await navigateTo(page, '/dashboard');
 
     const profileNavLink = page.locator('nav a:has-text("Business Profile"), a[href="/profile"]');
     await expect(profileNavLink).toHaveCount(0);
@@ -55,7 +55,7 @@ test.describe('Usecase Suite 02: Role Access Control & Employee Profile Guarding
   test('CRITICAL: Claims Adjuster is NEVER shown Business Profile link and cannot access /profile', async ({
     claimsAdjusterPage: page,
   }) => {
-    await navigateTo(page, '/');
+    await navigateTo(page, '/dashboard');
 
     const profileNavLink = page.locator('nav a:has-text("Business Profile"), a[href="/profile"]');
     await expect(profileNavLink).toHaveCount(0);
@@ -68,7 +68,7 @@ test.describe('Usecase Suite 02: Role Access Control & Employee Profile Guarding
   test('CRITICAL: Admin is NEVER shown Business Profile link and cannot access /profile', async ({
     adminPage: page,
   }) => {
-    await navigateTo(page, '/');
+    await navigateTo(page, '/dashboard');
 
     const profileNavLink = page.locator('nav a:has-text("Business Profile"), a[href="/profile"]');
     await expect(profileNavLink).toHaveCount(0);
@@ -81,7 +81,7 @@ test.describe('Usecase Suite 02: Role Access Control & Employee Profile Guarding
   test('Policyholder IS allowed to access Business Profile at /profile', async ({
     policyholderPage: page,
   }) => {
-    await navigateTo(page, '/');
+    await navigateTo(page, '/dashboard');
 
     // Navigation contains Business Profile for Policyholder
     const profileNavLink = page.locator('nav a:has-text("Business Profile"), a[href="/profile"]');

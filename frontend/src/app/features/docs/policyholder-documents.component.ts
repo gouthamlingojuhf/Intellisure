@@ -49,7 +49,7 @@ interface ClaimReference { claimId: string; }
                 <div class="document-icon" aria-hidden="true">▤</div>
                 <div class="document-main">
                   <strong>{{ document.fileName }}</strong>
-                  <span>{{ document.documentType.replace('_', ' ') }} · {{ document.contentType }}</span>
+                  <span>{{ (document.documentType || 'DOCUMENT').replace('_', ' ') }} · {{ document.contentType }}</span>
                 </div>
                 <div class="document-context">
                   <is-badge variant="info" size="sm">{{ document.entityType }}</is-badge>

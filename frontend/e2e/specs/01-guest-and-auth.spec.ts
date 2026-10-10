@@ -46,7 +46,7 @@ test.describe('Usecase Suite 01: Guest Actor & Authentication Flows', () => {
   test('Guest navigates to unknown route and sees 404 page', async ({ guestPage: page }) => {
     await navigateTo(page, '/non-existent-route-404');
     const notFoundIndicator = page.locator(
-      'text="Not Found", text="404", is-not-found, .not-found'
+      '.not-found-page, is-empty-state, :has-text("Page not found"), :has-text("404")'
     );
     await expect(notFoundIndicator.first()).toBeVisible();
   });

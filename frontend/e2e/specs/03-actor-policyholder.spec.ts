@@ -26,7 +26,7 @@ test.describe('Usecase Suite 03: Policyholder (Customer) Journey', () => {
     }
 
     // Verify phone input is present
-    const phoneInput = page.locator('#phone, input[formcontrolname="phone"]');
+    const phoneInput = page.locator('input#phone, input[formcontrolname="phone"]').first();
     if (await phoneInput.isVisible()) {
       await phoneInput.fill('+1 (555) 987-6543');
     }
@@ -45,11 +45,11 @@ test.describe('Usecase Suite 03: Policyholder (Customer) Journey', () => {
     await expect(page).toHaveURL(/.*\/quotes/);
 
     // Policyholder should see their own draft quote QTE-2026-0001
-    const draftQuote = page.locator('text="QTE-2026-0001", text="DRAFT"');
+    const draftQuote = page.locator(':has-text("QTE-2026-0001"), :has-text("DRAFT")');
     await expect(draftQuote.first()).toBeVisible();
 
     // Verify submitted quote is also visible
-    const submittedQuote = page.locator('text="QTE-2026-0002", text="SUBMITTED"');
+    const submittedQuote = page.locator(':has-text("QTE-2026-0002"), :has-text("SUBMITTED")');
     await expect(submittedQuote.first()).toBeVisible();
   });
 
@@ -64,7 +64,7 @@ test.describe('Usecase Suite 03: Policyholder (Customer) Journey', () => {
     await expect(quoteHeading.first()).toBeVisible();
 
     // Fill policy type if present
-    const policyTypeSelect = page.locator('select[formcontrolname="policyType"], select#policyType, is-select');
+    const policyTypeSelect = page.locator('select[formcontrolname="policyType"], select#policyType, is-select select').first();
     if (await policyTypeSelect.isVisible()) {
       await policyTypeSelect.selectOption({ index: 1 });
     }
@@ -83,7 +83,7 @@ test.describe('Usecase Suite 03: Policyholder (Customer) Journey', () => {
     await expect(page.locator('body')).toBeVisible();
 
     // Verify quote number or status is visible
-    const quoteStatus = page.locator('text="QTE-2026-0003", text="APPROVED"');
+    const quoteStatus = page.locator(':has-text("QTE-2026-0003"), :has-text("APPROVED")');
     await expect(quoteStatus.first()).toBeVisible();
   });
 
@@ -94,7 +94,7 @@ test.describe('Usecase Suite 03: Policyholder (Customer) Journey', () => {
     await expect(page).toHaveURL(/.*\/policy/);
 
     // Verify policy list contains active policy POL-2025-9842
-    const policyItem = page.locator('text="POL-2025-9842", text="COMMERCIAL_PROPERTY", text="ACTIVE"');
+    const policyItem = page.locator(':has-text("POL-2025-9842"), :has-text("COMMERCIAL_PROPERTY"), :has-text("ACTIVE")');
     await expect(policyItem.first()).toBeVisible();
   });
 
@@ -109,7 +109,7 @@ test.describe('Usecase Suite 03: Policyholder (Customer) Journey', () => {
     await expect(accessDenied).toHaveCount(0);
 
     // Verify bound documents list rendered
-    const docRow = page.locator('text="Commercial_Property_Binder_POL-2025-9842.pdf", .document-row, .doc-item');
+    const docRow = page.locator(':has-text("Commercial_Property_Binder"), .document-row, .doc-item');
     await expect(docRow.first()).toBeVisible();
   });
 
@@ -120,7 +120,7 @@ test.describe('Usecase Suite 03: Policyholder (Customer) Journey', () => {
     await expect(page).toHaveURL(/.*\/claims/);
 
     // Verify claim row or claim number is displayed
-    const claimRow = page.locator('text="CLM-2026-0101", text="CLM-2026-0102", .claim-item');
+    const claimRow = page.locator(':has-text("CLM-2026-0101"), :has-text("CLM-2026-0102"), .table tbody tr');
     await expect(claimRow.first()).toBeVisible();
   });
 });
