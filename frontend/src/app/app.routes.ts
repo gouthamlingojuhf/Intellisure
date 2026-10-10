@@ -58,6 +58,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./features/notifications/notifications.component').then((m) => m.NotificationsComponent),
   },
+  {
+    path: 'chat',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/chat/chat-workspace.component').then((m) => m.ChatWorkspaceComponent),
+  },
   { path: 'not-found', component: NotFoundComponent },
   { path: '**', redirectTo: 'not-found' },
 ];

@@ -1,4 +1,4 @@
-﻿import { CurrencyPipe, DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ClaimResponse } from '../../models/claim.models';
@@ -132,6 +132,17 @@ import { CardComponent, ButtonComponent, BadgeComponent, SkeletonComponent } fro
                   <div>
                     <dt>Assigned Adjuster</dt>
                     <dd>{{ claim.assignedAdjusterId || 'Unassigned / Automated Queue' }}</dd>
+                    @if (claim.assignedAdjusterId) {
+                      <div style="margin-top: 6px;">
+                        <is-button
+                          variant="secondary"
+                          size="sm"
+                          (click)="openAdjusterChat()"
+                        >
+                          💬 Message Adjuster
+                        </is-button>
+                      </div>
+                    }
                   </div>
                   <div>
                     <dt>Coverage Decision</dt>
@@ -483,5 +494,17 @@ export class ClaimDetailComponent implements OnInit {
     if (loss >= 100000) return 'HIGH';
     if (loss >= 25000) return 'MEDIUM';
     return 'LOW';
+  }
+
+  openAdjusterChat(): void {
+    if (!this.claim?.assignedAdjusterId) return;
+    this.router.navigate(['/chat'], {
+      queryParams: {
+        recipientId: this.claim.assignedAdjusterId,
+        name: 'Assigned Adjuster',
+        entityType: 'CLAIM',
+        entityId: this.claim.claimId
+      }
+    });
   }
 }

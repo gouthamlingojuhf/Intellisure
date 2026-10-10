@@ -124,6 +124,7 @@ describe('ClaimCreateComponent', () => {
     policyService = jasmine.createSpyObj<PolicyService>('PolicyService', ['getCustomerPolicies']);
     claimsService = jasmine.createSpyObj<ClaimsService>('ClaimsService', ['fileClaim']);
     router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    (router as any).events = of();
     policyService.getCustomerPolicies.and.returnValue(of(policies));
     TestBed.configureTestingModule({ imports: [ClaimCreateComponent], providers: [
       { provide: PolicyService, useValue: policyService }, { provide: ClaimsService, useValue: claimsService },
@@ -136,6 +137,7 @@ describe('ClaimCreateComponent', () => {
     const component = TestBed.createComponent(ClaimCreateComponent).componentInstance;
     expect(component.policyOptions.length).toBe(1); expect(component.selectedPolicy?.policyNumber).toBe('POL-1');
     expect(component.getFieldLabel('policyId')).toBe('Policy number');
+    component.claimForm.controls.policyId.setValue('');
     component.onNext(); expect(component.currentStep).toBe(0);
     component.claimForm.setValue({ policyId, incidentDate: '2026-01-01', estimatedLoss: 120000, description: 'Water damage' });
     component.onNext(); expect(component.currentStep).toBe(1); component.onNext(); expect(component.currentStep).toBe(2); component.onPrevious(); expect(component.currentStep).toBe(1);
@@ -173,6 +175,7 @@ describe('ClaimDetailComponent', () => {
     claimsService = jasmine.createSpyObj<ClaimsService>('ClaimsService', ['getClaim']);
     recoveryService = jasmine.createSpyObj<RecoveryService>('RecoveryService', ['getCases', 'createCase']);
     router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    (router as any).events = of();
     TestBed.configureTestingModule({ imports: [ClaimDetailComponent], providers: [
       { provide: ClaimsService, useValue: claimsService }, { provide: RecoveryService, useValue: recoveryService },
       { provide: Router, useValue: router }, { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => 'claim-1' } } } },

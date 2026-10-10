@@ -63,7 +63,7 @@ spring:
             - id: workflow-notification-service
               uri: lb://workflow-notification-service
               predicates:
-                - Path=/api/workflows/**,/api/notifications/**
+                - Path=/api/workflows/**,/api/notifications/**,/api/chat/**
 
             - id: recovery-service
               uri: lb://recovery-service

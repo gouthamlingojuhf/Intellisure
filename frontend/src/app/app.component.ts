@@ -56,6 +56,7 @@ export class AppComponent implements OnInit, OnDestroy {
     { label: 'Recovery', path: '/recovery', icon: '💰', roles: ['Admin', 'ADMIN', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Policyholder', 'POLICYHOLDER'] },
     { label: 'Documents', path: '/docs', icon: '📁', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Risk Engineer', 'RISK_ENGINEER', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Vendor Manager', 'VENDOR_MANAGER', 'SYSTEM_ADMINISTRATOR', 'Policyholder', 'POLICYHOLDER'] },
     { label: 'Notifications', path: '/notifications', icon: '🔔', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Risk Engineer', 'RISK_ENGINEER', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Vendor Manager', 'VENDOR_MANAGER', 'SYSTEM_ADMINISTRATOR', 'Policyholder', 'POLICYHOLDER'] },
+    { label: 'Chat', path: '/chat', icon: '💬', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Risk Engineer', 'RISK_ENGINEER', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Vendor Manager', 'VENDOR_MANAGER', 'SYSTEM_ADMINISTRATOR', 'Policyholder', 'POLICYHOLDER'] },
     { label: 'Administration', path: '/admin', icon: '⚙️', roles: ['Admin', 'ADMIN', 'SYSTEM_ADMINISTRATOR'] },
   ];
 
@@ -228,20 +229,20 @@ export class AppComponent implements OnInit, OnDestroy {
     if (!term) return;
     const lower = term.toLowerCase();
 
-    // Direct entity prefix checks
-    if (/^qt[-_0-9a-f]/i.test(lower) || lower.startsWith('quote')) {
+    // Direct entity ID checks (e.g. CLM-12345, QT-9988, POL-0012)
+    if (/^qt[-_0-9a-f]{3,}/i.test(lower)) {
       this.router.navigate(['/quotes'], { queryParams: { search: term } });
       return;
     }
-    if (/^pol[-_0-9a-f]/i.test(lower) || lower.startsWith('polic')) {
+    if (/^pol[-_0-9a-f]{3,}/i.test(lower)) {
       this.router.navigate(['/policy'], { queryParams: { search: term } });
       return;
     }
-    if (/^clm[-_0-9a-f]/i.test(lower) || lower.startsWith('claim')) {
+    if (/^clm[-_0-9a-f]{3,}/i.test(lower)) {
       this.router.navigate(['/claims'], { queryParams: { search: term } });
       return;
     }
-    if (/^vnd[-_0-9a-f]/i.test(lower) || lower.startsWith('vendor')) {
+    if (/^vnd[-_0-9a-f]{3,}/i.test(lower)) {
       this.router.navigate(['/vendor'], { queryParams: { search: term } });
       return;
     }

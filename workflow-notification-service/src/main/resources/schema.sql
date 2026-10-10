@@ -53,3 +53,42 @@ CREATE TABLE IF NOT EXISTS notification (
     INDEX idx_notification_reference (reference_type, reference_id),
     INDEX idx_notification_created (created_at)
 );
+
+CREATE TABLE IF NOT EXISTS chat_channel (
+    channel_id BINARY(16) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    channel_type VARCHAR(50) NOT NULL,
+    entity_type VARCHAR(50),
+    entity_id BINARY(16),
+    created_by BINARY(16) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (channel_id),
+    INDEX idx_chat_channel_entity (entity_type, entity_id),
+    INDEX idx_chat_channel_type (channel_type)
+);
+
+CREATE TABLE IF NOT EXISTS chat_participant (
+    participant_id BINARY(16) NOT NULL,
+    channel_id BINARY(16) NOT NULL,
+    user_id BINARY(16) NOT NULL,
+    role VARCHAR(50) NOT NULL,
+    display_name VARCHAR(255),
+    joined_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (participant_id),
+    INDEX idx_chat_participant_channel (channel_id),
+    INDEX idx_chat_participant_user (user_id)
+);
+
+CREATE TABLE IF NOT EXISTS chat_message (
+    message_id BINARY(16) NOT NULL,
+    channel_id BINARY(16) NOT NULL,
+    sender_id BINARY(16) NOT NULL,
+    sender_name VARCHAR(255) NOT NULL,
+    sender_role VARCHAR(50) NOT NULL,
+    content TEXT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (message_id),
+    INDEX idx_chat_message_channel (channel_id),
+    INDEX idx_chat_message_channel_created (channel_id, created_at)
+);

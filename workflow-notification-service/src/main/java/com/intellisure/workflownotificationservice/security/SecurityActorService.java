@@ -50,7 +50,48 @@ public class SecurityActorService {
                 : assertUserAccess(recipientUserId));
     }
 
-    private Mono<Boolean> hasAnyRole(String... roles) {
+    public Mono<String> currentRole() {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(context -> {
+                    var auth = context.getAuthentication();
+                    if (auth == null || auth.getAuthorities().isEmpty()) return "USER";
+                    return auth.getAuthorities().iterator().next().getAuthority().replaceFirst("^ROLE_", "");
+                })
+                .defaultIfEmpty("USER");
+    }
+
+    public Mono<UUID> currentCustomerId() {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(context -> context.getAuthentication())
+                .filter(JwtAuthenticationToken.class::isInstance)
+                .cast(JwtAuthenticationToken.class)
+                .flatMap(token -> {
+                    String custId = token.getToken().getClaimAsString("customerId");
+                    if (custId == null || custId.isBlank()) return Mono.empty();
+                    try {
+                        return Mono.just(UUID.fromString(custId));
+                    } catch (Exception e) {
+                        return Mono.empty();
+                    }
+                });
+    }
+
+    public Mono<String> currentDisplayName() {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(context -> context.getAuthentication())
+                .filter(JwtAuthenticationToken.class::isInstance)
+                .cast(JwtAuthenticationToken.class)
+                .map(token -> {
+                    String name = token.getToken().getClaimAsString("displayName");
+                    if (name != null && !name.isBlank()) return name;
+                    String email = token.getToken().getClaimAsString("email");
+                    if (email != null && !email.isBlank()) return email;
+                    return token.getToken().getSubject();
+                })
+                .defaultIfEmpty("User");
+    }
+
+    public Mono<Boolean> hasAnyRole(String... roles) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(context -> {
                     var authentication = context.getAuthentication();

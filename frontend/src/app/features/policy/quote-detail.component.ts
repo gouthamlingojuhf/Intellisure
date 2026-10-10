@@ -368,6 +368,15 @@ import {
                   <div>
                     <dt>Assigned Underwriter</dt>
                     <dd class="code-sm">{{ quote.assignedUnderwriterId }}</dd>
+                    <div style="margin-top: 6px;">
+                      <is-button
+                        variant="secondary"
+                        size="sm"
+                        (click)="openUnderwriterChat()"
+                      >
+                        💬 Message Underwriter
+                      </is-button>
+                    </div>
                   </div>
                 }
                 @if (quote.totalPremium) {
@@ -951,5 +960,17 @@ export class QuoteDetailComponent implements OnInit {
     if (s === 'BOUND' || s === 'ISSUED') return 'banner-bound';
     if (s.includes('DECLINED')) return 'banner-declined';
     return '';
+  }
+
+  openUnderwriterChat(): void {
+    if (!this.quote?.assignedUnderwriterId) return;
+    this.router.navigate(['/chat'], {
+      queryParams: {
+        recipientId: this.quote.assignedUnderwriterId,
+        name: 'Assigned Underwriter',
+        entityType: 'QUOTE',
+        entityId: this.quote.quoteId
+      }
+    });
   }
 }
