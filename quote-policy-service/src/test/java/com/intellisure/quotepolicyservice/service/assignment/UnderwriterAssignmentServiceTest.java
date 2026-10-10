@@ -1,5 +1,6 @@
 package com.intellisure.quotepolicyservice.service.assignment;
 
+import com.intellisure.quotepolicyservice.client.CustomerPartyClient;
 import com.intellisure.quotepolicyservice.config.UnderwriterPoolProperties;
 import com.intellisure.quotepolicyservice.repository.QuoteRepository;
 import com.intellisure.quotepolicyservice.testsupport.TestFixtures;
@@ -33,6 +34,7 @@ class UnderwriterAssignmentServiceTest {
             UUID.fromString("00000000-0000-0000-0000-00000000000c");
 
     private QuoteRepository quoteRepository;
+    private CustomerPartyClient customerPartyClient;
     private UnderwriterPoolProperties properties;
 
     private UnderwriterAssignmentService service;
@@ -40,10 +42,15 @@ class UnderwriterAssignmentServiceTest {
     @BeforeEach
     void setUp() {
         quoteRepository = mock(QuoteRepository.class);
+        customerPartyClient = mock(CustomerPartyClient.class);
         properties = new UnderwriterPoolProperties();
+
+        lenient().when(customerPartyClient.findAvailableEmployeesByRole(any()))
+                .thenReturn(reactor.core.publisher.Flux.empty());
 
         service = new UnderwriterAssignmentService(
                 quoteRepository,
+                customerPartyClient,
                 properties
         );
     }

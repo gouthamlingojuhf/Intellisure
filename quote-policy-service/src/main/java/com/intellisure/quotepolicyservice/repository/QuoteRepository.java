@@ -28,6 +28,13 @@ public interface QuoteRepository
 
     Flux<Quote> findAllByStatus(QuoteStatus status);
 
+    Flux<Quote> findAllByStatusNot(QuoteStatus status);
+
+    Flux<Quote> findAllByAssignedUnderwriterIdAndStatusNot(
+            UUID assignedUnderwriterId,
+            QuoteStatus status
+    );
+
     Mono<Boolean> existsByQuoteNumber(String quoteNumber);
 
     @Query("""

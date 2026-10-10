@@ -51,8 +51,8 @@ public class SecurityConfig {
                                 "/v3/api-docs",
                                 "/v3/api-docs/**"
                         ).permitAll()
-                        .pathMatchers("/api/documents/**")
-                        .hasAnyRole("POLICYHOLDER", "UNDERWRITER", "CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "VENDOR_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
+                        .pathMatchers("/api/documents", "/api/documents/**")
+                        .hasAnyRole("POLICYHOLDER", "UNDERWRITER", "CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "VENDOR_MANAGER", "RISK_ENGINEER", "SYSTEM_ADMINISTRATOR", "ADMIN")
                         .pathMatchers(HttpMethod.POST, "/api/audit-events")
                         .hasAnyRole("UNDERWRITER", "CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN", "SYSTEM")
                         .pathMatchers("/api/audit-events/**")

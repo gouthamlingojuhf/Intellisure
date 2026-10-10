@@ -4,7 +4,7 @@ import { loadRemoteModule } from '@angular-architects/module-federation';
 /** Shell mounts the vendorMfe remote (dev: http://localhost:4205/remoteEntry.js). */
 export const VENDOR_SHELL_ROUTES: Routes = [
   {
-    path: '**',
+    path: '',
     loadChildren: () =>
       loadRemoteModule({
         type: 'module',

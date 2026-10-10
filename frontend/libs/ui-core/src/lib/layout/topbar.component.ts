@@ -72,6 +72,16 @@ export interface UserMenuItem {
       </div>
 
       <div class="topbar-actions">
+        <button
+          type="button"
+          class="theme-toggle-btn"
+          (click)="onToggleTheme()"
+          [attr.aria-label]="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+          [title]="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+        >
+          {{ isDark ? '☀️' : '🌙' }}
+        </button>
+
         <div class="notification-button-wrapper">
           <is-button
             variant="icon"
@@ -176,12 +186,19 @@ export interface UserMenuItem {
     </header>
   `,
   styles: [`
+    :host {
+      display: block;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      width: 100%;
+    }
     .topbar {
-      position: fixed;
+      position: relative;
       top: 0;
       right: 0;
-      left: 264px;
-      z-index: 30;
+      left: 0;
+      width: 100%;
       height: 72px;
       display: flex;
       align-items: center;
@@ -190,16 +207,30 @@ export interface UserMenuItem {
       background: rgba(255, 255, 255, 0.94);
       border-bottom: 1px solid var(--border);
       backdrop-filter: blur(16px);
+      user-select: none;
+      -webkit-user-drag: none;
     }
-    
-    .topbar-mobile {
-      height: 64px;
-      padding: 0 18px;
-      gap: 10px;
+    :host-context(.dark) .topbar {
+      background: rgba(28, 26, 30, 0.94);
     }
-
-    :host-context(.app-shell-sidebar-collapsed) .topbar { left: 76px; }
-    :host-context(.app-shell-mobile-open) .topbar { left: 0; }
+    .theme-toggle-btn {
+      width: 36px;
+      height: 36px;
+      display: inline-grid;
+      place-items: center;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--surface);
+      color: var(--ink);
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+    }
+    .theme-toggle-btn:hover {
+      background: var(--warm-light);
+      border-color: var(--claret);
+      transform: scale(1.05);
+    }
     
     .topbar-left {
       min-width: 0;
@@ -653,6 +684,7 @@ export class TopbarComponent {
   @Input() userMenuOpen = false;
   @Input() userMenuItems: UserMenuItem[] = [];
   @Input() mobile = false;
+  @Input() isDark = false;
 
   @Output() searchTermChange = new EventEmitter<string>();
   @Output() search = new EventEmitter<string>();
@@ -660,9 +692,10 @@ export class TopbarComponent {
   @Output() toggleNotifications = new EventEmitter<void>();
   @Output() toggleUserMenu = new EventEmitter<void>();
   @Output() markAllRead = new EventEmitter<void>();
+  @Output() toggleTheme = new EventEmitter<void>();
 
   searchFocused = false;
-  readonly searchShortcut = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.platform) ? '⌘ K' : 'Ctrl K';
+  readonly searchShortcut = typeof navigator !== 'undefined' && (/Mac|iPhone|iPad/i.test(navigator.userAgent || navigator.platform || '')) ? '⌘K' : 'Ctrl+K';
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
@@ -678,15 +711,19 @@ export class TopbarComponent {
 
   @HostListener('document:keydown', ['$event'])
   onDocumentKeydown(event: KeyboardEvent): void {
-    const modifierPressed = /Mac|iPhone|iPad/i.test(navigator.platform)
-      ? event.metaKey
-      : event.ctrlKey;
-    if (!modifierPressed || event.key.toLowerCase() !== 'k') return;
+    const isK = event.key.toLowerCase() === 'k' || event.code === 'KeyK';
+    const modifierPressed = event.metaKey || event.ctrlKey;
+    if (modifierPressed && isK) {
+      event.preventDefault();
+      const input = this.elementRef.nativeElement.querySelector('.search-input') as HTMLInputElement | null;
+      input?.focus();
+      input?.select();
+    }
+  }
 
-    event.preventDefault();
-    const input = this.elementRef.nativeElement.querySelector('.search-input') as HTMLInputElement | null;
-    input?.focus();
-    input?.select();
+  onToggleTheme(): void {
+    this.isDark = !this.isDark;
+    this.toggleTheme.emit();
   }
 
   onSearch(): void {

@@ -66,6 +66,18 @@ public class DocumentService {
                 .map(this::mapToResponse);
     }
 
+    public Flux<DocumentResponse> getDocumentsBoundToCaller() {
+        return documentSecurityService.hasAnyDocumentStaffRole()
+                .flatMapMany(isStaff -> {
+                    if (Boolean.TRUE.equals(isStaff)) {
+                        return documentRepository.findAll().map(this::mapToResponse);
+                    }
+                    return documentSecurityService.currentUserId()
+                            .flatMapMany(userId -> documentRepository.findByUploadedBy(userId).map(this::mapToResponse))
+                            .switchIfEmpty(Flux.empty());
+                });
+    }
+
     private String computeSha256(UploadDocumentRequest request) {
         try {
             String input = request.entityId() + "|" + request.entityType() + "|" +

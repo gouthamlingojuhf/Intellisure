@@ -3,6 +3,9 @@ package com.intellisure.documentauditservice.client;
 import com.intellisure.documentauditservice.exception.AccessDeniedBusinessException;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.stereotype.Component;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
@@ -43,15 +46,26 @@ public class EurekaDocumentEntityOwnershipClient implements DocumentEntityOwners
             }
         }
 
-        return webClientBuilder.build()
-                .get()
-                .uri("lb://" + serviceName + resourcePath)
-                .retrieve()
-                .bodyToMono(OwnedEntityResponse.class)
-                .map(OwnedEntityResponse::customerId)
-                .switchIfEmpty(Mono.error(new AccessDeniedBusinessException("Document entity ownership could not be verified")))
-                .onErrorMap(WebClientResponseException.class,
-                        ex -> new AccessDeniedBusinessException("Document entity ownership could not be verified"));
+        return ReactiveSecurityContextHolder.getContext()
+                .map(SecurityContext::getAuthentication)
+                .filter(auth -> auth instanceof JwtAuthenticationToken)
+                .cast(JwtAuthenticationToken.class)
+                .map(jwt -> "Bearer " + jwt.getToken().getTokenValue())
+                .defaultIfEmpty("")
+                .flatMap(token -> {
+                    WebClient.RequestHeadersSpec<?> req = webClientBuilder.build()
+                            .get()
+                            .uri("lb://" + serviceName + resourcePath);
+                    if (!token.isBlank()) {
+                        req.header("Authorization", token);
+                    }
+                    return req.retrieve()
+                            .bodyToMono(OwnedEntityResponse.class)
+                            .map(OwnedEntityResponse::customerId)
+                            .switchIfEmpty(Mono.error(new AccessDeniedBusinessException("Document entity ownership could not be verified")))
+                            .onErrorMap(WebClientResponseException.class,
+                                    ex -> new AccessDeniedBusinessException("Document entity ownership could not be verified"));
+                });
     }
 
     private record OwnedEntityResponse(UUID customerId) {}

@@ -45,22 +45,39 @@ public class ClaimService {
     }
 
     public Flux<ClaimResponse> getClaimsForCaller(UUID requestedCustomerId, String status) {
-        return securityActorService.hasAnyRole("CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
-                .flatMapMany(isStaff -> {
-                    if (Boolean.TRUE.equals(isStaff)) {
+        return securityActorService.hasAnyRole("CLAIMS_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
+                .flatMapMany(isManagerOrAdmin -> {
+                    if (Boolean.TRUE.equals(isManagerOrAdmin)) {
                         if (status != null && !status.isBlank()) {
                             return getClaimsByStatus(status);
                         }
                         return getClaims(requestedCustomerId);
                     }
-                    return securityActorService.currentCustomerId()
-                            .flatMapMany(myCustomerId -> {
-                                if (status != null && !status.isBlank()) {
-                                    return claimRepository.findByCustomerId(myCustomerId)
-                                            .filter(c -> normalizeStatus(status).equals(c.getStatus()))
-                                            .map(this::mapToResponse);
+                    return securityActorService.hasAnyRole("CLAIMS_ADJUSTER")
+                            .flatMapMany(isAdjuster -> {
+                                if (Boolean.TRUE.equals(isAdjuster)) {
+                                    return securityActorService.currentUserId()
+                                            .flatMapMany(userId -> claimRepository.findAll()
+                                                    .filter(c -> userId.equals(c.getAssignedAdjusterId()))
+                                                    .filter(c -> status == null || status.isBlank() || normalizeStatus(status).equals(c.getStatus()))
+                                                    .map(this::mapToResponse)
+                                            );
                                 }
-                                return getClaims(myCustomerId);
+                                return securityActorService.hasAnyRole("UNDERWRITER", "RISK_ENGINEER", "VENDOR_MANAGER")
+                                        .flatMapMany(isOtherEmployee -> {
+                                            if (Boolean.TRUE.equals(isOtherEmployee)) {
+                                                return getClaims(requestedCustomerId);
+                                            }
+                                            return securityActorService.currentCustomerId()
+                                                    .flatMapMany(myCustomerId -> {
+                                                        if (status != null && !status.isBlank()) {
+                                                            return claimRepository.findByCustomerId(myCustomerId)
+                                                                    .filter(c -> normalizeStatus(status).equals(c.getStatus()))
+                                                                    .map(this::mapToResponse);
+                                                        }
+                                                        return getClaims(myCustomerId);
+                                                    });
+                                        });
                             });
                 });
     }

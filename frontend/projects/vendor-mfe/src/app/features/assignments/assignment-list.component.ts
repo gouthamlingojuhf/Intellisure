@@ -76,6 +76,28 @@ import {
       </table>
     </section>
   `,
+  styles: [`
+    :host { display: block; padding: 24px 0; }
+    .card { background: var(--surface, #fff); border: 1px solid var(--border, #eae5df); border-radius: 10px; padding: 24px; box-shadow: var(--shadow, 0 1px 3px rgba(0,0,0,0.05)); }
+    h1 { margin: 0 0 16px; font-size: 24px; font-weight: 700; color: var(--ink, #111); letter-spacing: -0.03em; }
+    form { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
+    .input-field { min-height: 38px; padding: 8px 12px; border: 1px solid var(--border, #eae5df); border-radius: 6px; background: var(--surface, #fff); color: var(--ink, #111); font-size: 12px; }
+    .input-field:focus { outline: none; border-color: var(--claret, #75013f); box-shadow: 0 0 0 3px rgba(117, 1, 63, 0.1); }
+    .btn-primary { min-height: 38px; padding: 0 16px; border: 1px solid var(--claret, #75013f); border-radius: 6px; background: var(--claret, #75013f); color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+    .btn-primary:hover { background: var(--claret-hover, #8f1750); }
+    .btn-secondary { min-height: 38px; padding: 0 16px; border: 1px solid var(--border, #eae5df); border-radius: 6px; background: var(--surface, #fff); color: var(--ink, #272427); font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+    .btn-secondary:hover { background: var(--warm-light, #f7f5f3); }
+    .table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 12px; }
+    .table th { padding: 12px 14px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted, #6f6a6d); border-bottom: 1px solid var(--border, #eae5df); background: var(--surface-hover, #faf9f8); }
+    .table td { padding: 14px; border-bottom: 1px solid var(--border, #eae5df); color: var(--ink, #272427); }
+    .table tr:hover td { background: var(--surface-hover, #faf9f8); }
+    .badge-success, .badge-warning, .badge-danger { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+    .badge-success { background: var(--success-light, #eaf6f0); color: var(--success, #176b45); }
+    .badge-warning { background: var(--warning-light, #fff5dc); color: var(--warning, #9a5b00); }
+    .badge-danger { background: var(--danger-light, #fdecea); color: var(--danger, #a32120); }
+    .underline { color: var(--claret, #75013f); font-weight: 600; text-decoration: none; }
+    .underline:hover { text-decoration: underline; }
+  `],
 })
 export class AssignmentListComponent implements OnInit {
   private readonly store = inject(Store);

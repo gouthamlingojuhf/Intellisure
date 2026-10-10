@@ -101,7 +101,7 @@ public class SecurityActorService {
         });
     }
 
-    private Mono<Boolean> hasAnyRole(String... roles) {
+    public Mono<Boolean> hasAnyRole(String... roles) {
         return ReactiveSecurityContextHolder
                 .getContext()
                 .map(context -> context.getAuthentication()

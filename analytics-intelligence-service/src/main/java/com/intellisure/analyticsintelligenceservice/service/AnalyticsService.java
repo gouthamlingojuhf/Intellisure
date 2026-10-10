@@ -57,7 +57,22 @@ public class AnalyticsService {
 
         return executiveDashboardSummaryRepository.findFirstByOrderByCalculatedAtDesc()
                 .map(this::mapToDashboardResponse)
-                .switchIfEmpty(Mono.error(new AnalyticsDataUnavailableException("No executive analytics summary is available")));
+                .defaultIfEmpty(new ExecutiveDashboardSummaryResponse(
+                        java.util.UUID.randomUUID(),
+                        java.math.BigDecimal.ZERO,
+                        java.math.BigDecimal.ZERO,
+                        java.math.BigDecimal.ZERO,
+                        java.math.BigDecimal.ZERO,
+                        java.math.BigDecimal.ZERO,
+                        java.math.BigDecimal.ZERO,
+                        0,
+                        0,
+                        0,
+                        0,
+                        LocalDateTime.now(),
+                        LocalDateTime.now().minusDays(30),
+                        LocalDateTime.now()
+                ));
     }
 
     private LossRatioMetricsResponse mapToLossRatioResponse(LossRatioMetrics entity) {

@@ -40,7 +40,7 @@ import {
     <div class="quote-detail-page">
       <!-- Header -->
       <header class="page-header">
-        <a routerLink="/policy" class="back-link">&larr; Back to quotes & policies</a>
+        <a routerLink="/quotes" class="back-link">&larr; Back to quotes</a>
         <div class="header-main">
           <div class="title-row">
             <h1>Quote {{ quote?.quoteNumber || 'details' }}</h1>

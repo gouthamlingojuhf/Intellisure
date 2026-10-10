@@ -31,8 +31,11 @@ public class DocumentController {
 
     @GetMapping
     public Flux<DocumentResponse> listDocuments(
-            @RequestParam UUID entityId,
-            @RequestParam String entityType) {
-        return documentService.getDocumentsByEntity(entityId, entityType);
+            @RequestParam(required = false) UUID entityId,
+            @RequestParam(required = false) String entityType) {
+        if (entityId != null && entityType != null) {
+            return documentService.getDocumentsByEntity(entityId, entityType);
+        }
+        return documentService.getDocumentsBoundToCaller();
     }
 }

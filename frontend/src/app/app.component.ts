@@ -47,8 +47,9 @@ export class AppComponent implements OnInit, OnDestroy {
     { label: 'Overview', path: '/', icon: '🏠' },
     { label: 'Dashboard', path: '/dashboard', icon: '📊', roles: ['Policyholder', 'POLICYHOLDER'] },
     { label: 'Business Profile', path: '/profile', icon: '🏢', roles: ['Policyholder', 'POLICYHOLDER'] },
-    { label: 'Quotes & Policies', path: '/policy', icon: '📋', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Policyholder', 'POLICYHOLDER', 'SYSTEM_ADMINISTRATOR'] },
-    { label: 'Underwriting', path: '/underwriting', icon: '🔍', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Risk Engineer', 'RISK_ENGINEER'] },
+    { label: 'Quotes', path: '/quotes', icon: '📋', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Policyholder', 'POLICYHOLDER', 'SYSTEM_ADMINISTRATOR', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER'] },
+    { label: 'Policies', path: '/policy', icon: '🛡️', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Policyholder', 'POLICYHOLDER', 'SYSTEM_ADMINISTRATOR', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER'] },
+    { label: 'Underwriting', path: '/underwriting', icon: '🔍', roles: ['Underwriter', 'UNDERWRITER', 'Risk Engineer', 'RISK_ENGINEER'] },
     { label: 'Claims', path: '/claims', icon: '📄', roles: ['Admin', 'ADMIN', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Policyholder', 'POLICYHOLDER'] },
     { label: 'Vendors', path: '/vendor', icon: '🏢', roles: ['Admin', 'ADMIN', 'Vendor Applicant', 'VENDOR_APPLICANT', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Vendor Manager', 'VENDOR_MANAGER', 'SYSTEM_ADMINISTRATOR'] },
     { label: 'Analytics', path: '/analytics', icon: '📊', roles: ['Admin', 'ADMIN', 'SYSTEM_ADMINISTRATOR', 'Underwriter', 'UNDERWRITER', 'Risk Engineer', 'RISK_ENGINEER', 'Claims Manager', 'CLAIMS_MANAGER'] },
@@ -67,6 +68,7 @@ export class AppComponent implements OnInit, OnDestroy {
   mobileSidebarOpen = false;
   notificationOpen = false;
   userMenuOpen = false;
+  isDark = false;
   searchTerm = '';
   currentPath = '/';
   breadcrumbs: { label: string; link?: string }[] = [];
@@ -116,7 +118,8 @@ export class AppComponent implements OnInit, OnDestroy {
         { label: 'Dashboard', link: '/dashboard', icon: '📊' },
         { label: 'Business profile', link: '/profile', icon: '🏢' },
       ] : []),
-      { label: 'Quotes & Policies', link: '/policy', icon: '📋' },
+      { label: 'Quotes', link: '/quotes', icon: '📋' },
+      { label: 'Policies', link: '/policy', icon: '🛡️' },
       { label: 'Sign out', action: () => this.logout(), icon: '🚪', variant: 'danger' },
     ];
   }
@@ -127,6 +130,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.initTheme();
     this.restoreUserSession();
     this.loadCurrentUser();
     this.updateNavigation(this.router.url);
@@ -190,22 +194,89 @@ export class AppComponent implements OnInit, OnDestroy {
     this.userMenuOpen = false;
   }
 
+  initTheme(): void {
+    if (typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem('is_theme');
+      if (saved) {
+        this.setTheme(saved === 'dark');
+      } else if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        this.setTheme(true);
+      } else {
+        this.setTheme(false);
+      }
+    }
+  }
+
+  onToggleTheme(): void {
+    this.setTheme(!this.isDark);
+  }
+
+  setTheme(dark: boolean): void {
+    this.isDark = dark;
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.toggle('dark', dark);
+      document.body.classList.toggle('dark', dark);
+      document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    }
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('is_theme', dark ? 'dark' : 'light');
+    }
+  }
+
   search(): void {
-    const term = this.searchTerm.trim().toLowerCase();
+    const term = this.searchTerm.trim();
     if (!term) return;
+    const lower = term.toLowerCase();
+
+    // Direct entity prefix checks
+    if (/^qt[-_0-9a-f]/i.test(lower) || lower.startsWith('quote')) {
+      this.router.navigate(['/quotes'], { queryParams: { search: term } });
+      return;
+    }
+    if (/^pol[-_0-9a-f]/i.test(lower) || lower.startsWith('polic')) {
+      this.router.navigate(['/policy'], { queryParams: { search: term } });
+      return;
+    }
+    if (/^clm[-_0-9a-f]/i.test(lower) || lower.startsWith('claim')) {
+      this.router.navigate(['/claims'], { queryParams: { search: term } });
+      return;
+    }
+    if (/^vnd[-_0-9a-f]/i.test(lower) || lower.startsWith('vendor')) {
+      this.router.navigate(['/vendor'], { queryParams: { search: term } });
+      return;
+    }
+
     const aliases: Record<string, string> = {
-      policy: '/policy', policies: '/policy', quote: '/policy', quotes: '/policy',
-      claim: '/claims', claims: '/claims', vendor: '/vendor', vendors: '/vendor',
-      recovery: '/recovery', document: '/docs', documents: '/docs',
-      notification: '/notifications', notifications: '/notifications', admin: '/admin', administration: '/admin',
-      underwriting: '/underwriting', analytics: '/analytics', profile: '/profile', dashboard: '/dashboard',
+      quote: '/quotes', quotes: '/quotes',
+      policy: '/policy', policies: '/policy',
+      claim: '/claims', claims: '/claims',
+      vendor: '/vendor', vendors: '/vendor',
+      recovery: '/recovery',
+      document: '/docs', documents: '/docs', doc: '/docs',
+      notification: '/notifications', notifications: '/notifications',
+      admin: '/admin', administration: '/admin',
+      underwriting: '/underwriting',
+      analytics: '/analytics', intelligence: '/analytics',
+      profile: '/profile', dashboard: '/dashboard',
     };
-    const aliasMatch = Object.entries(aliases).find(([alias]) => alias.startsWith(term));
-    const destinationPath = aliases[term]
+
+    const aliasMatch = Object.entries(aliases).find(([alias]) => alias.startsWith(lower));
+    const destinationPath = aliases[lower]
       ?? aliasMatch?.[1]
-      ?? this.navigationItems.find((item) => item.label.toLowerCase().includes(term))?.path;
-    const destination = this.navigationItems.find((item) => item.path === destinationPath && (!item.roles || item.roles.some((role) => role.toUpperCase() === (this.role ?? '').toUpperCase())));
-    if (destination) this.router.navigateByUrl(destination.path);
+      ?? this.navigationItems.find((item) => item.label.toLowerCase().includes(lower))?.path;
+
+    if (destinationPath) {
+      const allowed = this.navigationItems.find((item) =>
+        item.path === destinationPath && (!item.roles || item.roles.some((role) => role.toUpperCase() === (this.role ?? '').toUpperCase()))
+      );
+      if (allowed) {
+        this.router.navigateByUrl(allowed.path);
+        return;
+      }
+    }
+
+    // Default search routing
+    this.router.navigate(['/quotes'], { queryParams: { search: term } });
   }
 
   logout(): void {

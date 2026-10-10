@@ -30,4 +30,12 @@ public class DocumentSecurityService {
     public Mono<UUID> currentUserId() {
         return securityActorService.currentUserId();
     }
+
+    public Mono<UUID> currentCustomerId() {
+        return securityActorService.currentCustomerId();
+    }
+
+    public Mono<Boolean> hasAnyDocumentStaffRole() {
+        return securityActorService.hasAnyDocumentStaffRole();
+    }
 }

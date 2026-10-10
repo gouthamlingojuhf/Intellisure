@@ -160,7 +160,7 @@ public class QuoteService {
      * ---------------------------------------------------------
      */
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SYSTEM_ADMINISTRATOR')")
     @Transactional
     public Mono<QuoteResponse> reassignUnderwriter(
             UUID quoteId,
@@ -256,9 +256,37 @@ public class QuoteService {
                         .flatMap(this::buildQuoteResponse));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'SYSTEM_ADMINISTRATOR', 'UNDERWRITER', 'RISK_ENGINEER', 'CLAIMS_ADJUSTER', 'CLAIMS_MANAGER')")
+    public Flux<QuoteResponse> getQuotesForCaller() {
+        return securityActorService.hasAnyRole("ADMIN", "SYSTEM_ADMINISTRATOR")
+                .flatMapMany(isAdmin -> {
+                    if (Boolean.TRUE.equals(isAdmin)) {
+                        return quoteRepository.findAllByStatusNot(QuoteStatus.DRAFT)
+                                .flatMap(this::buildQuoteResponse);
+                    }
+                    return securityActorService.hasAnyRole("UNDERWRITER")
+                            .flatMapMany(isUnderwriter -> {
+                                if (Boolean.TRUE.equals(isUnderwriter)) {
+                                    return securityActorService.currentUserId()
+                                            .flatMapMany(userId -> quoteRepository
+                                                    .findAllByAssignedUnderwriterIdAndStatusNot(userId, QuoteStatus.DRAFT)
+                                                    .flatMap(this::buildQuoteResponse));
+                                }
+                                return securityActorService.hasAnyRole("RISK_ENGINEER", "CLAIMS_ADJUSTER", "CLAIMS_MANAGER")
+                                        .flatMapMany(isStaff -> {
+                                            if (Boolean.TRUE.equals(isStaff)) {
+                                                return quoteRepository.findAllByStatusNot(QuoteStatus.DRAFT)
+                                                        .flatMap(this::buildQuoteResponse);
+                                            }
+                                            return securityActorService.currentCustomerId()
+                                                    .flatMapMany(customerId -> quoteRepository.findAllByCustomerId(customerId)
+                                                            .flatMap(this::buildQuoteResponse));
+                                        });
+                            });
+                });
+    }
+
     public Flux<QuoteResponse> getAllQuotesForAdministration() {
-        return quoteRepository.findAll().flatMap(this::buildQuoteResponse);
+        return getQuotesForCaller();
     }
 
 

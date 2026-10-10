@@ -33,7 +33,7 @@ public class AnalyticsController {
         return analyticsService.getLossTriangle(year);
     }
 
-    @GetMapping("/dashboard/summary")
+    @GetMapping({"/dashboard/summary", "/dashboard/summary/"})
     public Mono<com.intellisure.analyticsintelligenceservice.dto.ExecutiveDashboardSummaryResponse> getDashboardSummary() {
         return analyticsService.getDashboardSummary();
     }

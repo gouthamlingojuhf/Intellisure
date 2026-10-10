@@ -1,0 +1,343 @@
+/**
+ * Comprehensive Mock Data for IntelliSure Playwright End-to-End Test Suite.
+ * Mirrors the Spring Boot backend R2DBC schemas and Microfrontend API contracts.
+ */
+
+export interface TestUser {
+  userId: string;
+  email: string;
+  role: string;
+  displayName: string;
+  customerId?: string;
+  token: string;
+}
+
+export const TEST_USERS: Record<string, TestUser> = {
+  POLICYHOLDER: {
+    userId: '11111111-1111-1111-1111-111111111111',
+    email: 'acme.corp@intellisure.test',
+    role: 'POLICYHOLDER',
+    displayName: 'Acme Logistics & Warehousing',
+    customerId: 'c0000001-0000-0000-0000-000000000001',
+    token: 'mock-jwt-policyholder-token',
+  },
+  UNDERWRITER: {
+    userId: '22222222-2222-2222-2222-222222222222',
+    email: 'sarah.underwriter@intellisure.com',
+    role: 'UNDERWRITER',
+    displayName: 'Sarah Jenkins (Senior Underwriter)',
+    token: 'mock-jwt-underwriter-token',
+  },
+  UNDERWRITER_2: {
+    userId: '22222222-2222-2222-2222-333333333333',
+    email: 'marcus.underwriter@intellisure.com',
+    role: 'UNDERWRITER',
+    displayName: 'Marcus Vance (Commercial Underwriter)',
+    token: 'mock-jwt-underwriter-2-token',
+  },
+  RISK_ENGINEER: {
+    userId: '33333333-3333-3333-3333-333333333333',
+    email: 'elena.risk@intellisure.com',
+    role: 'RISK_ENGINEER',
+    displayName: 'Dr. Elena Rostova (Risk Engineer)',
+    token: 'mock-jwt-risk-engineer-token',
+  },
+  CLAIMS_ADJUSTER: {
+    userId: '44444444-4444-4444-4444-444444444444',
+    email: 'david.adjuster@intellisure.com',
+    role: 'CLAIMS_ADJUSTER',
+    displayName: 'David Cole (Lead Adjuster)',
+    token: 'mock-jwt-adjuster-token',
+  },
+  CLAIMS_MANAGER: {
+    userId: '55555555-5555-5555-5555-555555555555',
+    email: 'claire.manager@intellisure.com',
+    role: 'CLAIMS_MANAGER',
+    displayName: 'Claire Dupont (Claims Operations Director)',
+    token: 'mock-jwt-claims-manager-token',
+  },
+  VENDOR_MANAGER: {
+    userId: '66666666-6666-6666-6666-666666666666',
+    email: 'vikram.vendor@intellisure.com',
+    role: 'VENDOR_MANAGER',
+    displayName: 'Vikram Patel (Vendor Network Manager)',
+    token: 'mock-jwt-vendor-manager-token',
+  },
+  VENDOR_APPLICANT: {
+    userId: '77777777-7777-7777-7777-777777777777',
+    email: 'contact@apex-restoration.com',
+    role: 'VENDOR_APPLICANT',
+    displayName: 'Apex Emergency Restoration Services',
+    token: 'mock-jwt-vendor-applicant-token',
+  },
+  ADMIN: {
+    userId: '99999999-9999-9999-9999-999999999999',
+    email: 'admin@intellisure.internal',
+    role: 'ADMIN',
+    displayName: 'IntelliSure System Administrator',
+    token: 'mock-jwt-admin-token',
+  },
+};
+
+export const MOCK_AVAILABLE_EMPLOYEES = [
+  {
+    userId: '22222222-2222-2222-2222-222222222222',
+    email: 'sarah.underwriter@intellisure.com',
+    role: 'UNDERWRITER',
+    accountStatus: 'ACTIVE',
+    displayName: 'Sarah Jenkins',
+  },
+  {
+    userId: '22222222-2222-2222-2222-333333333333',
+    email: 'marcus.underwriter@intellisure.com',
+    role: 'UNDERWRITER',
+    accountStatus: 'ACTIVE',
+    displayName: 'Marcus Vance',
+  },
+  {
+    userId: '44444444-4444-4444-4444-444444444444',
+    email: 'david.adjuster@intellisure.com',
+    role: 'CLAIMS_ADJUSTER',
+    accountStatus: 'ACTIVE',
+    displayName: 'David Cole',
+  },
+  {
+    userId: '33333333-3333-3333-3333-333333333333',
+    email: 'elena.risk@intellisure.com',
+    role: 'RISK_ENGINEER',
+    accountStatus: 'ACTIVE',
+    displayName: 'Dr. Elena Rostova',
+  },
+];
+
+export const MOCK_CUSTOMER_PROFILE = {
+  customerId: 'c0000001-0000-0000-0000-000000000001',
+  userId: '11111111-1111-1111-1111-111111111111',
+  legalName: 'Acme Logistics & Warehousing LLC',
+  dba: 'Acme Freight Services',
+  taxId: 'XX-XXXX1234',
+  companyType: 'LLC',
+  industrySector: 'Transportation & Logistics',
+  businessDescription: 'Nationwide freight warehousing, cold chain storage, and multi-modal distribution.',
+  phone: '+1 (555) 019-2834',
+  email: 'acme.corp@intellisure.test',
+  website: 'https://acme-logistics.example.com',
+  operatingAddress: {
+    street: '100 Corporate Center Parkway, Suite 400',
+    city: 'Hartford',
+    state: 'CT',
+    postalCode: '06103',
+    country: 'USA',
+  },
+  createdAt: '2025-01-15T09:00:00Z',
+  updatedAt: '2025-09-20T14:30:00Z',
+};
+
+export const MOCK_QUOTES = [
+  {
+    quoteId: 'q0000001-0000-0000-0000-000000000001',
+    quoteNumber: 'QTE-2026-0001',
+    customerId: 'c0000001-0000-0000-0000-000000000001',
+    businessName: 'Acme Logistics & Warehousing LLC',
+    policyType: 'COMMERCIAL_PROPERTY',
+    coverageAmount: 2500000,
+    annualPremium: 14500.0,
+    status: 'DRAFT',
+    assignedUnderwriterId: null,
+    riskScore: 32,
+    createdAt: '2026-03-01T10:00:00Z',
+    updatedAt: '2026-03-01T10:00:00Z',
+  },
+  {
+    quoteId: 'q0000002-0000-0000-0000-000000000002',
+    quoteNumber: 'QTE-2026-0002',
+    customerId: 'c0000001-0000-0000-0000-000000000001',
+    businessName: 'Acme Logistics & Warehousing LLC',
+    policyType: 'GENERAL_LIABILITY',
+    coverageAmount: 1000000,
+    annualPremium: 8200.0,
+    status: 'SUBMITTED',
+    assignedUnderwriterId: '22222222-2222-2222-2222-222222222222',
+    riskScore: 45,
+    createdAt: '2026-03-02T11:00:00Z',
+    updatedAt: '2026-03-02T11:30:00Z',
+  },
+  {
+    quoteId: 'q0000003-0000-0000-0000-000000000003',
+    quoteNumber: 'QTE-2026-0003',
+    customerId: 'c0000001-0000-0000-0000-000000000001',
+    businessName: 'Acme Logistics & Warehousing LLC',
+    policyType: 'CYBER_SECURITY',
+    coverageAmount: 5000000,
+    annualPremium: 22000.0,
+    status: 'APPROVED',
+    assignedUnderwriterId: '22222222-2222-2222-2222-222222222222',
+    riskScore: 28,
+    createdAt: '2026-02-15T09:00:00Z',
+    updatedAt: '2026-02-18T16:00:00Z',
+  },
+  {
+    quoteId: 'q0000004-0000-0000-0000-000000000004',
+    quoteNumber: 'QTE-2026-0004',
+    customerId: 'c0000002-0000-0000-0000-000000000002',
+    businessName: 'BioHealth Labs Inc',
+    policyType: 'COMMERCIAL_PROPERTY',
+    coverageAmount: 8000000,
+    annualPremium: 45000.0,
+    status: 'UNDER_REVIEW',
+    assignedUnderwriterId: '22222222-2222-2222-2222-333333333333',
+    riskScore: 68,
+    createdAt: '2026-03-03T14:00:00Z',
+    updatedAt: '2026-03-04T09:00:00Z',
+  },
+];
+
+export const MOCK_POLICIES = [
+  {
+    policyId: 'p0000001-0000-0000-0000-000000000001',
+    policyNumber: 'POL-2025-9842',
+    customerId: 'c0000001-0000-0000-0000-000000000001',
+    policyType: 'COMMERCIAL_PROPERTY',
+    coverageAmount: 2000000,
+    premiumAmount: 13800.0,
+    effectiveDate: '2025-06-01',
+    expiryDate: '2026-06-01',
+    status: 'ACTIVE',
+    insuredEntity: 'Acme Logistics & Warehousing LLC',
+  },
+  {
+    policyId: 'p0000002-0000-0000-0000-000000000002',
+    policyNumber: 'POL-2025-7711',
+    customerId: 'c0000001-0000-0000-0000-000000000001',
+    policyType: 'FLEET_AUTO',
+    coverageAmount: 1500000,
+    premiumAmount: 9200.0,
+    effectiveDate: '2025-08-15',
+    expiryDate: '2026-08-15',
+    status: 'ACTIVE',
+    insuredEntity: 'Acme Logistics & Warehousing LLC',
+  },
+];
+
+export const MOCK_CLAIMS = [
+  {
+    claimId: 'cl000001-0000-0000-0000-000000000001',
+    claimNumber: 'CLM-2026-0101',
+    policyId: 'p0000001-0000-0000-0000-000000000001',
+    customerId: 'c0000001-0000-0000-0000-000000000001',
+    incidentDate: '2026-02-10T14:30:00Z',
+    incidentDescription: 'Loading dock water pipe burst during freeze, damaging 40 pallets of electronics.',
+    estimatedDamage: 45000.0,
+    approvedPayout: 38500.0,
+    status: 'UNDER_INVESTIGATION',
+    assignedAdjusterId: '44444444-4444-4444-4444-444444444444',
+    createdAt: '2026-02-11T09:00:00Z',
+    updatedAt: '2026-02-15T16:00:00Z',
+  },
+  {
+    claimId: 'cl000002-0000-0000-0000-000000000002',
+    claimNumber: 'CLM-2026-0102',
+    policyId: 'p0000002-0000-0000-0000-000000000002',
+    customerId: 'c0000001-0000-0000-0000-000000000001',
+    incidentDate: '2026-03-01T08:15:00Z',
+    incidentDescription: 'Minor collision at depot entrance involving delivery box truck.',
+    estimatedDamage: 6200.0,
+    approvedPayout: null,
+    status: 'SUBMITTED',
+    assignedAdjusterId: '44444444-4444-4444-4444-444444444444',
+    createdAt: '2026-03-01T10:30:00Z',
+    updatedAt: '2026-03-01T10:30:00Z',
+  },
+];
+
+export const MOCK_DOCUMENTS = [
+  {
+    documentId: 'd0000001-0000-0000-0000-000000000001',
+    entityId: 'p0000001-0000-0000-0000-000000000001',
+    entityType: 'POLICY',
+    fileName: 'Commercial_Property_Binder_POL-2025-9842.pdf',
+    contentType: 'application/pdf',
+    fileSizeBytes: 245890,
+    uploadedBy: '22222222-2222-2222-2222-222222222222',
+    uploadedAt: '2025-06-01T10:00:00Z',
+    classification: 'CERTIFICATE_OF_INSURANCE',
+    downloadUrl: '/api/documents/d0000001-0000-0000-0000-000000000001/download',
+  },
+  {
+    documentId: 'd0000002-0000-0000-0000-000000000002',
+    entityId: 'cl000001-0000-0000-0000-000000000001',
+    entityType: 'CLAIM',
+    fileName: 'Loading_Dock_Water_Damage_Inspection.jpg',
+    contentType: 'image/jpeg',
+    fileSizeBytes: 1204850,
+    uploadedBy: '11111111-1111-1111-1111-111111111111',
+    uploadedAt: '2026-02-11T09:15:00Z',
+    classification: 'DAMAGE_EVIDENCE',
+    downloadUrl: '/api/documents/d0000002-0000-0000-0000-000000000002/download',
+  },
+  {
+    documentId: 'd0000003-0000-0000-0000-000000000003',
+    entityId: 'q0000002-0000-0000-0000-000000000002',
+    entityType: 'QUOTE',
+    fileName: 'Engineering_Risk_Survey_Warehouse_Hartford.pdf',
+    contentType: 'application/pdf',
+    fileSizeBytes: 541029,
+    uploadedBy: '33333333-3333-3333-3333-333333333333',
+    uploadedAt: '2026-03-02T12:00:00Z',
+    classification: 'RISK_ENGINEERING_REPORT',
+    downloadUrl: '/api/documents/d0000003-0000-0000-0000-000000000003/download',
+  },
+];
+
+export const MOCK_NOTIFICATIONS = [
+  {
+    id: 'n0000001-0000-0000-0000-000000000001',
+    userId: '11111111-1111-1111-1111-111111111111',
+    title: 'Quote Approved',
+    message: 'Cyber Security Quote QTE-2026-0003 has been approved. You may now bind the policy.',
+    time: '2 hours ago',
+    kind: 'success' as const,
+    read: false,
+    createdAt: '2026-03-04T07:00:00Z',
+  },
+  {
+    id: 'n0000002-0000-0000-0000-000000000002',
+    userId: '11111111-1111-1111-1111-111111111111',
+    title: 'Adjuster Assigned',
+    message: 'Adjuster David Cole has been assigned to claim CLM-2026-0101.',
+    time: '1 day ago',
+    kind: 'info' as const,
+    read: true,
+    createdAt: '2026-03-03T09:00:00Z',
+  },
+];
+
+export const MOCK_VENDOR_ASSIGNMENTS = [
+  {
+    assignmentId: 'va000001-0000-0000-0000-000000000001',
+    claimId: 'cl000001-0000-0000-0000-000000000001',
+    vendorId: '77777777-7777-7777-7777-777777777777',
+    vendorName: 'Apex Emergency Restoration Services',
+    serviceType: 'WATER_MITIGATION_AND_REPAIR',
+    status: 'IN_PROGRESS',
+    assignedDate: '2026-02-12T10:00:00Z',
+    targetCompletionDate: '2026-02-28T18:00:00Z',
+    estimatedCost: 12400.0,
+    actualCost: null,
+    notes: 'Industrial drying fans installed in cold room 3. Drywall demo underway.',
+  },
+];
+
+export const MOCK_ANALYTICS_DASHBOARD = {
+  lossRatio: 0.58,
+  activePoliciesCount: 1420,
+  grossWrittenPremium: 18450000,
+  openClaimsCount: 84,
+  averageCycleTimeDays: 14.2,
+  underwritingQueueCount: 38,
+  riskDistribution: [
+    { riskCategory: 'Low', count: 850, percentage: 60 },
+    { riskCategory: 'Moderate', count: 420, percentage: 30 },
+    { riskCategory: 'High', count: 150, percentage: 10 },
+  ],
+};

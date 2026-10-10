@@ -37,8 +37,17 @@ export const routes: Routes = [
     loadChildren: () =>
       import('./features/auth/auth-shell.routes').then((m) => m.AUTH_SHELL_ROUTES),
   },
+  {
+    path: 'quotes',
+    canActivate: [authGuard, roleGuard(['POLICYHOLDER', 'USER', 'UNDERWRITER', 'CLAIMS_ADJUSTER', 'CLAIMS_MANAGER', 'ADMIN', 'SYSTEM_ADMINISTRATOR'])],
+    children: [
+      { path: '', pathMatch: 'full', loadComponent: () => import('./features/policy/quotes-list.component').then((m) => m.QuotesListComponent) },
+      { path: 'new', canActivate: [roleGuard(['POLICYHOLDER', 'USER'])], loadComponent: () => import('./features/policy/quote-create.component').then((m) => m.QuoteCreateComponent) },
+      { path: ':quoteId', loadComponent: () => import('./features/policy/quote-detail.component').then((m) => m.QuoteDetailComponent) },
+    ],
+  },
   { path: 'policy', canActivate: [authGuard, roleGuard(['POLICYHOLDER', 'USER', 'UNDERWRITER', 'CLAIMS_ADJUSTER', 'CLAIMS_MANAGER', 'ADMIN', 'SYSTEM_ADMINISTRATOR'])], loadChildren: () => import('./features/policy/policy-shell.routes').then((m) => m.POLICY_SHELL_ROUTES) },
-  { path: 'underwriting', canActivate: [authGuard], loadChildren: () => import('./features/underwriting/underwriting-shell.routes').then((m) => m.UNDERWRITING_SHELL_ROUTES) },
+  { path: 'underwriting', canActivate: [authGuard, roleGuard(['UNDERWRITER', 'RISK_ENGINEER'])], loadChildren: () => import('./features/underwriting/underwriting-shell.routes').then((m) => m.UNDERWRITING_SHELL_ROUTES) },
   { path: 'claims', canActivate: [authGuard], loadChildren: () => import('./features/claims/claims-shell.routes').then((m) => m.CLAIMS_SHELL_ROUTES) },
   { path: 'vendor', canActivate: [authGuard, roleGuard(['VENDOR_APPLICANT', 'VENDOR_MANAGER', 'CLAIMS_ADJUSTER', 'CLAIMS_MANAGER', 'ADMIN', 'SYSTEM_ADMINISTRATOR'])], loadChildren: () => import('./features/vendor/vendor-shell.routes').then((m) => m.VENDOR_SHELL_ROUTES) },
   { path: 'analytics', canActivate: [authGuard, roleGuard(['UNDERWRITER', 'RISK_ENGINEER', 'CLAIMS_MANAGER', 'ADMIN', 'SYSTEM_ADMINISTRATOR'])], loadChildren: () => import('./features/analytics/analytics-shell.routes').then((m) => m.ANALYTICS_SHELL_ROUTES) },

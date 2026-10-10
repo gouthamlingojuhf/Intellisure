@@ -10,4 +10,6 @@ import java.util.UUID;
 public interface UserAccountRepo extends ReactiveCrudRepository<UserAccount, UUID> {
     Mono<UserAccount> findByEmail(String email);
     Flux<UserAccount> findByRole(String role);
+    Flux<UserAccount> findByRoleAndAccountStatus(String role, String accountStatus);
+    Flux<UserAccount> findByAccountStatus(String accountStatus);
 }

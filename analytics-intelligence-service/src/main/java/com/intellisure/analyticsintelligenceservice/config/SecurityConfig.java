@@ -51,7 +51,7 @@ public class SecurityConfig {
                                 "/v3/api-docs",
                                 "/v3/api-docs/**"
                         ).permitAll()
-                        .pathMatchers(HttpMethod.GET, "/api/analytics/dashboard/summary")
+                        .pathMatchers(HttpMethod.GET, "/api/analytics/dashboard/summary", "/api/analytics/dashboard/summary/")
                         .hasAnyRole("POLICYHOLDER", "UNDERWRITER", "CLAIMS_MANAGER", "RISK_ENGINEER", "SYSTEM_ADMINISTRATOR", "ADMIN")
                         .pathMatchers("/api/analytics/**")
                         .hasAnyRole("UNDERWRITER", "CLAIMS_MANAGER", "RISK_ENGINEER", "SYSTEM_ADMINISTRATOR", "ADMIN")

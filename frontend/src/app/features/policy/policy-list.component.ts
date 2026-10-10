@@ -40,24 +40,22 @@ import {
         <div class="header-main">
           <p class="page-eyebrow">Portfolio Management</p>
           <div class="title-row">
-            <h1>Quotes & Policies</h1>
+            <h1>In-Force Insurance Policies</h1>
             @if (!loading) {
               <is-badge variant="info" size="md">
-                {{ policies.length }} Policies · {{ quotes.length }} Quotes
+                {{ policies.length }} Active Policies
               </is-badge>
             }
           </div>
           <p class="page-description">
-            Manage your commercial insurance contracts, track quotes in underwriting review, and initiate new coverage applications.
+            Manage your commercial insurance contracts, view bound terms, certificates of insurance, and active coverage schedules.
           </p>
         </div>
-        @if (!isEmployee) {
-          <div class="header-actions">
-            <is-button variant="primary" routerLink="/policy/quotes/new">
-              Request New Quote &rarr;
-            </is-button>
-          </div>
-        }
+        <div class="header-actions">
+          <is-button variant="secondary" routerLink="/quotes">
+            Quotes Queue &rarr;
+          </is-button>
+        </div>
       </header>
 
       @if (loading) {
@@ -139,70 +137,15 @@ import {
           }
         </is-card>
 
-        <!-- Card 2: Commercial Quotes Queue -->
-        <is-card
-          title="Quotes & Submissions Queue"
-          subtitle="Applications in progress, underwriting reviews, and offered terms"
-        >
-          @if (quotes.length === 0) {
-            <is-empty-state
-              title="No quotes found"
-              description="No commercial quote applications are currently available."
-              icon="📝"
-              [actionLabel]="isEmployee ? '' : 'Start a Quote'"
-              (action)="isEmployee ? null : navigate('/policy/quotes/new')"
-            />
-          } @else {
-            <div class="table-container">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Quote Number</th>
-                    <th>Product</th>
-                    <th>Status</th>
-                    <th>Effective Date</th>
-                    <th>Total Premium</th>
-                    <th class="text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (quote of quotes; track quote.quoteId) {
-                    <tr>
-                      <td>
-                        <strong>{{ quote.quoteNumber }}</strong>
-                      </td>
-                      <td>
-                        <span class="code-pill">{{ quote.productCode }}</span>
-                      </td>
-                      <td>
-                        <is-badge [variant]="getQuoteStatusVariant(quote.status)" size="sm">
-                          {{ formatStatus(quote.status) }}
-                        </is-badge>
-                      </td>
-                      <td>{{ quote.requestedEffectiveDate }}</td>
-                      <td>
-                        @if (quote.totalPremium !== null && quote.totalPremium !== undefined) {
-                          <strong>{{ quote.totalPremium | currency:'INR':'symbol':'1.0-0' }}</strong>
-                        } @else {
-                          <span class="text-muted">Awaiting Rating</span>
-                        }
-                      </td>
-                      <td class="text-right">
-                        <is-button
-                          variant="text"
-                          size="sm"
-                          (click)="navigate('/policy/quotes/' + quote.quoteId)"
-                        >
-                          Details &rarr;
-                        </is-button>
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          }
-        </is-card>
+        <div class="notice-card" style="display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+          <div>
+            <h3 style="margin: 0 0 4px; font-size: 14px; font-weight: 700;">Commercial Insurance Quotes & Applications</h3>
+            <p style="margin: 0; color: var(--muted); font-size: 12px;">Track submissions in review, rating indications, and accept offered quote terms.</p>
+          </div>
+          <is-button variant="primary" size="sm" routerLink="/quotes">
+            Open Quotes Workspace &rarr;
+          </is-button>
+        </div>
       }
     </div>
   `,

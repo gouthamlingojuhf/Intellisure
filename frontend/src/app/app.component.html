@@ -26,6 +26,8 @@
         [userMenuOpen]="userMenuOpen"
         [userMenuItems]="userMenuItems"
         [mobile]="false"
+        [isDark]="isDark"
+        (toggleTheme)="onToggleTheme()"
         (search)="search()"
         (toggleSidebar)="onCloseMobileSidebar()"
         (toggleNotifications)="onToggleNotifications()"

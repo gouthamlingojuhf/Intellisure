@@ -18,6 +18,7 @@ public class SecurityActorService {
             "CLAIMS_ADJUSTER",
             "CLAIMS_MANAGER",
             "VENDOR_MANAGER",
+            "RISK_ENGINEER",
             "SYSTEM_ADMINISTRATOR",
             "ADMIN"
     };

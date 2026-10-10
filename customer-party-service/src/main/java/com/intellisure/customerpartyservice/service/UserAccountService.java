@@ -79,9 +79,18 @@ public class UserAccountService {
     }
 
     public Flux<UserResponse> getUsersByRole(String role) {
+        return findAvailableEmployees(role, "ACTIVE");
+    }
+
+    public Flux<UserResponse> findAvailableEmployees(String role, String status) {
+        String normalizedStatus = (status == null || status.isBlank()) ? "ACTIVE" : status.trim().toUpperCase(Locale.ROOT);
+        if (role == null || role.isBlank()) {
+            return userAccountRepo.findByAccountStatus(normalizedStatus)
+                    .filter(user -> !"POLICYHOLDER".equalsIgnoreCase(normalizeRole(user.getRole())))
+                    .map(userAccountMapper::toUserResponse);
+        }
         String normalizedRole = normalizeRole(role);
-        return userAccountRepo.findByRole(normalizedRole)
-                .filter(user -> "ACTIVE".equalsIgnoreCase(user.getAccountStatus()))
+        return userAccountRepo.findByRoleAndAccountStatus(normalizedRole, normalizedStatus)
                 .map(userAccountMapper::toUserResponse);
     }
 

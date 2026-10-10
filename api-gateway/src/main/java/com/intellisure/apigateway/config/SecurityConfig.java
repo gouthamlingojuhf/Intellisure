@@ -140,16 +140,19 @@ public class SecurityConfig {
                         // Policyholder views quotes
                         .pathMatchers(
                                 HttpMethod.GET,
+                                "/api/quotes",
                                 "/api/quotes/**"
                         )
                         .hasAnyRole("POLICYHOLDER", "USER", "UNDERWRITER", "RISK_ENGINEER", "SYSTEM_ADMINISTRATOR", "ADMIN")
 
                         .pathMatchers(
+                                "/api/quotes",
                                 "/api/quotes/**"
                         )
                         .hasAnyRole("POLICYHOLDER", "UNDERWRITER", "SYSTEM_ADMINISTRATOR", "ADMIN")
 
                         .pathMatchers(
+                                "/api/policies",
                                 "/api/policies/**"
                         )
                         .hasAnyRole("POLICYHOLDER", "UNDERWRITER", "CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
@@ -198,7 +201,12 @@ public class SecurityConfig {
                                 "POLICYHOLDER",
                                 "USER",
                                 "CLAIMS_ADJUSTER",
-                                "CLAIMS_MANAGER"
+                                "CLAIMS_MANAGER",
+                                "SYSTEM_ADMINISTRATOR",
+                                "ADMIN",
+                                "UNDERWRITER",
+                                "RISK_ENGINEER",
+                                "VENDOR_MANAGER"
                         )
 
                         .pathMatchers(
@@ -285,6 +293,7 @@ public class SecurityConfig {
                         )
 
                         .pathMatchers(
+                                "/api/documents",
                                 "/api/documents/**",
                                 "/api/audit/**",
                                 "/api/audit-events/**"
@@ -317,6 +326,7 @@ public class SecurityConfig {
                          * Customer endpoints
                          */
                         .pathMatchers(
+                                "/api/users",
                                 "/api/users/**"
                         )
                         .authenticated()

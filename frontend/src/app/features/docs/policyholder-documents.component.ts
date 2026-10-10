@@ -2,7 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { forkJoin, map, of, switchMap, take } from 'rxjs';
+import { forkJoin, map, of, switchMap, take, catchError } from 'rxjs';
 import { BadgeComponent, ButtonComponent, CardComponent, EmptyStateComponent, SkeletonComponent } from 'ui-core';
 import { DocumentResponse } from '../../core/models/document.models';
 import { DocumentService } from '../../core/services/document.service';
@@ -105,37 +105,14 @@ export class PolicyholderDocumentsComponent implements OnInit {
   loadDocuments(): void {
     this.loading = true;
     this.error = null;
-    this.store.select(selectUserRole).pipe(
-      take(1),
-      switchMap((role) => {
-        this.isEmployee = ['UNDERWRITER', 'RISK_ENGINEER', 'CLAIMS_ADJUSTER', 'CLAIMS_MANAGER', 'VENDOR_MANAGER', 'SYSTEM_ADMINISTRATOR', 'ADMIN'].includes((role ?? '').toUpperCase());
-        if (this.isEmployee) {
-          return this.api.get<ClaimReference[]>('/api/claims').pipe(map((claims) => ({ policies: [], quotes: [], claims })));
-        }
-        return this.profileService.getProfile().pipe(
-          switchMap((profile) => forkJoin({
-            policies: this.policyService.getPoliciesByCustomerId(profile.customerId),
-            quotes: this.quoteService.getQuotesByCustomerId(profile.customerId),
-            claims: this.api.get<ClaimReference[]>('/api/claims'),
-          }))
-        );
-      }),
-      switchMap(({ policies, quotes, claims }) => {
-        const references: EntityReference[] = [
-          ...(quotes ?? []).map((quote) => ({ entityId: quote.quoteId, entityType: 'QUOTE' as const })),
-          ...(policies ?? []).map((policy) => ({ entityId: policy.policyId, entityType: 'POLICY' as const })),
-          ...(claims ?? []).map((claim) => ({ entityId: claim.claimId, entityType: 'CLAIM' as const })),
-        ];
-        const uniqueReferences = references.filter((reference, index, all) =>
-          all.findIndex((item) => item.entityId === reference.entityId && item.entityType === reference.entityType) === index
-        );
-        if (uniqueReferences.length === 0) return of([] as DocumentResponse[]);
-        return forkJoin(uniqueReferences.map((reference) =>
-          this.documentService.getDocuments(reference.entityId, reference.entityType)
-        )).pipe(map((results) => results.flat()));
-      })
-    ).subscribe({
-      next: (documents) => { this.documents = documents.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? '')); this.loading = false; },
+    this.store.select(selectUserRole).pipe(take(1)).subscribe((role) => {
+      this.isEmployee = ['UNDERWRITER', 'RISK_ENGINEER', 'CLAIMS_ADJUSTER', 'CLAIMS_MANAGER', 'VENDOR_MANAGER', 'SYSTEM_ADMINISTRATOR', 'ADMIN'].includes((role ?? '').toUpperCase());
+    });
+    this.documentService.getBoundDocuments().subscribe({
+      next: (documents) => {
+        this.documents = (documents ?? []).sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+        this.loading = false;
+      },
       error: (err) => this.handleError(err),
     });
   }

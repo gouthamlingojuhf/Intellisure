@@ -64,4 +64,12 @@ export class QuoteService {
   getAllQuotes(): Observable<QuoteResponse[]> {
     return this.api.get<QuoteResponse[]>('/api/quotes/admin');
   }
+
+  getAllQuotesForAdministration(): Observable<QuoteResponse[]> {
+    return this.api.get<QuoteResponse[]>('/api/quotes/admin');
+  }
+
+  reassignUnderwriter(quoteId: string, underwriterId: string): Observable<QuoteResponse> {
+    return this.api.patch<QuoteResponse>(`/api/quotes/${quoteId}/underwriter/reassign`, { underwriterId });
+  }
 }

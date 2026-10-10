@@ -8,4 +8,5 @@ import java.util.UUID;
 
 public interface DocumentRepository extends R2dbcRepository<Document, UUID> {
     Flux<Document> findByEntityIdAndEntityType(UUID entityId, String entityType);
+    Flux<Document> findByUploadedBy(UUID uploadedBy);
 }

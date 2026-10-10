@@ -225,8 +225,8 @@ public class QuoteController {
         return quoteService.getQuotesByCustomerId(customerId);
     }
 
-    @GetMapping("/admin")
-    @Operation(summary = "Get all quotes for administrators")
+    @GetMapping({"", "/admin"})
+    @Operation(summary = "Get all quotes for administrators and staff")
     public Flux<QuoteResponse> getAllQuotesForAdministration() {
         return quoteService.getAllQuotesForAdministration();
     }

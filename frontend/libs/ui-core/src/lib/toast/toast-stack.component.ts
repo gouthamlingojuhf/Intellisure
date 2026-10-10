@@ -57,7 +57,7 @@ export class ToastStackComponent implements OnChanges, OnDestroy {
       this.timers.set(toast.id, setTimeout(() => {
         this.timers.delete(toast.id);
         this.dismiss.emit(toast.id);
-      }, 30_000));
+      }, toast.duration ?? 32_000));
     }
   }
 

@@ -10,4 +10,8 @@ export class DocumentService {
   getDocuments(entityId: string, entityType: string): Observable<DocumentResponse[]> {
     return this.api.get<DocumentResponse[]>('/api/documents', { entityId, entityType });
   }
+
+  getBoundDocuments(): Observable<DocumentResponse[]> {
+    return this.api.get<DocumentResponse[]>('/api/documents');
+  }
 }

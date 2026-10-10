@@ -94,6 +94,32 @@ import { VendorPerformanceResponse } from '../../models/vendor.models';
       }
     </section>
   `,
+  styles: [`
+    :host { display: block; padding: 24px 0; }
+    .card { background: var(--surface, #fff); border: 1px solid var(--border, #eae5df); border-radius: 10px; padding: 24px; box-shadow: var(--shadow, 0 1px 3px rgba(0,0,0,0.05)); max-width: 768px; }
+    h1 { margin: 0 0 16px; font-size: 24px; font-weight: 700; color: var(--ink, #111); letter-spacing: -0.03em; }
+    h2 { margin: 16px 0 8px; font-size: 16px; font-weight: 600; color: var(--ink, #111); }
+    dl { display: grid; grid-template-columns: 140px 1fr; gap: 10px 16px; font-size: 13px; margin: 16px 0; }
+    dt { font-weight: 600; color: var(--muted, #6f6a6d); }
+    dd { margin: 0; color: var(--ink, #111); }
+    .input-field { width: 100%; min-height: 38px; padding: 8px 12px; border: 1px solid var(--border, #eae5df); border-radius: 6px; background: var(--surface, #fff); color: var(--ink, #111); font-size: 12px; box-sizing: border-box; }
+    .input-field:focus { outline: none; border-color: var(--claret, #75013f); box-shadow: 0 0 0 3px rgba(117, 1, 63, 0.1); }
+    textarea.input-field { resize: vertical; }
+    .btn-primary { min-height: 38px; padding: 0 16px; border: 1px solid var(--claret, #75013f); border-radius: 6px; background: var(--claret, #75013f); color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+    .btn-primary:hover { background: var(--claret-hover, #8f1750); }
+    .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-secondary { min-height: 38px; padding: 0 16px; border: 1px solid var(--border, #eae5df); border-radius: 6px; background: var(--surface, #fff); color: var(--ink, #272427); font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+    .btn-secondary:hover { background: var(--warm-light, #f7f5f3); }
+    .btn-secondary:disabled { opacity: 0.55; cursor: not-allowed; }
+    .space-y-2 > * + * { margin-top: 8px; }
+    .gap-2 { gap: 8px; }
+    .flex { display: flex; }
+    .flex-wrap { flex-wrap: wrap; }
+    .mt-4 { margin-top: 16px; }
+    .block { display: block; }
+    .text-sm { font-size: 13px; }
+    .font-semibold { font-weight: 600; }
+  `],
 })
 export class AssignmentDetailComponent implements OnInit {
   private readonly store = inject(Store);

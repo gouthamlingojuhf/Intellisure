@@ -38,12 +38,12 @@ spring:
             - id: customer-party-service
               uri: lb://customer-party-service
               predicates:
-                - Path=/api/auth/**,/api/users/**,/api/customers/**,/api/admin/**
+                - Path=/api/auth/**,/api/users,/api/users/**,/api/customers/**,/api/admin/**
 
             - id: quote-policy-service
               uri: lb://quote-policy-service
               predicates:
-                - Path=/api/quotes/**,/api/policies/**
+                - Path=/api/quotes,/api/quotes/**,/api/policies,/api/policies/**
 
             - id: risk-underwriting-service
               uri: lb://risk-underwriting-service
@@ -53,7 +53,7 @@ spring:
             - id: claims-service
               uri: lb://claims-service
               predicates:
-                - Path=/api/claims/**
+                - Path=/api/claims,/api/claims/**
 
             - id: vendor-partner-service
               uri: lb://vendor-partner-service
@@ -73,7 +73,7 @@ spring:
             - id: document-audit-service
               uri: lb://document-audit-service
               predicates:
-                - Path=/api/documents/**,/api/audit/**,/api/audit-events/**
+                - Path=/api/documents,/api/documents/**,/api/audit/**,/api/audit-events/**
 
             - id: analytics-intelligence-service
               uri: lb://analytics-intelligence-service
