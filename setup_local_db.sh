@@ -31,7 +31,13 @@ echo "1. Creating the 9 microservice databases..."
 mysql $MYSQL_ARGS < "$ROOT/docker/mysql/init/00-create-databases.sql"
 echo "   -> Databases created successfully!"
 
-echo "2. Seeding demo accounts and master configuration..."
+echo "2. Verifying and applying schema column migrations..."
+if [ -f "$ROOT/docker/mysql/init/fix_missing_columns.sql" ]; then
+  mysql $MYSQL_ARGS < "$ROOT/docker/mysql/init/fix_missing_columns.sql"
+  echo "   -> Column migrations verified!"
+fi
+
+echo "3. Seeding demo accounts and master configuration..."
 mysql $MYSQL_ARGS < "$ROOT/docker/mysql/init/reset_and_seed.sql"
 echo "   -> Demo accounts, vendors, and risk rules seeded successfully!"
 

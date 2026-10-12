@@ -41,8 +41,16 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Host "   -> Databases created successfully!" -ForegroundColor Green
 
-# 2. Seed baseline accounts and accredited vendors
-Write-Host "2. Seeding demo accounts and master configuration..." -ForegroundColor Yellow
+# 2. Apply column migrations / fixes if tables already exist
+Write-Host "2. Verifying and applying schema column migrations..." -ForegroundColor Yellow
+$fixFile = Join-Path $root "docker\mysql\init\fix_missing_columns.sql"
+if (Test-Path $fixFile) {
+    Get-Content $fixFile | & mysql @pwArgs
+    Write-Host "   -> Column migrations verified!" -ForegroundColor Green
+}
+
+# 3. Seed baseline accounts and accredited vendors
+Write-Host "3. Seeding demo accounts and master configuration..." -ForegroundColor Yellow
 $seedFile = Join-Path $root "docker\mysql\init\reset_and_seed.sql"
 Get-Content $seedFile | & mysql @pwArgs
 if ($LASTEXITCODE -ne 0) {
