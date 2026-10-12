@@ -229,4 +229,52 @@ public class RiskUnderwritingClient {
                 )
         );
     }
+
+    public Mono<RiskAssessmentClientResponse> createRiskAssessment(
+            CreateRiskAssessmentClientRequest request,
+            String authorizationHeader
+    ) {
+        WebClient.RequestHeadersSpec<?> req = webClient.post()
+                .uri("/api/risk-assessments")
+                .bodyValue(request);
+
+        if (authorizationHeader != null && !authorizationHeader.isBlank()) {
+            req = req.header(HttpHeaders.AUTHORIZATION, authorizationHeader);
+        }
+
+        return req.retrieve()
+                .bodyToMono(RiskAssessmentClientResponse.class)
+                .doOnSuccess(resp -> log.info("Successfully created risk assessment {} for quoteId {}",
+                        resp != null ? resp.assessmentId() : null, request.quoteId()))
+                .doOnError(err -> log.warn("Failed to create risk assessment for quoteId {}: {}",
+                        request.quoteId(), err.getMessage()))
+                .onErrorResume(err -> Mono.empty());
+    }
+
+    public record CreateRiskAssessmentClientRequest(
+            UUID quoteId,
+            UUID policyId,
+            UUID customerId,
+            String assessmentType,
+            java.time.LocalDate assessmentDate,
+            String location,
+            String businessOperations,
+            java.math.BigDecimal annualRevenue,
+            java.math.BigDecimal annualPayroll,
+            Integer employeeCount,
+            java.math.BigDecimal assetValue,
+            Integer priorClaimCount,
+            java.math.BigDecimal priorLossAmount,
+            UUID createdBy,
+            UUID assignedUnderwriterId,
+            UUID assignedRiskEngineerId
+    ) {}
+
+    public record RiskAssessmentClientResponse(
+            UUID assessmentId,
+            String assessmentNumber,
+            UUID quoteId,
+            String status,
+            UUID assignedRiskEngineerId
+    ) {}
 }

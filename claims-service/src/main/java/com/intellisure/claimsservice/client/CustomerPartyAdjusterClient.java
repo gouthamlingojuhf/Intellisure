@@ -36,7 +36,21 @@ public class CustomerPartyAdjusterClient {
                 .onErrorResume(err -> Flux.empty());
     }
 
+    public Mono<UUID> findUserIdByCustomerId(UUID customerId) {
+        if (customerId == null) return Mono.empty();
+        return webClient.get()
+                .uri("/api/customers/{customerId}", customerId)
+                .retrieve()
+                .bodyToMono(CustomerSummary.class)
+                .map(CustomerSummary::userId)
+                .onErrorResume(err -> Mono.empty());
+    }
+
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record AdjusterSummary(UUID userId, String role, String accountStatus) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record CustomerSummary(UUID customerId, UUID userId) {
     }
 }

@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS business_customer (
     state VARCHAR(50),
     country VARCHAR(50),
     postal_code VARCHAR(20),
+    annual_turnover DECIMAL(15,2) NULL,
+    employee_count INT NULL,
     version BIGINT NOT NULL DEFAULT 0,
     last_material_change_at DATETIME NULL,
     material_change_pending BOOLEAN NOT NULL DEFAULT FALSE,

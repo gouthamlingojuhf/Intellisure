@@ -3,8 +3,9 @@ import { AsyncPipe, CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ButtonComponent } from 'ui-core';
-import { selectIsAuthenticated } from '../../../core/store/auth/auth.selectors';
+import { selectIsAuthenticated, selectUserRole } from '../../../core/store/auth/auth.selectors';
 import { authActions } from '../../../core/store/auth/auth.actions';
+import { map } from 'rxjs';
 
 @Component({
   selector: 'is-landing-header',
@@ -30,7 +31,7 @@ import { authActions } from '../../../core/store/auth/auth.actions';
 
         <div class="header-actions">
           @if (isAuthenticated$ | async) {
-            <a routerLink="/policy" class="cta-link">
+            <a [routerLink]="(workspaceLink$ | async) ?? '/quotes'" class="cta-link">
               <is-button variant="primary" size="sm">Enter Workspace →</is-button>
             </a>
             <button type="button" class="sign-in-link" (click)="logout()">Sign Out</button>
@@ -65,7 +66,7 @@ import { authActions } from '../../../core/store/auth/auth.actions';
           <a href="#roles" class="mobile-link" (click)="closeMobileMenu()">Roles</a>
           <div class="mobile-actions">
             @if (isAuthenticated$ | async) {
-              <a routerLink="/policy" class="mobile-auth-btn primary" (click)="closeMobileMenu()">Enter Workspace</a>
+              <a [routerLink]="(workspaceLink$ | async) ?? '/quotes'" class="mobile-auth-btn primary" (click)="closeMobileMenu()">Enter Workspace</a>
               <button type="button" class="mobile-auth-btn secondary" (click)="logout(); closeMobileMenu()">Sign Out</button>
             } @else {
               <a routerLink="/auth/login" class="mobile-auth-btn secondary" (click)="closeMobileMenu()">Sign In</a>
@@ -321,6 +322,18 @@ export class LandingHeaderComponent {
   private readonly store = inject(Store);
 
   readonly isAuthenticated$ = this.store.select(selectIsAuthenticated);
+  readonly role$ = this.store.select(selectUserRole);
+  readonly workspaceLink$ = this.role$.pipe(
+    map((role) => {
+      const r = (role ?? '').toUpperCase();
+      if (r === 'RISK_ENGINEER') return '/quotes';
+      if (r === 'UNDERWRITER') return '/underwriting';
+      if (r.includes('CLAIM')) return '/claims';
+      if (r.includes('VENDOR')) return '/vendor';
+      if (r.includes('ADMIN')) return '/admin';
+      return '/dashboard';
+    })
+  );
 
   isScrolled = false;
   mobileMenuOpen = false;

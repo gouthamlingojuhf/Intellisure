@@ -228,6 +228,68 @@ class SecurityActorServiceTest {
         }
 
         @Test
+        @DisplayName("falls back to CustomerPartyClient when customerId claim is missing")
+        void fallsBackToCustomerPartyClientWhenClaimMissing() {
+            UUID userId = UUID.randomUUID();
+            UUID customerId = UUID.randomUUID();
+            com.intellisure.quotepolicyservice.client.CustomerPartyClient client =
+                    org.mockito.Mockito.mock(com.intellisure.quotepolicyservice.client.CustomerPartyClient.class);
+            org.mockito.Mockito.when(client.findCustomerIdByUserId(org.mockito.ArgumentMatchers.eq(userId), org.mockito.ArgumentMatchers.any()))
+                    .thenReturn(reactor.core.publisher.Mono.just(customerId));
+
+            SecurityActorService clientService = new SecurityActorService(client);
+
+            StepVerifier.create(
+                            clientService.currentCustomerId().contextWrite(
+                                    ReactiveSecurityContextHolder
+                                            .withAuthentication(
+                                                    jwtToken(
+                                                            Map.of(
+                                                                    "sub",
+                                                                    userId.toString()
+                                                            )
+                                                    )
+                                            )
+                            )
+                    )
+                    .expectNext(customerId)
+                    .verifyComplete();
+        }
+
+        @Test
+        @DisplayName("fails when CustomerPartyClient returns empty for missing customerId claim")
+        void failsWhenCustomerPartyClientReturnsEmpty() {
+            UUID userId = UUID.randomUUID();
+            com.intellisure.quotepolicyservice.client.CustomerPartyClient client =
+                    org.mockito.Mockito.mock(com.intellisure.quotepolicyservice.client.CustomerPartyClient.class);
+            org.mockito.Mockito.when(client.findCustomerIdByUserId(org.mockito.ArgumentMatchers.eq(userId), org.mockito.ArgumentMatchers.any()))
+                    .thenReturn(reactor.core.publisher.Mono.empty());
+
+            SecurityActorService clientService = new SecurityActorService(client);
+
+            StepVerifier.create(
+                            clientService.currentCustomerId().contextWrite(
+                                    ReactiveSecurityContextHolder
+                                            .withAuthentication(
+                                                    jwtToken(
+                                                            Map.of(
+                                                                    "sub",
+                                                                    userId.toString()
+                                                            )
+                                                    )
+                                            )
+                            )
+                    )
+                    .expectErrorSatisfies(error -> TestAssertions.errorIs(
+                            AccessDeniedBusinessException.class,
+                            "A business customer profile is required "
+                                    + "before creating a quote",
+                            error
+                    ))
+                    .verify();
+        }
+
+        @Test
         @DisplayName("fails when there is no authentication")
         void failsWithoutAuthentication() {
             StepVerifier.create(service.currentCustomerId())

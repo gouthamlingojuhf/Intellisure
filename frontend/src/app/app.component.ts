@@ -12,6 +12,8 @@ import { selectIsAuthenticated, selectUserId, selectUserRole } from './core/stor
 import { selectGlobalLoading, selectToasts } from './core/store/ui/ui.selectors';
 import { uiActions } from './core/store/ui/ui.actions';
 
+import { ChatService } from './core/services/chat.service';
+
 // Import ui-core components
 import { SidebarComponent, TopbarComponent, ToastStackComponent, Toast, SkeletonComponent } from 'ui-core';
 
@@ -20,6 +22,8 @@ interface NavigationItem {
   path: string;
   icon?: string;
   roles?: string[];
+  badge?: string;
+  badgeVariant?: 'success' | 'warning' | 'danger' | 'info' | 'neutral';
 }
 
 @Component({
@@ -41,22 +45,24 @@ export class AppComponent implements OnInit, OnDestroy {
   private readonly store = inject(Store);
   private readonly router = inject(Router);
   private readonly notificationService = inject(NotificationService);
+  private readonly chatService = inject(ChatService);
   private readonly api = inject(ApiService);
   
   readonly navigationItems: NavigationItem[] = [
     { label: 'Overview', path: '/', icon: '🏠' },
     { label: 'Dashboard', path: '/dashboard', icon: '📊', roles: ['Policyholder', 'POLICYHOLDER'] },
-    { label: 'Business Profile', path: '/profile', icon: '🏢', roles: ['Policyholder', 'POLICYHOLDER'] },
-    { label: 'Quotes', path: '/quotes', icon: '📋', roles: ['Admin', 'ADMIN', 'Policyholder', 'POLICYHOLDER', 'SYSTEM_ADMINISTRATOR', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER'] },
-    { label: 'Policies', path: '/policy', icon: '🛡️', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Policyholder', 'POLICYHOLDER', 'SYSTEM_ADMINISTRATOR', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER'] },
+    { label: 'Profile & Security', path: '/profile', icon: '👤' },
+    { label: 'Quotes', path: '/quotes', icon: '📋', roles: ['Admin', 'ADMIN', 'Policyholder', 'POLICYHOLDER', 'Underwriter', 'UNDERWRITER', 'Risk Engineer', 'RISK_ENGINEER', 'SYSTEM_ADMINISTRATOR', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER'] },
+    { label: 'Policies', path: '/policy', icon: '🛡️', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Risk Engineer', 'RISK_ENGINEER', 'Policyholder', 'POLICYHOLDER', 'SYSTEM_ADMINISTRATOR', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER'] },
     { label: 'Underwriting', path: '/underwriting', icon: '🔍', roles: ['Underwriter', 'UNDERWRITER', 'Risk Engineer', 'RISK_ENGINEER'] },
-    { label: 'Claims', path: '/claims', icon: '📄', roles: ['Admin', 'ADMIN', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Policyholder', 'POLICYHOLDER'] },
+    { label: 'Claims', path: '/claims', icon: '📄', roles: ['Admin', 'ADMIN', 'SYSTEM_ADMINISTRATOR', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Policyholder', 'POLICYHOLDER'] },
     { label: 'Vendors', path: '/vendor', icon: '🏢', roles: ['Admin', 'ADMIN', 'Vendor Applicant', 'VENDOR_APPLICANT', 'Vendor', 'VENDOR', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Vendor Manager', 'VENDOR_MANAGER', 'SYSTEM_ADMINISTRATOR'] },
     { label: 'Analytics', path: '/analytics', icon: '📊', roles: ['Admin', 'ADMIN', 'SYSTEM_ADMINISTRATOR', 'Underwriter', 'UNDERWRITER', 'Risk Engineer', 'RISK_ENGINEER', 'Claims Manager', 'CLAIMS_MANAGER'] },
-    { label: 'Recovery', path: '/recovery', icon: '💰', roles: ['Admin', 'ADMIN', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Policyholder', 'POLICYHOLDER'] },
+    { label: 'Recovery', path: '/recovery', icon: '💰', roles: ['Admin', 'ADMIN', 'SYSTEM_ADMINISTRATOR', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Policyholder', 'POLICYHOLDER'] },
     { label: 'Documents', path: '/docs', icon: '📁', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Risk Engineer', 'RISK_ENGINEER', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Vendor Manager', 'VENDOR_MANAGER', 'SYSTEM_ADMINISTRATOR', 'Policyholder', 'POLICYHOLDER'] },
     { label: 'Notifications', path: '/notifications', icon: '🔔', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Risk Engineer', 'RISK_ENGINEER', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Vendor Manager', 'VENDOR_MANAGER', 'SYSTEM_ADMINISTRATOR', 'Policyholder', 'POLICYHOLDER'] },
     { label: 'Chat', path: '/chat', icon: '💬', roles: ['Admin', 'ADMIN', 'Underwriter', 'UNDERWRITER', 'Risk Engineer', 'RISK_ENGINEER', 'Claims Adjuster', 'CLAIMS_ADJUSTER', 'Claims Manager', 'CLAIMS_MANAGER', 'Vendor Manager', 'VENDOR_MANAGER', 'Vendor', 'VENDOR', 'Vendor Applicant', 'VENDOR_APPLICANT', 'SYSTEM_ADMINISTRATOR', 'Policyholder', 'POLICYHOLDER'] },
+    { label: 'Role Guides', path: '/docs/guide', icon: '📖' },
     { label: 'Administration', path: '/admin', icon: '⚙️', roles: ['Admin', 'ADMIN', 'SYSTEM_ADMINISTRATOR'] },
   ];
 
@@ -117,8 +123,8 @@ export class AppComponent implements OnInit, OnDestroy {
     return [
       ...(this.isPolicyholder ? [
         { label: 'Dashboard', link: '/dashboard', icon: '📊' },
-        { label: 'Business profile', link: '/profile', icon: '🏢' },
       ] : []),
+      { label: 'Profile & Security', link: '/profile', icon: '👤' },
       { label: 'Quotes', link: '/quotes', icon: '📋' },
       { label: 'Policies', link: '/policy', icon: '🛡️' },
       { label: 'Sign out', action: () => this.logout(), icon: '🚪', variant: 'danger' },
@@ -130,11 +136,14 @@ export class AppComponent implements OnInit, OnDestroy {
     return path !== '/' && !path.startsWith('/auth');
   }
 
+  private pollInterval: any = null;
+
   ngOnInit(): void {
     this.initTheme();
     this.restoreUserSession();
     this.loadCurrentUser();
     this.updateNavigation(this.router.url);
+    this.startPeriodicBadgePolling();
   }
 
   private restoreUserSession(): void {
@@ -181,15 +190,71 @@ export class AppComponent implements OnInit, OnDestroy {
     this.navigationSubscription.unsubscribe();
     this.roleSubscription.unsubscribe();
     this.notificationSubscription.unsubscribe();
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+      this.pollInterval = null;
+    }
+  }
+
+  private startPeriodicBadgePolling(): void {
+    this.checkBadges();
+    if (typeof window !== 'undefined') {
+      this.pollInterval = setInterval(() => this.checkBadges(), 10000);
+    }
+  }
+
+  private checkBadges(): void {
+    if (typeof localStorage === 'undefined' || !localStorage.getItem('is_token')) return;
+
+    // 1. Check unread chat messages
+    this.chatService.getChannels().subscribe({
+      next: (channels) => {
+        const unreadTotal = (channels || []).reduce((sum, ch) => sum + (ch.unreadCount || 0), 0);
+        const chatItem = this.navigationItems.find((i) => i.path === '/chat');
+        if (chatItem) {
+          chatItem.badge = unreadTotal > 0 ? (unreadTotal > 99 ? '99+' : `${unreadTotal}`) : undefined;
+          chatItem.badgeVariant = 'danger';
+        }
+      },
+      error: () => {},
+    });
+
+    // 2. Check unread notifications
+    if (this.notificationUserId) {
+      this.notificationService.getUnreadCount(this.notificationUserId).subscribe({
+        next: (count) => {
+          const notifItem = this.navigationItems.find((i) => i.path === '/notifications');
+          if (notifItem) {
+            notifItem.badge = count > 0 ? (count > 99 ? '99+' : `${count}`) : undefined;
+            notifItem.badgeVariant = 'danger';
+          }
+        },
+        error: () => {},
+      });
+    }
   }
 
   updateNavigation(url: string): void {
     this.currentPath = url || '/';
-    const segments = this.currentPath.split('/').filter(Boolean);
-    this.breadcrumbs = segments.map((segment, index) => ({
-      label: segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' '),
-      link: index < segments.length - 1 ? '/' + segments.slice(0, index + 1).join('/') : undefined,
-    }));
+    const cleanUrl = (this.currentPath || '').split('?')[0].split('#')[0];
+    const segments = cleanUrl.split('/').filter(Boolean);
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    this.breadcrumbs = segments.map((segment, index) => {
+      let label = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
+      if (uuidRegex.test(segment)) {
+        const prev = segments[index - 1]?.toLowerCase();
+        if (prev === 'claims') label = 'Claim Details';
+        else if (prev === 'quotes') label = 'Quote Details';
+        else if (prev === 'policy') label = 'Policy Contract';
+        else if (prev === 'vendor') label = 'Vendor Profile';
+        else label = 'Record Details';
+      }
+      return {
+        label,
+        link: index < segments.length - 1 ? '/' + segments.slice(0, index + 1).join('/') : undefined,
+      };
+    });
     this.mobileSidebarOpen = false;
     this.notificationOpen = false;
     this.userMenuOpen = false;
@@ -229,6 +294,24 @@ export class AppComponent implements OnInit, OnDestroy {
     if (!term) return;
     const lower = term.toLowerCase();
 
+    // Check if on a listing page already
+    if (this.currentPath.startsWith('/claims')) {
+      this.router.navigate(['/claims'], { queryParams: { search: term } });
+      return;
+    }
+    if (this.currentPath.startsWith('/policy')) {
+      this.router.navigate(['/policy'], { queryParams: { search: term } });
+      return;
+    }
+    if (this.currentPath.startsWith('/quotes')) {
+      this.router.navigate(['/quotes'], { queryParams: { search: term } });
+      return;
+    }
+    if (this.currentPath.startsWith('/vendor')) {
+      this.router.navigate(['/vendor'], { queryParams: { search: term } });
+      return;
+    }
+
     // Direct entity ID checks (e.g. CLM-12345, QT-9988, POL-0012)
     if (/^qt[-_0-9a-f]{3,}/i.test(lower)) {
       this.router.navigate(['/quotes'], { queryParams: { search: term } });
@@ -247,33 +330,15 @@ export class AppComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const aliases: Record<string, string> = {
-      quote: '/quotes', quotes: '/quotes',
-      policy: '/policy', policies: '/policy',
-      claim: '/claims', claims: '/claims',
-      vendor: '/vendor', vendors: '/vendor',
-      recovery: '/recovery',
-      document: '/docs', documents: '/docs', doc: '/docs',
-      notification: '/notifications', notifications: '/notifications',
-      admin: '/admin', administration: '/admin',
-      underwriting: '/underwriting',
-      analytics: '/analytics', intelligence: '/analytics',
-      profile: '/profile', dashboard: '/dashboard',
-    };
-
-    const aliasMatch = Object.entries(aliases).find(([alias]) => alias.startsWith(lower));
-    const destinationPath = aliases[lower]
-      ?? aliasMatch?.[1]
-      ?? this.navigationItems.find((item) => item.label.toLowerCase().includes(lower))?.path;
-
-    if (destinationPath) {
-      const allowed = this.navigationItems.find((item) =>
-        item.path === destinationPath && (!item.roles || item.roles.some((role) => role.toUpperCase() === (this.role ?? '').toUpperCase()))
-      );
-      if (allowed) {
-        this.router.navigateByUrl(allowed.path);
-        return;
-      }
+    // Role-based routing preference
+    const roleUpper = (this.role || '').toUpperCase();
+    if (roleUpper.includes('ADJUSTER') || roleUpper.includes('CLAIMS')) {
+      this.router.navigate(['/claims'], { queryParams: { search: term } });
+      return;
+    }
+    if (roleUpper.includes('VENDOR')) {
+      this.router.navigate(['/vendor'], { queryParams: { search: term } });
+      return;
     }
 
     // Default search routing
@@ -340,7 +405,7 @@ export class AppComponent implements OnInit, OnDestroy {
       id: notification.notificationId,
       title: notification.title,
       message: notification.message,
-      time: notification.createdAt ? new Date(notification.createdAt).toLocaleString() : '',
+      time: notification.createdAt ? new Date(notification.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : '',
       kind: this.notificationKind(notification.type),
       read: notification.read,
     };

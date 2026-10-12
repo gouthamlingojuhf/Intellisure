@@ -1,9 +1,12 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { Store } from '@ngrx/store';
 
 import { PolicyService } from '../../core/services/policy.service';
 import { PolicyResponse } from '../../core/models/policy.models';
+import { uiActions } from '../../core/store/ui/ui.actions';
 
 // ui-core components
 import {
@@ -21,6 +24,7 @@ import {
     CurrencyPipe,
     DatePipe,
     RouterLink,
+    FormsModule,
     CardComponent,
     ButtonComponent,
     BadgeComponent,
@@ -62,17 +66,38 @@ import {
         <!-- Action bar -->
         <section class="policy-action-banner">
           <div>
-            <h3>Active Contract Protection</h3>
-            <p>
-              Term period from <strong>{{ policy.startDate }}</strong> to <strong>{{ policy.endDate }}</strong>. Total annual written premium:
-              <strong>{{ policy.totalPremium | currency:'INR':'symbol':'1.0-0' }}</strong>.
-            </p>
+            @if (policy.status === 'PENDING_ISSUANCE') {
+              <h3>Policy Bound & Executed (Pending Inception)</h3>
+              <p>
+                This commercial contract is officially bound and locked. Coverage begins on inception date <strong>{{ policy.startDate | date:'mediumDate' }}</strong> through <strong>{{ policy.endDate | date:'mediumDate' }}</strong>. Total annual written premium:
+                <strong>{{ policy.totalPremium | currency:'INR':'symbol':'1.0-0' }}</strong>.
+              </p>
+            } @else if (policy.status === 'IN_FORCE') {
+              <h3>Active Contract Protection (In-Force)</h3>
+              <p>
+                Coverage is currently active from <strong>{{ policy.startDate | date:'mediumDate' }}</strong> to <strong>{{ policy.endDate | date:'mediumDate' }}</strong>. Total annual written premium:
+                <strong>{{ policy.totalPremium | currency:'INR':'symbol':'1.0-0' }}</strong>.
+              </p>
+            } @else {
+              <h3>Policy {{ formatStatus(policy.status) }}</h3>
+              <p>
+                Term period: <strong>{{ policy.startDate | date:'mediumDate' }}</strong> to <strong>{{ policy.endDate | date:'mediumDate' }}</strong>. Total annual written premium:
+                <strong>{{ policy.totalPremium | currency:'INR':'symbol':'1.0-0' }}</strong>.
+              </p>
+            }
           </div>
-          @if (isPolicyholder) {
-            <is-button variant="primary" (click)="goToClaim(policy.policyId)">
-              Report a Claim (FNOL) &rarr;
-            </is-button>
-          }
+          <div class="banner-actions" style="display: flex; gap: 10px; align-items: center;">
+            @if (canManagePolicy && (policy.status === 'PENDING_ISSUANCE' || policy.status === 'BOUND')) {
+              <is-button variant="secondary" size="md" [disabled]="actionLoading !== null" (click)="issuePolicy()">
+                {{ actionLoading === 'issue' ? 'Issuing…' : 'Issue Policy Now →' }}
+              </is-button>
+            }
+            @if (isPolicyholder) {
+              <is-button variant="primary" (click)="goToClaim(policy.policyId)">
+                Report a Claim (FNOL) &rarr;
+              </is-button>
+            }
+          </div>
         </section>
 
         <!-- Main Content -->
@@ -108,10 +133,10 @@ import {
                           }
                         </td>
                         <td class="text-right">
-                          <strong class="text-emerald">\${{ cov.limitAmount | number:'1.0-0' }}</strong>
+                          <strong class="text-emerald">₹{{ cov.limitAmount | number:'1.0-0' }}</strong>
                         </td>
                         <td class="text-right">
-                          \${{ cov.deductibleAmount | number:'1.0-0' }}
+                          ₹{{ cov.deductibleAmount | number:'1.0-0' }}
                         </td>
                         <td class="text-right">
                           <strong>{{ cov.coveragePremium | currency:'INR':'symbol':'1.0-0' }}</strong>
@@ -155,18 +180,89 @@ import {
               </dl>
             </is-card>
 
-            <is-card title="Claims Assistance" subtitle="Incident support">
-              <div class="help-box">
-                <p>Need to report property damage, auto collision, or a liability incident under this contract?</p>
-                <is-button
-                  variant="secondary"
-                  size="sm"
-                  (click)="goToClaim(policy.policyId)"
-                >
-                  File First Notice of Loss
-                </is-button>
-              </div>
-            </is-card>
+            @if (canManagePolicy) {
+              <is-card title="Policy Servicing" subtitle="Administrative actions">
+                <div class="servicing-box">
+                  @if (policy.status === 'PENDING_ISSUANCE' || policy.status === 'BOUND') {
+                    <div class="action-item">
+                      <p>Issue policy to make contract active and effective.</p>
+                      <is-button variant="primary" size="sm" [disabled]="actionLoading !== null" (click)="issuePolicy()">
+                        {{ actionLoading === 'issue' ? 'Issuing…' : 'Issue Policy' }}
+                      </is-button>
+                    </div>
+                  }
+                  @if (policy.status === 'IN_FORCE' || policy.status === 'PENDING_ISSUANCE' || policy.status === 'BOUND') {
+                    <div class="action-item">
+                      <p>Cancel active policy coverage and terminate contract.</p>
+                      @if (activeModal === 'cancel') {
+                        <div class="servicing-form">
+                          <label class="field-label" for="cancelReason">Cancellation Reason</label>
+                          <textarea
+                            id="cancelReason"
+                            class="custom-textarea"
+                            rows="2"
+                            placeholder="Enter reason for policy cancellation..."
+                            [(ngModel)]="servicingReason"
+                          ></textarea>
+                          <div class="form-actions">
+                            <is-button variant="secondary" size="sm" [disabled]="actionLoading !== null || !servicingReason.trim()" (click)="confirmCancel()">
+                              {{ actionLoading === 'cancel' ? 'Cancelling…' : 'Confirm Cancellation' }}
+                            </is-button>
+                            <is-button variant="secondary" size="sm" (click)="closeModal()">Cancel</is-button>
+                          </div>
+                        </div>
+                      } @else {
+                        <is-button variant="secondary" size="sm" [disabled]="actionLoading !== null" (click)="openModal('cancel')">
+                          Cancel Policy
+                        </is-button>
+                      }
+                    </div>
+                  }
+                  @if (policy.status === 'CANCELLED' || policy.status === 'CANCEL_PENDING') {
+                    <div class="action-item">
+                      <p>Reinstate previously cancelled policy contract.</p>
+                      @if (activeModal === 'reinstate') {
+                        <div class="servicing-form">
+                          <label class="field-label" for="reinstateReason">Reinstatement Justification</label>
+                          <textarea
+                            id="reinstateReason"
+                            class="custom-textarea"
+                            rows="2"
+                            placeholder="Enter justification for reinstatement..."
+                            [(ngModel)]="servicingReason"
+                          ></textarea>
+                          <div class="form-actions">
+                            <is-button variant="primary" size="sm" [disabled]="actionLoading !== null || !servicingReason.trim()" (click)="confirmReinstate()">
+                              {{ actionLoading === 'reinstate' ? 'Reinstating…' : 'Confirm Reinstatement' }}
+                            </is-button>
+                            <is-button variant="secondary" size="sm" (click)="closeModal()">Cancel</is-button>
+                          </div>
+                        </div>
+                      } @else {
+                        <is-button variant="primary" size="sm" [disabled]="actionLoading !== null" (click)="openModal('reinstate')">
+                          Reinstate Policy
+                        </is-button>
+                      }
+                    </div>
+                  }
+                </div>
+              </is-card>
+            }
+
+            @if (isPolicyholder) {
+              <is-card title="Claims Assistance" subtitle="Incident support">
+                <div class="help-box">
+                  <p>Need to report property damage, auto collision, or a liability incident under this contract?</p>
+                  <is-button
+                    variant="secondary"
+                    size="sm"
+                    (click)="goToClaim(policy.policyId)"
+                  >
+                    File First Notice of Loss
+                  </is-button>
+                </div>
+              </is-card>
+            }
           </aside>
         </div>
       }
@@ -378,6 +474,69 @@ import {
       margin: 2px 0 0;
     }
 
+    .servicing-box {
+      font-size: 12px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .action-item {
+      display: grid;
+      gap: 8px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border, #eae5df);
+    }
+
+    .action-item:last-child {
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    .action-item p {
+      margin: 0;
+      color: var(--muted, #6f6a6d);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .servicing-form {
+      display: grid;
+      gap: 8px;
+      margin-top: 4px;
+      background: var(--warm-light, #f7f5f3);
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border, #eae5df);
+    }
+
+    .field-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--ink, #000);
+    }
+
+    .custom-textarea {
+      width: 100%;
+      border: 1px solid var(--border, #eae5df);
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 12px;
+      font-family: inherit;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+
+    .custom-textarea:focus {
+      outline: none;
+      border-color: var(--claret, #75013f);
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
     @media (max-width: 1024px) {
       .detail-grid {
         grid-template-columns: 1fr;
@@ -389,17 +548,24 @@ export class PolicyDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly policyService = inject(PolicyService);
+  private readonly store = inject(Store);
 
   policyId = '';
   policy: PolicyResponse | null = null;
   loading = true;
   errorMessage: string | null = null;
   isPolicyholder = false;
+  canManagePolicy = false;
+
+  activeModal: 'cancel' | 'reinstate' | null = null;
+  servicingReason = '';
+  actionLoading: 'cancel' | 'reinstate' | 'issue' | null = null;
 
   ngOnInit(): void {
     const rawRole = typeof localStorage !== 'undefined' ? localStorage.getItem('is_role') : null;
     const role = (rawRole ?? '').toUpperCase().replace(/^ROLE_/, '');
     this.isPolicyholder = ['POLICYHOLDER', 'USER'].includes(role);
+    this.canManagePolicy = ['UNDERWRITER', 'ADMIN', 'SYSTEM_ADMINISTRATOR'].includes(role);
     this.policyId = this.route.snapshot.paramMap.get('policyId') ?? '';
     this.loadPolicy();
   }
@@ -416,9 +582,81 @@ export class PolicyDetailComponent implements OnInit {
         this.loading = false;
       },
       error: (err) => {
-        this.loading = false;
-        this.errorMessage =
-          err?.error?.message || err?.message || 'Unable to retrieve policy details from the server.';
+        // Fallback: Check if this identifier was a quoteId
+        this.policyService.getPolicyByQuoteId(this.policyId).subscribe({
+          next: (p) => {
+            this.policy = p;
+            this.loading = false;
+          },
+          error: () => {
+            this.loading = false;
+            this.errorMessage =
+              err?.error?.message || err?.message || 'Unable to retrieve policy details from the server.';
+          },
+        });
+      },
+    });
+  }
+
+  openModal(modal: 'cancel' | 'reinstate'): void {
+    this.activeModal = modal;
+    this.servicingReason = '';
+  }
+
+  closeModal(): void {
+    this.activeModal = null;
+    this.servicingReason = '';
+  }
+
+  confirmCancel(): void {
+    if (!this.policy || !this.servicingReason.trim()) return;
+    this.actionLoading = 'cancel';
+    this.policyService.cancelPolicy(this.policy.policyId, this.servicingReason.trim()).subscribe({
+      next: (updated) => {
+        this.policy = updated;
+        this.actionLoading = null;
+        this.closeModal();
+        this.store.dispatch(uiActions.showToast({ message: 'Policy successfully cancelled.', kind: 'success' }));
+      },
+      error: (err) => {
+        this.actionLoading = null;
+        const msg = err?.error?.message || err?.message || 'Failed to cancel policy.';
+        this.store.dispatch(uiActions.showToast({ message: msg, kind: 'error' }));
+      },
+    });
+  }
+
+  confirmReinstate(): void {
+    if (!this.policy || !this.servicingReason.trim()) return;
+    this.actionLoading = 'reinstate';
+    this.policyService.reinstatePolicy(this.policy.policyId, this.servicingReason.trim()).subscribe({
+      next: (updated) => {
+        this.policy = updated;
+        this.actionLoading = null;
+        this.closeModal();
+        this.store.dispatch(uiActions.showToast({ message: 'Policy successfully reinstated.', kind: 'success' }));
+      },
+      error: (err) => {
+        this.actionLoading = null;
+        const msg = err?.error?.message || err?.message || 'Failed to reinstate policy.';
+        this.store.dispatch(uiActions.showToast({ message: msg, kind: 'error' }));
+      },
+    });
+  }
+
+  issuePolicy(): void {
+    if (!this.policy) return;
+    this.actionLoading = 'issue';
+    this.policyService.issuePolicy(this.policy.policyId).subscribe({
+      next: (updated) => {
+        this.policy = updated;
+        this.actionLoading = null;
+        this.store.dispatch(uiActions.showToast({ message: 'Policy successfully issued and in force.', kind: 'success' }));
+      },
+      error: (err) => {
+        this.actionLoading = null;
+        const msg = err?.error?.message || err?.message || 'Failed to issue policy.';
+        this.store.dispatch(uiActions.showToast({ message: msg, kind: 'error' }));
       },
     });
   }

@@ -34,6 +34,8 @@ class RiskAssessmentServiceCoverageTest {
     @Mock R2dbcEntityTemplate entityTemplate;
     @Mock RiskAssessmentMapper mapper;
     @Mock SecurityActorService security;
+    @Mock com.intellisure.riskunderwritingservice.client.WorkflowNotificationClient workflowNotificationClient;
+    @Mock com.intellisure.riskunderwritingservice.client.CustomerPartyClient customerPartyClient;
     @InjectMocks RiskAssessmentService service;
 
     private final UUID id = UUID.randomUUID();
@@ -76,6 +78,7 @@ class RiskAssessmentServiceCoverageTest {
         draft.setStatus(RiskAssessmentStatus.DRAFT);
         draft.setAssignedUnderwriterId(actor);
         draft.setAssignedRiskEngineerId(actor);
+        when(workflowNotificationClient.notifyRiskEngineerAssignment(any(), any(), any())).thenReturn(Mono.empty());
         StepVerifier.create(service.assignAssessment(id, new AssignAssessmentRequest(actor, actor))).expectNext(response).verifyComplete();
         draft.setStatus(RiskAssessmentStatus.COMPLETED);
         StepVerifier.create(service.assignAssessment(id, new AssignAssessmentRequest(actor, actor))).expectError(BusinessException.class).verify();

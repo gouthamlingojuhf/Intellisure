@@ -24,6 +24,7 @@ public class VendorOnboardingService {
 
     private final VendorOnboardingRequestRepository onboardingRepository;
     private final VendorRepository vendorRepository;
+    private final com.intellisure.vendorpartnerservice.client.CustomerPartyClient customerPartyClient;
 
     public Mono<VendorOnboardingResponse> submitOnboardingRequest(com.intellisure.vendorpartnerservice.dto.VendorOnboardingRequest request) {
         return vendorRepository.findByLegalName(request.legalName())
@@ -90,8 +91,9 @@ public class VendorOnboardingService {
                                     vendor.setUpdatedAt(LocalDateTime.now());
                                     vendor.setNew(false);
                                     return vendorRepository.save(vendor)
-                                            .then(onboardingRepository.save(onboardingRequest))
-                                            .thenReturn(mapToResponse(onboardingRequest));
+                                            .flatMap(savedVendor -> customerPartyClient.promoteVendorByEmail(savedVendor.getContactEmail())
+                                                    .then(onboardingRepository.save(onboardingRequest))
+                                                    .thenReturn(mapToResponse(onboardingRequest)));
                                 });
                     } else {
                         onboardingRequest.setStatus(OnboardingStatus.REJECTED);

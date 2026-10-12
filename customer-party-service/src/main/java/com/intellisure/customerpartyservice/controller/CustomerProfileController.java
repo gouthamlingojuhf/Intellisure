@@ -36,4 +36,9 @@ public class CustomerProfileController {
     public Mono<CustomerResponse> getCustomerById(@PathVariable UUID customerId) {
         return customerProfileService.getCustomerProfileByCustomerId(customerId);
     }
+
+    @GetMapping("/by-user/{userId}")
+    public Mono<CustomerResponse> getCustomerByUserId(@PathVariable UUID userId) {
+        return customerProfileService.getCustomerProfileByUserId(userId);
+    }
 }

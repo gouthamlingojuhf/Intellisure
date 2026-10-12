@@ -2,12 +2,15 @@ package com.intellisure.workflownotificationservice.entity;
 
 public enum NotificationType {
     QUOTE_ISSUED,
+    QUOTE_OFFERED,
     QUOTE_SUBMITTED,
     QUOTE_APPROVED,
     QUOTE_REJECTED,
     QUOTE_ACCEPTED,
     UNDERWRITING_REFERRAL,
     UNDERWRITING_DECISION,
+    RISK_ASSESSMENT_ASSIGNED,
+    RISK_ASSESSMENT_COMPLETED,
     POLICY_BOUND,
     POLICY_ISSUED,
     POLICY_CANCELLED,

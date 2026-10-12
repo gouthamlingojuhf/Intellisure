@@ -1,6 +1,7 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { assignmentActions } from '../../store/assignments.actions';
 import { selectAssignmentsError, selectAssignmentsLoading } from '../../store/assignments.selectors';
@@ -99,6 +100,7 @@ import { ClaimReference, RecoveryCaseReference, VendorResponse } from '../../mod
 export class AssignmentCreateComponent implements OnInit {
   private readonly store = inject(Store);
   private readonly vendorApi = inject(VendorApiService);
+  private readonly route = inject(ActivatedRoute);
   readonly loading$ = this.store.select(selectAssignmentsLoading);
   readonly error$ = this.store.select(selectAssignmentsError);
   vendors: VendorResponse[] = [];
@@ -125,6 +127,16 @@ export class AssignmentCreateComponent implements OnInit {
   ngOnInit(): void {
     this.loadVendors();
     this.loadReferences();
+
+    const query = this.route.snapshot.queryParams;
+    if (query['assignmentType'] || query['taskDescription'] || query['claimId']) {
+      this.form.patchValue({
+        assignmentType: query['assignmentType'] || 'CLAIM_REPAIR',
+        claimId: query['claimId'] || '',
+        recoveryCaseId: query['recoveryCaseId'] || '',
+        taskDescription: query['taskDescription'] ? `[Reassignment] ${query['taskDescription']}` : '',
+      });
+    }
   }
 
   private loadReferences(): void {

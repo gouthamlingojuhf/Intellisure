@@ -83,7 +83,9 @@ class AuthServiceTest {
         when(jwtService.generateToken(
                 user.getUserId(),
                 user.getRole(),
-                null
+                null,
+                user.getDisplayName(),
+                user.getEmail()
         )).thenReturn("policyholder-token");
 
         when(jwtService.getExpirationSeconds())
@@ -132,7 +134,9 @@ class AuthServiceTest {
         verify(jwtService).generateToken(
                 user.getUserId(),
                 "POLICYHOLDER",
-                null
+                null,
+                user.getDisplayName(),
+                user.getEmail()
         );
 
         verify(entityTemplate).update(user);
@@ -174,7 +178,9 @@ class AuthServiceTest {
         when(jwtService.generateToken(
                 user.getUserId(),
                 user.getRole(),
-                customerId
+                customerId,
+                user.getDisplayName(),
+                user.getEmail()
         )).thenReturn("policyholder-token-with-customer");
 
         when(jwtService.getExpirationSeconds())
@@ -209,7 +215,9 @@ class AuthServiceTest {
         verify(jwtService).generateToken(
                 user.getUserId(),
                 "POLICYHOLDER",
-                customerId
+                customerId,
+                user.getDisplayName(),
+                user.getEmail()
         );
     }
 
@@ -245,7 +253,9 @@ class AuthServiceTest {
         when(jwtService.generateToken(
                 underwriter.getUserId(),
                 "UNDERWRITER",
-                null
+                null,
+                underwriter.getDisplayName(),
+                underwriter.getEmail()
         )).thenReturn("underwriter-token");
 
         when(jwtService.getExpirationSeconds())
@@ -296,7 +306,7 @@ class AuthServiceTest {
             LoginRequest request = new LoginRequest(user.getEmail(), "Password@123");
             when(userAccountRepo.findByEmail(user.getEmail())).thenReturn(Mono.just(user));
             when(passwordEncoder.matches(request.password(), user.getPasswordHash())).thenReturn(true);
-            when(jwtService.generateToken(user.getUserId(), role, null)).thenReturn("internal-token");
+            when(jwtService.generateToken(user.getUserId(), role, null, user.getDisplayName(), user.getEmail())).thenReturn("internal-token");
             when(jwtService.getExpirationSeconds()).thenReturn(2592000L);
             when(entityTemplate.update(any(UserAccount.class)))
                     .thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
@@ -343,6 +353,8 @@ class AuthServiceTest {
 
         verify(jwtService, never())
                 .generateToken(
+                        any(),
+                        any(),
                         any(),
                         any(),
                         any()
@@ -397,6 +409,8 @@ class AuthServiceTest {
                 .generateToken(
                         any(),
                         any(),
+                        any(),
+                        any(),
                         any()
                 );
     }
@@ -427,7 +441,9 @@ class AuthServiceTest {
         when(jwtService.generateToken(
                 user.getUserId(),
                 user.getRole(),
-                null
+                null,
+                user.getDisplayName(),
+                user.getEmail()
         )).thenReturn("token");
 
         when(jwtService.getExpirationSeconds())

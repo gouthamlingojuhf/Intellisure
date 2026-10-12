@@ -11,12 +11,15 @@ export interface ClaimResponse {
   claimId: string;
   policyId: string;
   customerId: string;
+  policyNumber?: string;
   claimNumber: string;
   status: string;
   incidentDate: string;
   reportedDate: string;
   description: string;
+  incidentDescription?: string;
   estimatedLoss: number;
+  estimatedCoveredLoss?: number;
   payoutAmount?: number;
   payableAmount?: number;
   createdAt: string;
@@ -24,6 +27,7 @@ export interface ClaimResponse {
   incidentType?: string;
   incidentLocation?: string;
   coverageDecision?: string;
+  coverageDecisionReason?: string;
   assignedAdjusterId?: string;
   coverageConfirmed?: boolean;
   closureReason?: string;

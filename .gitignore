@@ -11,6 +11,9 @@ build/
 .settings/
 *.class
 *.log
+*.log.*
+logs/
+**/logs/
 .env
 .env.*
 node_modules/

@@ -105,6 +105,8 @@ export interface UpdateCustomerProfileRequest {
   ownerName: string;
   phone?: string | null;
   businessType?: string | null;
+  annualTurnover?: number | null;
+  employeeCount?: number | null;
   address?: string | null;
   city?: string | null;
   state?: string | null;
@@ -260,10 +262,17 @@ export interface ClaimResponse {
   claimNumber: string;
   policyId: string;
   customerId: string;
+  policyNumber?: string;
   incidentDate: string;
   description: string;
+  incidentDescription?: string;
   estimatedLoss: number;
+  estimatedCoveredLoss?: number;
+  payoutAmount?: number;
+  payableAmount?: number;
   status: ClaimStatus;
+  coverageDecision?: string;
+  coverageDecisionReason?: string;
   assignedAdjusterId?: string;
   createdAt: string;
   updatedAt: string;

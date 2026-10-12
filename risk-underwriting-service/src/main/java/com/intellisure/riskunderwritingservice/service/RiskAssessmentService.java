@@ -13,6 +13,8 @@ import com.intellisure.riskunderwritingservice.exception.ResourceNotFoundExcepti
 import com.intellisure.riskunderwritingservice.mapper.RiskAssessmentMapper;
 import com.intellisure.riskunderwritingservice.repository.RiskAssessmentRepository;
 import com.intellisure.riskunderwritingservice.security.SecurityActorService;
+import com.intellisure.riskunderwritingservice.client.CustomerPartyClient;
+import com.intellisure.riskunderwritingservice.client.WorkflowNotificationClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,6 +26,7 @@ import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.Year;
+import java.util.Comparator;
 import java.util.UUID;
 
 @Service
@@ -37,12 +40,16 @@ public class RiskAssessmentService {
 
     private final RiskAssessmentMapper mapper;
 
-    private final SecurityActorService  securityActorService;
+    private final SecurityActorService securityActorService;
+
+    private final WorkflowNotificationClient workflowNotificationClient;
+
+    private final CustomerPartyClient customerPartyClient;
 
 
 
     @PreAuthorize(
-            "hasAnyRole('UNDERWRITER', 'ADMIN', 'SYSTEM')"
+            "hasAnyRole('UNDERWRITER', 'ADMIN', 'SYSTEM', 'POLICYHOLDER')"
     )
     @Transactional
     public Mono<RiskAssessmentResponse> createAssessment(
@@ -192,6 +199,8 @@ public class RiskAssessmentService {
                                         ? BigDecimal.ZERO
                                         : request.priorLossAmount()
                         )
+                        .assignedUnderwriterId(request.assignedUnderwriterId())
+                        .assignedRiskEngineerId(request.assignedRiskEngineerId())
                         .createdBy(request.createdBy())
                         .createdAt(now)
                         .updatedAt(now)
@@ -200,6 +209,30 @@ public class RiskAssessmentService {
         return entityTemplate
                 .insert(RiskAssessment.class)
                 .using(assessment)
+                .flatMap(saved -> {
+                    if (saved.getAssignedRiskEngineerId() != null) {
+                        saved.setStatus(RiskAssessmentStatus.RISK_ENGINEERING_REQUIRED);
+                        return entityTemplate.update(saved)
+                                .flatMap(updated -> workflowNotificationClient.notifyRiskEngineerAssignment(
+                                        updated.getAssignedRiskEngineerId(),
+                                        updated.getAssessmentId(),
+                                        updated.getAssessmentNumber()
+                                ).thenReturn(updated));
+                    }
+                    return selectLeastLoadedRiskEngineer()
+                            .flatMap(engineerId -> {
+                                saved.setAssignedRiskEngineerId(engineerId);
+                                saved.setStatus(RiskAssessmentStatus.RISK_ENGINEERING_REQUIRED);
+                                saved.setUpdatedAt(LocalDateTime.now());
+                                return entityTemplate.update(saved)
+                                        .flatMap(updated -> workflowNotificationClient.notifyRiskEngineerAssignment(
+                                                engineerId,
+                                                updated.getAssessmentId(),
+                                                updated.getAssessmentNumber()
+                                        ).thenReturn(updated));
+                            })
+                            .switchIfEmpty(Mono.just(saved));
+                })
                 .map(mapper::toResponse);
     }
 
@@ -238,7 +271,7 @@ public class RiskAssessmentService {
     }
 
     @PreAuthorize(
-            "hasAnyRole('ADMIN', 'SYSTEM')"
+            "hasAnyRole('ADMIN', 'SYSTEM_ADMINISTRATOR', 'SYSTEM', 'UNDERWRITER')"
     )
     @Transactional
     public Mono<RiskAssessmentResponse> assignAssessment(
@@ -267,14 +300,117 @@ public class RiskAssessmentService {
                             request.riskEngineerId()
                     );
 
+                    if (request.riskEngineerId() != null
+                            && (assessment.getStatus() == RiskAssessmentStatus.DRAFT
+                            || assessment.getStatus() == RiskAssessmentStatus.IN_PROGRESS)) {
+                        assessment.setStatus(RiskAssessmentStatus.RISK_ENGINEERING_REQUIRED);
+                    }
+
                     assessment.setUpdatedAt(
                             LocalDateTime.now()
                     );
 
-                    return entityTemplate.update(assessment);
+                    return entityTemplate.update(assessment)
+                            .flatMap(saved -> {
+                                if (request.riskEngineerId() != null) {
+                                    return workflowNotificationClient.notifyRiskEngineerAssignment(
+                                            request.riskEngineerId(),
+                                            saved.getAssessmentId(),
+                                            saved.getAssessmentNumber()
+                                    ).thenReturn(saved);
+                                }
+                                return Mono.just(saved);
+                            });
                 })
                 .map(mapper::toResponse);
     }
+
+    @PreAuthorize(
+            "hasAnyRole('UNDERWRITER', 'ADMIN', 'SYSTEM_ADMINISTRATOR')"
+    )
+    @Transactional
+    public Mono<RiskAssessmentResponse> assignRiskEngineer(
+            UUID assessmentId,
+            UUID riskEngineerId
+    ) {
+        return getAssessmentEntity(assessmentId)
+                .flatMap(assessment -> {
+                    assessment.setAssignedRiskEngineerId(riskEngineerId);
+                    assessment.setStatus(RiskAssessmentStatus.RISK_ENGINEERING_REQUIRED);
+                    assessment.setUpdatedAt(LocalDateTime.now());
+                    return entityTemplate.update(assessment)
+                            .flatMap(saved -> workflowNotificationClient.notifyRiskEngineerAssignment(
+                                    riskEngineerId,
+                                    saved.getAssessmentId(),
+                                    saved.getAssessmentNumber()
+                            ).thenReturn(saved));
+                })
+                .map(mapper::toResponse);
+    }
+
+    @PreAuthorize(
+            "hasAnyRole('UNDERWRITER', 'ADMIN', 'SYSTEM_ADMINISTRATOR', 'SYSTEM')"
+    )
+    @Transactional
+    public Mono<RiskAssessmentResponse> autoAssignRiskEngineer(
+            UUID assessmentId
+    ) {
+        return getAssessmentEntity(assessmentId)
+                .flatMap(assessment -> {
+                    if (assessment.getStatus() == RiskAssessmentStatus.COMPLETED
+                            || assessment.getStatus() == RiskAssessmentStatus.CANCELLED) {
+                        return Mono.error(
+                                new BusinessException(
+                                        "A completed or cancelled assessment cannot be assigned"
+                                )
+                        );
+                    }
+
+                    return selectLeastLoadedRiskEngineer()
+                            .flatMap(riskEngineerId -> {
+                                assessment.setAssignedRiskEngineerId(riskEngineerId);
+                                assessment.setStatus(RiskAssessmentStatus.RISK_ENGINEERING_REQUIRED);
+                                assessment.setUpdatedAt(LocalDateTime.now());
+                                return entityTemplate.update(assessment)
+                                        .flatMap(saved -> workflowNotificationClient.notifyRiskEngineerAssignment(
+                                                riskEngineerId,
+                                                saved.getAssessmentId(),
+                                                saved.getAssessmentNumber()
+                                        ).thenReturn(saved));
+                            })
+                            .switchIfEmpty(Mono.just(assessment));
+                })
+                .map(mapper::toResponse);
+    }
+
+    public Mono<UUID> selectLeastLoadedRiskEngineer() {
+        if (customerPartyClient == null) {
+            return Mono.empty();
+        }
+        Flux<UUID> available = customerPartyClient.findAvailableRiskEngineers();
+        if (available == null) {
+            return Mono.empty();
+        }
+        return available
+                .collectList()
+                .flatMap(engineers -> {
+                    if (engineers == null || engineers.isEmpty()) {
+                        return Mono.empty();
+                    }
+                    return Flux.fromIterable(engineers)
+                            .flatMap(engineerId ->
+                                    assessmentRepository.countActiveAssessmentsByRiskEngineerId(engineerId)
+                                            .defaultIfEmpty(0L)
+                                            .map(count -> new RiskEngineerWorkload(engineerId, count))
+                            )
+                            .sort(Comparator.comparingLong(RiskEngineerWorkload::count)
+                                    .thenComparing(w -> w.engineerId().toString()))
+                            .next()
+                            .map(RiskEngineerWorkload::engineerId);
+                });
+    }
+
+    private record RiskEngineerWorkload(UUID engineerId, Long count) {}
 
 
 

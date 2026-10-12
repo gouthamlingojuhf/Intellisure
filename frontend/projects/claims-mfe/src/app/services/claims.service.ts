@@ -75,4 +75,112 @@ export class ClaimsService {
       }
     );
   }
+
+  createReserve(claimId: string, reserve: number, reason: string): Observable<ClaimResponse> {
+    const params = new HttpParams()
+      .set('reserve', reserve.toString())
+      .set('reserveReason', reason);
+    return this.http.post<ClaimResponse>(
+      `${this.base}/api/claims/${claimId}/reserve`,
+      {},
+      { headers: authHeaders(), params }
+    );
+  }
+
+  createAssessment(
+    claimId: string,
+    causeOfLoss: string,
+    findings: string,
+    covered: boolean,
+    totalLossAmount: number,
+    coveredLossAmount: number,
+    deductibleApplied: number,
+    netLossAmount: number
+  ): Observable<ClaimResponse> {
+    const params = new HttpParams()
+      .set('causeOfLoss', causeOfLoss)
+      .set('findings', findings)
+      .set('covered', covered.toString())
+      .set('totalLossAmount', totalLossAmount.toString())
+      .set('coveredLossAmount', coveredLossAmount.toString())
+      .set('deductibleApplied', deductibleApplied.toString())
+      .set('netLossAmount', netLossAmount.toString());
+    return this.http.post<ClaimResponse>(
+      `${this.base}/api/claims/${claimId}/assessment`,
+      {},
+      { headers: authHeaders(), params }
+    );
+  }
+
+  recordDecision(claimId: string, decision: string, reason?: string): Observable<ClaimResponse> {
+    let params = new HttpParams().set('decision', decision);
+    if (reason) params = params.set('reason', reason);
+    return this.http.post<ClaimResponse>(
+      `${this.base}/api/claims/${claimId}/decision`,
+      {},
+      { headers: authHeaders(), params }
+    );
+  }
+
+  approveSettlement(claimId: string, approvedAmount: number): Observable<ClaimResponse> {
+    const userId =
+      (typeof localStorage !== 'undefined' ? localStorage.getItem('is_user_id') : null) ||
+      '00000000-0000-0000-0000-000000000000';
+    const params = new HttpParams()
+      .set('approvedAmount', approvedAmount.toString())
+      .set('approvedBy', userId);
+    return this.http.patch<ClaimResponse>(
+      `${this.base}/api/claims/${claimId}/settlement/approve`,
+      {},
+      { headers: authHeaders(), params }
+    );
+  }
+
+  closeClaim(claimId: string, reason: string): Observable<ClaimResponse> {
+    const params = new HttpParams().set('reason', reason);
+    return this.http.patch<ClaimResponse>(
+      `${this.base}/api/claims/${claimId}/close`,
+      {},
+      { headers: authHeaders(), params }
+    );
+  }
+
+  recordPayment(claimId: string, paymentReference: string): Observable<ClaimResponse> {
+    const params = new HttpParams().set('paymentReference', paymentReference);
+    return this.http.patch<ClaimResponse>(
+      `${this.base}/api/claims/${claimId}/payment`,
+      {},
+      { headers: authHeaders(), params }
+    );
+  }
+
+  assignAdjuster(claimId: string, adjusterId: string): Observable<ClaimResponse> {
+    return this.http.patch<ClaimResponse>(
+      `${this.base}/api/claims/${claimId}/assign-adjuster`,
+      { adjusterId },
+      { headers: authHeaders() }
+    );
+  }
+
+  autoAssignAdjuster(claimId: string): Observable<ClaimResponse> {
+    return this.http.patch<ClaimResponse>(
+      `${this.base}/api/claims/${claimId}/auto-assign-adjuster`,
+      {},
+      { headers: authHeaders() }
+    );
+  }
+
+  getAvailableAdjusters(): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${this.base}/api/users/role/CLAIMS_ADJUSTER/available`,
+      { headers: authHeaders() }
+    );
+  }
+
+  getUserById(userId: string): Observable<any> {
+    return this.http.get<any>(
+      `${this.base}/api/users/${userId}`,
+      { headers: authHeaders() }
+    );
+  }
 }

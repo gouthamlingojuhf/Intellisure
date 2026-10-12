@@ -3,8 +3,9 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ButtonComponent } from 'ui-core';
-import { selectIsAuthenticated } from '../../../core/store/auth/auth.selectors';
+import { selectIsAuthenticated, selectUserRole } from '../../../core/store/auth/auth.selectors';
 import { authActions } from '../../../core/store/auth/auth.actions';
+import { map } from 'rxjs';
 
 @Component({
   selector: 'is-final-cta',
@@ -25,7 +26,7 @@ import { authActions } from '../../../core/store/auth/auth.actions';
 
           <div class="cta-actions">
             @if (isAuthenticated$ | async) {
-              <a routerLink="/policy" class="cta-btn-link">
+              <a [routerLink]="(workspaceLink$ | async) ?? '/quotes'" class="cta-btn-link">
                 <is-button variant="primary" size="lg">Enter Workspace</is-button>
               </a>
               <button type="button" class="cta-btn-link cta-signout" (click)="logout()">Sign Out</button>
@@ -206,6 +207,17 @@ import { authActions } from '../../../core/store/auth/auth.actions';
 export class FinalCtaComponent {
   private readonly store = inject(Store);
   readonly isAuthenticated$ = this.store.select(selectIsAuthenticated);
+  readonly role$ = this.store.select(selectUserRole);
+  readonly workspaceLink$ = this.role$.pipe(
+    map((role) => {
+      const r = (role ?? '').toUpperCase();
+      if (r === 'UNDERWRITER' || r === 'RISK_ENGINEER') return '/underwriting';
+      if (r.includes('CLAIM')) return '/claims';
+      if (r.includes('VENDOR')) return '/vendor';
+      if (r.includes('ADMIN')) return '/admin';
+      return '/dashboard';
+    })
+  );
 
   logout(): void {
     this.store.dispatch(authActions.logout());

@@ -54,11 +54,17 @@ public class ClaimController {
 
     @PatchMapping("/{claimId}/assign-adjuster")
     public Mono<ClaimResponse> assignAdjuster(@PathVariable UUID claimId, @RequestBody Map<String, UUID> body) {
-        UUID adjusterId = body.get("adjusterId");
+        UUID adjusterId = body != null ? body.get("adjusterId") : null;
         if (adjusterId == null) {
             throw new IllegalArgumentException("adjusterId is required");
         }
         return claimService.assignAdjuster(claimId, adjusterId);
+    }
+
+    @PatchMapping("/{claimId}/auto-assign-adjuster")
+    @PostMapping("/{claimId}/auto-assign-adjuster")
+    public Mono<ClaimResponse> autoAssignAdjuster(@PathVariable UUID claimId) {
+        return claimService.autoAssignAdjuster(claimId);
     }
 
     @PatchMapping("/{claimId}/resign-adjuster")

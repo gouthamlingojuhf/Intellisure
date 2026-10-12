@@ -37,6 +37,8 @@ class RiskAssessmentServiceTest {
     @Mock private R2dbcEntityTemplate entityTemplate;
     @Mock private RiskAssessmentMapper mapper;
     @Mock private SecurityActorService securityActorService;
+    @Mock private com.intellisure.riskunderwritingservice.client.WorkflowNotificationClient workflowNotificationClient;
+    @Mock private com.intellisure.riskunderwritingservice.client.CustomerPartyClient customerPartyClient;
 
     @InjectMocks private RiskAssessmentService service;
 

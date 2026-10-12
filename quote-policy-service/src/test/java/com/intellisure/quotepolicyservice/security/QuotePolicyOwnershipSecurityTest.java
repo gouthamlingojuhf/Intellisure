@@ -33,6 +33,8 @@ import reactor.test.StepVerifier;
 import java.util.List;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -60,6 +62,7 @@ class QuotePolicyOwnershipSecurityTest {
                 quoteCoverageRepository,
                 entityTemplate,
                 new QuoteMapper(),
+                policyRepository,
                 underwriterAssignmentService,
                 underwritingDecisionRepository,
                 securityActorService,
@@ -76,6 +79,9 @@ class QuotePolicyOwnershipSecurityTest {
                 new PolicyMapper(),
                 securityActorService
         );
+        lenient().when(
+                policyRepository.findByQuoteId(any(UUID.class))
+        ).thenReturn(Mono.empty());
     }
 
     @Test

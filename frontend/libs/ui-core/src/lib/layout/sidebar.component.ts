@@ -79,9 +79,12 @@ export interface NavItem {
                 [attr.aria-current]="isActive(item) ? 'page' : null"
                 (click)="onNavClick()"
               >
-                <span class="nav-icon" aria-hidden="true">
+                <span class="nav-icon" aria-hidden="true" style="position: relative;">
                   @if (item.icon) {
                     {{ item.icon }}
+                  }
+                  @if (item.badge) {
+                    <span class="collapsed-badge-dot"></span>
                   }
                 </span>
               </a>
@@ -95,10 +98,10 @@ export interface NavItem {
           <span class="status-dot" aria-hidden="true"></span>
           <span>All systems operational</span>
         </div>
-        <div class="sidebar-help">
+        <a routerLink="/docs/guide" class="sidebar-help" (click)="onNavClick()">
           <span aria-hidden="true">?</span>
           <span>Help center</span>
-        </div>
+        </a>
       </div>
     </aside>
 
@@ -265,6 +268,17 @@ export interface NavItem {
     .sidebar-link.collapsed .nav-label {
       display: none;
     }
+
+    .collapsed-badge-dot {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 7px;
+      height: 7px;
+      background: #dc2626;
+      border-radius: 50%;
+      border: 1px solid var(--surface);
+    }
     
     .sidebar-footer {
       padding: 16px 18px;
@@ -292,6 +306,13 @@ export interface NavItem {
     .sidebar-help {
       color: var(--claret);
       font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+    }
+    .sidebar-help:hover {
+      text-decoration: underline;
+      opacity: 0.85;
     }
     
     .sidebar-help span:first-child {

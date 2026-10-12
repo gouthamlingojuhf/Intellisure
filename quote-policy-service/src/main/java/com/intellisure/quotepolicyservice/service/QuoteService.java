@@ -1,5 +1,6 @@
 package com.intellisure.quotepolicyservice.service;
 
+import com.intellisure.quotepolicyservice.repository.PolicyRepository;
 import com.intellisure.quotepolicyservice.dto.request.AssignUnderwriterRequest;
 import com.intellisure.quotepolicyservice.dto.request.CreateQuoteCoverageRequest;
 import com.intellisure.quotepolicyservice.dto.request.CreateQuoteRequest;
@@ -35,7 +36,11 @@ import com.intellisure.quotepolicyservice.exception.AccessDeniedBusinessExceptio
 import com.intellisure.quotepolicyservice.security.SecurityActorService;
 import org.springframework.security.access.prepost.PreAuthorize;
 
+import com.intellisure.quotepolicyservice.client.RiskUnderwritingClient;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -47,19 +52,115 @@ import java.util.Set;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class QuoteService {
 
     private final QuoteRepository quoteRepository;
     private final QuoteCoverageRepository quoteCoverageRepository;
     private final R2dbcEntityTemplate entityTemplate;
     private final QuoteMapper quoteMapper;
+    private final PolicyRepository policyRepository;
     private final UnderwriterAssignmentService underwriterAssignmentService;
     private final UnderwritingDecisionRepository underwritingDecisionRepository;
     private final SecurityActorService securityActorService;
     private final QuoteVersionRepository quoteVersionRepository;
     private final SubjectivityRepository subjectivityRepository;
     private final RatingService ratingService;
+    private final RiskUnderwritingClient riskUnderwritingClient;
+    private final com.intellisure.quotepolicyservice.client.WorkflowNotificationClient workflowNotificationClient;
+
+    @Autowired
+    public QuoteService(
+            QuoteRepository quoteRepository,
+            QuoteCoverageRepository quoteCoverageRepository,
+            R2dbcEntityTemplate entityTemplate,
+            QuoteMapper quoteMapper,
+            PolicyRepository policyRepository,
+            UnderwriterAssignmentService underwriterAssignmentService,
+            UnderwritingDecisionRepository underwritingDecisionRepository,
+            SecurityActorService securityActorService,
+            QuoteVersionRepository quoteVersionRepository,
+            SubjectivityRepository subjectivityRepository,
+            RatingService ratingService,
+            @Autowired(required = false)
+            RiskUnderwritingClient riskUnderwritingClient,
+            @Autowired(required = false)
+            com.intellisure.quotepolicyservice.client.WorkflowNotificationClient workflowNotificationClient
+    ) {
+        this.quoteRepository = quoteRepository;
+        this.quoteCoverageRepository = quoteCoverageRepository;
+        this.entityTemplate = entityTemplate;
+        this.quoteMapper = quoteMapper;
+        this.policyRepository = policyRepository;
+        this.underwriterAssignmentService = underwriterAssignmentService;
+        this.underwritingDecisionRepository = underwritingDecisionRepository;
+        this.securityActorService = securityActorService;
+        this.quoteVersionRepository = quoteVersionRepository;
+        this.subjectivityRepository = subjectivityRepository;
+        this.ratingService = ratingService;
+        this.riskUnderwritingClient = riskUnderwritingClient;
+        this.workflowNotificationClient = workflowNotificationClient;
+    }
+
+    public QuoteService(
+            QuoteRepository quoteRepository,
+            QuoteCoverageRepository quoteCoverageRepository,
+            R2dbcEntityTemplate entityTemplate,
+            QuoteMapper quoteMapper,
+            PolicyRepository policyRepository,
+            UnderwriterAssignmentService underwriterAssignmentService,
+            UnderwritingDecisionRepository underwritingDecisionRepository,
+            SecurityActorService securityActorService,
+            QuoteVersionRepository quoteVersionRepository,
+            SubjectivityRepository subjectivityRepository,
+            RatingService ratingService,
+            RiskUnderwritingClient riskUnderwritingClient
+    ) {
+        this(
+                quoteRepository,
+                quoteCoverageRepository,
+                entityTemplate,
+                quoteMapper,
+                policyRepository,
+                underwriterAssignmentService,
+                underwritingDecisionRepository,
+                securityActorService,
+                quoteVersionRepository,
+                subjectivityRepository,
+                ratingService,
+                riskUnderwritingClient,
+                null
+        );
+    }
+
+    public QuoteService(
+            QuoteRepository quoteRepository,
+            QuoteCoverageRepository quoteCoverageRepository,
+            R2dbcEntityTemplate entityTemplate,
+            QuoteMapper quoteMapper,
+            PolicyRepository policyRepository,
+            UnderwriterAssignmentService underwriterAssignmentService,
+            UnderwritingDecisionRepository underwritingDecisionRepository,
+            SecurityActorService securityActorService,
+            QuoteVersionRepository quoteVersionRepository,
+            SubjectivityRepository subjectivityRepository,
+            RatingService ratingService
+    ) {
+        this(
+                quoteRepository,
+                quoteCoverageRepository,
+                entityTemplate,
+                quoteMapper,
+                policyRepository,
+                underwriterAssignmentService,
+                underwritingDecisionRepository,
+                securityActorService,
+                quoteVersionRepository,
+                subjectivityRepository,
+                ratingService,
+                null,
+                null
+        );
+    }
 
     /*
      * ---------------------------------------------------------
@@ -151,7 +252,59 @@ public class QuoteService {
                                         Mono.just(submittedQuote)
                                 )
                 )
-                .flatMap(this::buildQuoteResponse);
+                .flatMap(submittedQuote -> {
+                    if (riskUnderwritingClient == null) {
+                        return Mono.just(submittedQuote);
+                    }
+                    return securityActorService.currentUserId()
+                            .defaultIfEmpty(submittedQuote.getCustomerId())
+                            .flatMap(actorId -> {
+                                var req = new RiskUnderwritingClient.CreateRiskAssessmentClientRequest(
+                                        submittedQuote.getQuoteId(),
+                                        null,
+                                        submittedQuote.getCustomerId(),
+                                        submittedQuote.getProductCode() != null ? submittedQuote.getProductCode() : "COMMERCIAL_PROPERTY",
+                                        LocalDate.now(),
+                                        "Primary Location",
+                                        submittedQuote.getBusinessOperations() != null ? submittedQuote.getBusinessOperations() : "Standard Operations",
+                                        BigDecimal.valueOf(500000),
+                                        BigDecimal.valueOf(150000),
+                                        10,
+                                        BigDecimal.valueOf(1000000),
+                                        0,
+                                        BigDecimal.ZERO,
+                                        actorId,
+                                        submittedQuote.getAssignedUnderwriterId(),
+                                        null
+                                );
+                                return securityActorService.currentTokenValue()
+                                        .map(t -> "Bearer " + t)
+                                        .defaultIfEmpty("")
+                                        .flatMap(auth -> riskUnderwritingClient.createRiskAssessment(req, auth))
+                                        .flatMap(assessmentResp -> {
+                                            if (assessmentResp != null && assessmentResp.assessmentId() != null) {
+                                                submittedQuote.setRiskAssessmentId(assessmentResp.assessmentId());
+                                                return entityTemplate.update(submittedQuote);
+                                            }
+                                            return Mono.just(submittedQuote);
+                                        })
+                                        .switchIfEmpty(Mono.just(submittedQuote));
+                            });
+                })
+                .flatMap(submittedQuote -> {
+                    Mono<Void> notifyMono = Mono.empty();
+                    if (workflowNotificationClient != null) {
+                        notifyMono = securityActorService.currentUserId()
+                                .flatMap(actorId -> workflowNotificationClient.notifyQuoteSubmitted(
+                                        actorId,
+                                        submittedQuote.getAssignedUnderwriterId(),
+                                        submittedQuote.getQuoteId(),
+                                        submittedQuote.getQuoteNumber()
+                                ))
+                                .onErrorResume(e -> Mono.empty());
+                    }
+                    return notifyMono.then(buildQuoteResponse(submittedQuote));
+                });
     }
     /*
      * ---------------------------------------------------------
@@ -279,7 +432,8 @@ public class QuoteService {
                                             }
                                             return securityActorService.currentCustomerId()
                                                     .flatMapMany(customerId -> quoteRepository.findAllByCustomerId(customerId)
-                                                            .flatMap(this::buildQuoteResponse));
+                                                            .flatMap(this::buildQuoteResponse))
+                                                    .onErrorResume(AccessDeniedBusinessException.class, e -> Flux.empty());
                                         });
                             });
                 });
@@ -897,9 +1051,17 @@ public class QuoteService {
 
                                                     return entityTemplate
                                                             .update(quote)
-                                                            .map(updatedQuote ->
-                                                                    quoteMapper.toResponse(updatedQuote, savedCoverages)
-                                                            );
+                                                            .flatMap(updatedQuote -> {
+                                                                Mono<Void> notify = Mono.empty();
+                                                                if (workflowNotificationClient != null) {
+                                                                    notify = workflowNotificationClient.notifyQuoteOffered(
+                                                                            updatedQuote.getCustomerId(),
+                                                                            updatedQuote.getQuoteId(),
+                                                                            updatedQuote.getQuoteNumber()
+                                                                    ).onErrorResume(e -> Mono.empty());
+                                                                }
+                                                                return notify.thenReturn(quoteMapper.toResponse(updatedQuote, savedCoverages));
+                                                            });
                                                 })
                                         );
                             });
@@ -1030,11 +1192,16 @@ public class QuoteService {
         return quoteCoverageRepository
                 .findAllByQuoteId(quote.getQuoteId())
                 .collectList()
-                .map(coverages ->
-                        quoteMapper.toResponse(
-                                quote,
-                                coverages
-                        )
+                .flatMap(coverages ->
+                        policyRepository.findByQuoteId(quote.getQuoteId())
+                                .map(policy -> quoteMapper.toResponse(
+                                        quote,
+                                        coverages,
+                                        policy.getPolicyId()
+                                ))
+                                .switchIfEmpty(Mono.fromSupplier(() ->
+                                        quoteMapper.toResponse(quote, coverages, null)
+                                ))
                 );
     }
 

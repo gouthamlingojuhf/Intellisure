@@ -23,4 +23,10 @@ export class PolicyService {
       headers: authHeaders(),
     });
   }
+
+  getPolicy(policyId: string): Observable<any> {
+    return this.http.get<any>(`${this.base}/api/policies/${policyId}`, {
+      headers: authHeaders(),
+    });
+  }
 }

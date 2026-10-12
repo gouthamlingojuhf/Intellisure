@@ -3,8 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
+import { take } from 'rxjs';
 
 import { CustomerProfileService } from '../../core/services/customer-profile.service';
+import { ApiService } from '../../core/services/api.service';
 import { CustomerResponse } from '../../core/models/customer.models';
 import { uiActions } from '../../core/store/ui/ui.actions';
 import { authActions } from '../../core/store/auth/auth.actions';
@@ -39,17 +41,21 @@ import {
       <!-- Breadcrumb / Header Area -->
       <header class="page-header">
         <div class="header-left">
-          <p class="page-eyebrow">Enterprise Account</p>
+          <p class="page-eyebrow">{{ isEmployee ? 'Internal Staff Account' : 'Enterprise Account' }}</p>
           <div class="title-row">
-            <h1>Business Profile</h1>
-            @if (profile) {
+            <h1>{{ isEmployee ? 'Staff Profile' : 'Business Profile' }}</h1>
+            @if (isEmployee) {
+              <is-badge variant="info" size="md">{{ currentUser?.role || 'Staff' }}</is-badge>
+            } @else if (profile) {
               <is-badge variant="success" size="md">Profile Active</is-badge>
             } @else if (!loading && notFound) {
               <is-badge variant="warning" size="md">Incomplete Setup</is-badge>
             }
           </div>
           <p class="page-description">
-            Maintain your legal entity, risk classification, and principal business contact information required for commercial quoting, underwriting, and policy issuance.
+            {{ isEmployee
+              ? 'View your internal staff credentials, roles, system permissions, and update your sign-in password.'
+              : 'Maintain your legal entity, risk classification, and principal business contact information required for commercial quoting, underwriting, and policy issuance.' }}
           </p>
         </div>
       </header>
@@ -65,6 +71,40 @@ import {
           </div>
         </div>
       } @else {
+        @if (isEmployee) {
+          <!-- Employee Account Overview -->
+          <is-card
+            title="Account Overview"
+            subtitle="Signed-in identity, system roles, and account security details"
+          >
+            <div class="form-grid">
+              <div>
+                <label class="info-label">Display Name</label>
+                <div class="info-value">{{ currentUser?.displayName || '—' }}</div>
+              </div>
+              <div>
+                <label class="info-label">Email Address</label>
+                <div class="info-value">{{ currentUser?.email || '—' }}</div>
+              </div>
+              <div>
+                <label class="info-label">Assigned Role</label>
+                <div class="info-value">
+                  <is-badge variant="info" size="sm">{{ currentUser?.role || '—' }}</is-badge>
+                </div>
+              </div>
+              <div>
+                <label class="info-label">Account Status</label>
+                <div class="info-value">
+                  <is-badge variant="success" size="sm">{{ currentUser?.accountStatus || 'ACTIVE' }}</is-badge>
+                </div>
+              </div>
+              <div class="col-span-2">
+                <label class="info-label">User ID</label>
+                <div class="info-value mono">{{ currentUser?.userId || '—' }}</div>
+              </div>
+            </div>
+          </is-card>
+        } @else {
         <!-- Onboarding / No Profile State Notice -->
         @if (notFound) {
           <div class="onboarding-notice" role="region" aria-label="Onboarding notice">
@@ -150,12 +190,34 @@ import {
                 />
               </div>
 
+              <div>
+                <is-input
+                  id="annualTurnover"
+                  label="Annual Turnover (₹)"
+                  type="number"
+                  placeholder="e.g. 5000000"
+                  formControlName="annualTurnover"
+                  [disabled]="saving"
+                />
+              </div>
+
+              <div>
+                <is-input
+                  id="employeeCount"
+                  label="Employee Count"
+                  type="number"
+                  placeholder="e.g. 25"
+                  formControlName="employeeCount"
+                  [disabled]="saving"
+                />
+              </div>
+
               <div class="col-span-2">
                 <is-input
                   id="phone"
                   label="Contact Phone Number"
                   type="tel"
-                  placeholder="e.g. +1 (555) 019-2834"
+                  placeholder="e.g. +91 98765 43210"
                   formControlName="phone"
                   [error]="getFieldError('phone')"
                   [disabled]="saving"
@@ -259,9 +321,89 @@ import {
             </div>
           </div>
         </form>
+        }
+
+        <!-- Change Password Card (Available for all authenticated users) -->
+        <is-card
+          title="Security & Password"
+          subtitle="Update your sign-in password to keep your account secure"
+        >
+          @if (passwordError) {
+            <div class="error-banner" role="alert" style="margin-bottom: 16px;">
+              <div class="error-content">
+                <strong>Password update failed:</strong>
+                <p>{{ passwordError }}</p>
+              </div>
+            </div>
+          }
+
+          @if (passwordSuccess) {
+            <div class="success-banner" role="status" style="margin-bottom: 16px;">
+              <div class="success-content">
+                <strong>Password updated:</strong>
+                <p>{{ passwordSuccess }}</p>
+              </div>
+            </div>
+          }
+
+          <form [formGroup]="passwordForm" (ngSubmit)="onChangePassword()" class="profile-form">
+            <div class="form-grid">
+              <div class="col-span-2">
+                <is-input
+                  id="currentPassword"
+                  label="Current Password *"
+                  type="password"
+                  placeholder="Enter your current password"
+                  formControlName="currentPassword"
+                  [error]="getPasswordFieldError('currentPassword')"
+                  [disabled]="changingPassword"
+                />
+              </div>
+
+              <div>
+                <is-input
+                  id="newPassword"
+                  label="New Password *"
+                  type="password"
+                  placeholder="At least 8 characters"
+                  formControlName="newPassword"
+                  [error]="getPasswordFieldError('newPassword')"
+                  [disabled]="changingPassword"
+                />
+              </div>
+
+              <div>
+                <is-input
+                  id="confirmPassword"
+                  label="Confirm New Password *"
+                  type="password"
+                  placeholder="Re-enter new password"
+                  formControlName="confirmPassword"
+                  [error]="getPasswordFieldError('confirmPassword')"
+                  [disabled]="changingPassword"
+                />
+              </div>
+            </div>
+
+            <div class="actions-bar" style="margin-top: 8px;">
+              <div class="metadata-info">
+                <span>Must be at least 8 characters. Requires your current password for verification.</span>
+              </div>
+              <div class="action-buttons">
+                <is-button
+                  variant="primary"
+                  type="submit"
+                  [disabled]="changingPassword || passwordForm.invalid"
+                >
+                  {{ changingPassword ? 'Updating Password…' : 'Update Password' }}
+                </is-button>
+              </div>
+            </div>
+          </form>
+        </is-card>
 
         <!-- Post-Save Quick Actions / Next Steps -->
-        @if (profile) {
+        @if (!isEmployee && profile) {
           <div class="next-steps-panel">
             <h4>Next Steps for Your Account</h4>
             <div class="next-steps-grid">
@@ -549,17 +691,49 @@ import {
         grid-template-columns: 1fr;
       }
     }
+
+    .info-label {
+      display: block;
+      color: var(--muted, #6f6a6d);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .info-value {
+      font-size: 13px;
+      color: var(--ink, #111111);
+      font-weight: 500;
+    }
+
+    .info-value.mono {
+      font-family: monospace;
+      font-size: 11px;
+      color: var(--muted, #6f6a6d);
+    }
   `],
 })
 export class CustomerProfileComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly profileService = inject(CustomerProfileService);
+  private readonly api = inject(ApiService);
   private readonly store = inject(Store);
   private readonly router = inject(Router);
 
   readonly token$ = this.store.select(selectAuthToken);
   readonly userId$ = this.store.select(selectUserId);
   readonly role$ = this.store.select(selectUserRole);
+
+  currentUser: {
+    userId?: string;
+    email?: string;
+    role?: string;
+    displayName?: string;
+    accountStatus?: string;
+  } | null = null;
+  isEmployee = false;
 
   profile: CustomerResponse | null = null;
   loading = false;
@@ -568,6 +742,15 @@ export class CustomerProfileComponent implements OnInit {
   errorMessage: string | null = null;
   successMessage: string | null = null;
   reauthenticationRequired = false;
+
+  readonly passwordForm = this.fb.nonNullable.group({
+    currentPassword: ['', [Validators.required]],
+    newPassword: ['', [Validators.required, Validators.minLength(8)]],
+    confirmPassword: ['', [Validators.required]],
+  });
+  changingPassword = false;
+  passwordError: string | null = null;
+  passwordSuccess: string | null = null;
 
   readonly businessTypeOptions = [
     { value: 'LIMITED_LIABILITY_COMPANY', label: 'Limited Liability Company (LLC)' },
@@ -585,20 +768,49 @@ export class CustomerProfileComponent implements OnInit {
     { value: 'OTHER', label: 'Other Business Type' },
   ];
 
-  readonly profileForm = this.fb.nonNullable.group({
+  readonly profileForm = this.fb.group({
     businessName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(255)]],
     ownerName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(255)]],
     businessType: ['LIMITED_LIABILITY_COMPANY'],
+    annualTurnover: [null as number | null, [Validators.min(0)]],
+    employeeCount: [null as number | null, [Validators.min(0)]],
     phone: ['', [Validators.maxLength(50)]],
     address: ['', [Validators.maxLength(255)]],
     city: ['', [Validators.maxLength(100)]],
     state: ['', [Validators.maxLength(50)]],
-    country: ['USA', [Validators.maxLength(50)]],
+    country: ['India', [Validators.maxLength(50)]],
     postalCode: ['', [Validators.maxLength(20)]],
   });
 
   ngOnInit(): void {
-    this.loadProfile();
+    this.loadUserAndProfile();
+  }
+
+  loadUserAndProfile(): void {
+    this.loading = true;
+    this.api.get<any>('/api/auth/me').subscribe({
+      next: (user) => {
+        this.currentUser = user;
+        const role = (user?.role || '').toUpperCase();
+        this.isEmployee = role !== 'POLICYHOLDER' && role !== 'USER' && !!role;
+        if (this.isEmployee) {
+          this.loading = false;
+        } else {
+          this.loadProfile();
+        }
+      },
+      error: () => {
+        this.role$.pipe(take(1)).subscribe((role) => {
+          const upper = (role || '').toUpperCase();
+          this.isEmployee = upper !== 'POLICYHOLDER' && upper !== 'USER' && !!upper;
+          if (this.isEmployee) {
+            this.loading = false;
+          } else {
+            this.loadProfile();
+          }
+        });
+      }
+    });
   }
 
   loadProfile(): void {
@@ -637,11 +849,13 @@ export class CustomerProfileComponent implements OnInit {
       businessName: data.businessName || '',
       ownerName: data.ownerName || '',
       businessType: data.businessType || 'LIMITED_LIABILITY_COMPANY',
+      annualTurnover: data.annualTurnover ?? null,
+      employeeCount: data.employeeCount ?? null,
       phone: data.phone || '',
       address: data.address || '',
       city: data.city || '',
       state: data.state || '',
-      country: data.country || 'USA',
+      country: data.country || 'India',
       postalCode: data.postalCode || '',
     });
     this.profileForm.markAsPristine();
@@ -655,11 +869,13 @@ export class CustomerProfileComponent implements OnInit {
         businessName: '',
         ownerName: '',
         businessType: 'LIMITED_LIABILITY_COMPANY',
+        annualTurnover: null,
+        employeeCount: null,
         phone: '',
         address: '',
         city: '',
         state: '',
-        country: 'USA',
+        country: 'India',
         postalCode: '',
       });
     }
@@ -681,9 +897,11 @@ export class CustomerProfileComponent implements OnInit {
 
     const raw = this.profileForm.getRawValue();
     const payload = {
-      businessName: raw.businessName.trim(),
-      ownerName: raw.ownerName.trim(),
+      businessName: (raw.businessName || '').trim(),
+      ownerName: (raw.ownerName || '').trim(),
       businessType: raw.businessType || undefined,
+      annualTurnover: raw.annualTurnover != null && (raw.annualTurnover as any) !== '' ? Number(raw.annualTurnover) : undefined,
+      employeeCount: raw.employeeCount != null && (raw.employeeCount as any) !== '' ? Number(raw.employeeCount) : undefined,
       phone: raw.phone?.trim() || undefined,
       address: raw.address?.trim() || undefined,
       city: raw.city?.trim() || undefined,
@@ -703,11 +921,28 @@ export class CustomerProfileComponent implements OnInit {
           localStorage.setItem('is_customer_id', updated.customerId);
         }
 
+        // Seamless token refresh so JWT contains the new customerId immediately:
+        this.api.post<any>('/api/auth/refresh', {}).subscribe({
+          next: (refreshed) => {
+            const token = refreshed?.accessToken ?? refreshed?.token;
+            if (token && typeof localStorage !== 'undefined') {
+              localStorage.setItem('is_token', token);
+              if (refreshed.role) localStorage.setItem('is_role', refreshed.role);
+              if (refreshed.userId) localStorage.setItem('is_user_id', refreshed.userId);
+              if (refreshed.customerId) localStorage.setItem('is_customer_id', refreshed.customerId);
+            }
+            this.store.dispatch(authActions.loginSuccess({ response: refreshed }));
+          },
+          error: () => {
+            // Non-blocking fallback; local storage is_customer_id is already set
+          }
+        });
+
         const msg = profileWasMissing
-          ? 'Business profile created. Sign in again to refresh your customer access before creating a quote or using other policyholder services.'
+          ? 'Business profile created successfully. Your account is now fully active for commercial quoting and policy services.'
           : 'Business profile updated successfully.';
         this.successMessage = msg;
-        this.reauthenticationRequired = profileWasMissing;
+        this.reauthenticationRequired = false;
         this.store.dispatch(uiActions.showToast({ message: msg, kind: 'success' }));
       },
       error: (err) => {
@@ -729,6 +964,56 @@ export class CustomerProfileComponent implements OnInit {
   reauthenticate(): void {
     this.store.dispatch(authActions.logout());
     this.router.navigate(['/auth']);
+  }
+
+  onChangePassword(): void {
+    if (this.passwordForm.invalid) {
+      this.passwordForm.markAllAsTouched();
+      return;
+    }
+    const { currentPassword, newPassword, confirmPassword } = this.passwordForm.getRawValue();
+    if (newPassword !== confirmPassword) {
+      this.passwordError = 'New password and confirm password do not match.';
+      return;
+    }
+    if (newPassword.length < 8) {
+      this.passwordError = 'New password must be at least 8 characters long.';
+      return;
+    }
+
+    this.changingPassword = true;
+    this.passwordError = null;
+    this.passwordSuccess = null;
+
+    this.api.post('/api/auth/change-password', {
+      currentPassword,
+      newPassword,
+    }).subscribe({
+      next: () => {
+        this.changingPassword = false;
+        this.passwordSuccess = 'Password updated successfully.';
+        this.passwordForm.reset();
+        this.store.dispatch(uiActions.showToast({ message: 'Password updated successfully.', kind: 'success' }));
+      },
+      error: (err) => {
+        this.changingPassword = false;
+        this.passwordError = err?.error?.message || err?.message || 'Failed to update password. Please check your current password and try again.';
+        this.store.dispatch(uiActions.showToast({ message: this.passwordError || 'Password change failed.', kind: 'error' }));
+      }
+    });
+  }
+
+  getPasswordFieldError(field: string): string | undefined {
+    const ctrl = this.passwordForm.get(field);
+    if (ctrl?.invalid && (ctrl.dirty || ctrl.touched)) {
+      if (ctrl.errors?.['required']) {
+        if (field === 'currentPassword') return 'Current password is required';
+        if (field === 'newPassword') return 'New password is required';
+        if (field === 'confirmPassword') return 'Please confirm your new password';
+      }
+      if (ctrl.errors?.['minlength']) return 'Password must be at least 8 characters';
+    }
+    return undefined;
   }
 
   getFieldError(controlName: string): string | undefined {

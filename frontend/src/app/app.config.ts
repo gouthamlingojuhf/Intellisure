@@ -1,6 +1,7 @@
 import { ApplicationConfig } from '@angular/core';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
+import { DATE_PIPE_DEFAULT_OPTIONS } from '@angular/common';
 import { provideEffects } from '@ngrx/effects';
 import { provideStore } from '@ngrx/store';
 
@@ -18,5 +19,6 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([correlationIdInterceptor, jwtInterceptor, errorInterceptor])),
     provideStore({ auth: authReducer, ui: uiReducer }),
     provideEffects(AuthEffects),
+    { provide: DATE_PIPE_DEFAULT_OPTIONS, useValue: { timezone: '+0530' } },
   ],
 };

@@ -59,6 +59,10 @@ public class BusinessCustomer implements Persistable<UUID> {
     
     private String postalCode;
     
+    private java.math.BigDecimal annualTurnover;
+    
+    private Integer employeeCount;
+    
     private Long version;
     
     private LocalDateTime lastMaterialChangeAt;

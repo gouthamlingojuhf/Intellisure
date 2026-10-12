@@ -33,8 +33,10 @@ import java.time.Year;
 import java.util.List;
 import java.util.UUID;
 
+import com.intellisure.quotepolicyservice.client.WorkflowNotificationClient;
+import org.springframework.beans.factory.annotation.Autowired;
+
 @Service
-@RequiredArgsConstructor
 public class PolicyService {
 
     private final QuoteRepository quoteRepository;
@@ -44,6 +46,50 @@ public class PolicyService {
     private final R2dbcEntityTemplate entityTemplate;
     private final PolicyMapper policyMapper;
     private final SecurityActorService securityActorService;
+    private final WorkflowNotificationClient workflowNotificationClient;
+
+    @Autowired
+    public PolicyService(
+            QuoteRepository quoteRepository,
+            QuoteCoverageRepository quoteCoverageRepository,
+            PolicyRepository policyRepository,
+            PolicyCoverageRepository policyCoverageRepository,
+            R2dbcEntityTemplate entityTemplate,
+            PolicyMapper policyMapper,
+            SecurityActorService securityActorService,
+            @Autowired(required = false)
+            WorkflowNotificationClient workflowNotificationClient
+    ) {
+        this.quoteRepository = quoteRepository;
+        this.quoteCoverageRepository = quoteCoverageRepository;
+        this.policyRepository = policyRepository;
+        this.policyCoverageRepository = policyCoverageRepository;
+        this.entityTemplate = entityTemplate;
+        this.policyMapper = policyMapper;
+        this.securityActorService = securityActorService;
+        this.workflowNotificationClient = workflowNotificationClient;
+    }
+
+    public PolicyService(
+            QuoteRepository quoteRepository,
+            QuoteCoverageRepository quoteCoverageRepository,
+            PolicyRepository policyRepository,
+            PolicyCoverageRepository policyCoverageRepository,
+            R2dbcEntityTemplate entityTemplate,
+            PolicyMapper policyMapper,
+            SecurityActorService securityActorService
+    ) {
+        this(
+                quoteRepository,
+                quoteCoverageRepository,
+                policyRepository,
+                policyCoverageRepository,
+                entityTemplate,
+                policyMapper,
+                securityActorService,
+                null
+        );
+    }
 
     @PreAuthorize("hasAnyRole('UNDERWRITER', 'ADMIN', 'SYSTEM_ADMINISTRATOR')")
     @Transactional
@@ -264,6 +310,21 @@ public class PolicyService {
                         .then(Mono.defer(() -> buildPolicyResponse(policy))));
     }
 
+    public Mono<PolicyResponse> getPolicyByQuoteId(
+            UUID quoteId
+    ) {
+        return policyRepository.findByQuoteId(quoteId)
+                .switchIfEmpty(Mono.error(
+                        new ResourceNotFoundException(
+                                "Policy not found for quote ID: "
+                                        + quoteId
+                        )
+                ))
+                .flatMap(policy -> securityActorService
+                        .assertCustomerAccess(policy.getCustomerId())
+                        .then(Mono.defer(() -> buildPolicyResponse(policy))));
+    }
+
     public Mono<PolicyResponse> getPolicyByNumber(
             String policyNumber
     ) {
@@ -292,7 +353,15 @@ public class PolicyService {
 
     @PreAuthorize("hasAnyRole('ADMIN', 'SYSTEM_ADMINISTRATOR', 'UNDERWRITER', 'CLAIMS_ADJUSTER', 'CLAIMS_MANAGER')")
     public Flux<PolicyResponse> getAllPoliciesForAdministration() {
-        return policyRepository.findAll().flatMap(this::buildPolicyResponse);
+        return securityActorService.hasAnyRole("ADMIN", "SYSTEM_ADMINISTRATOR", "CLAIMS_ADJUSTER", "CLAIMS_MANAGER")
+                .flatMapMany(isPrivileged -> {
+                    if (Boolean.TRUE.equals(isPrivileged)) {
+                        return policyRepository.findAll().flatMap(this::buildPolicyResponse);
+                    }
+                    return securityActorService.currentUserId()
+                            .flatMapMany(userId -> policyRepository.findAllByIssuedByUserId(userId)
+                                    .flatMap(this::buildPolicyResponse));
+                });
     }
 
 
@@ -539,12 +608,22 @@ public class PolicyService {
 
                                     return entityTemplate
                                             .update(quote)
-                                            .thenReturn(
-                                                    policyMapper.toResponse(
-                                                            insertedPolicy,
-                                                            insertedCoverages
-                                                    )
-                                            );
+                                            .flatMap(q -> {
+                                                Mono<Void> notify = Mono.empty();
+                                                if (workflowNotificationClient != null) {
+                                                    notify = workflowNotificationClient.notifyPolicyIssued(
+                                                            insertedPolicy.getCustomerId(),
+                                                            insertedPolicy.getPolicyId(),
+                                                            insertedPolicy.getPolicyNumber()
+                                                    ).onErrorResume(e -> Mono.empty());
+                                                }
+                                                return notify.thenReturn(
+                                                        policyMapper.toResponse(
+                                                                insertedPolicy,
+                                                                insertedCoverages
+                                                        )
+                                                );
+                                            });
                                 })
                 );
     }

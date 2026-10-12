@@ -149,13 +149,13 @@ public class SecurityConfig {
                                 "/api/quotes",
                                 "/api/quotes/**"
                         )
-                        .hasAnyRole("POLICYHOLDER", "UNDERWRITER", "SYSTEM_ADMINISTRATOR", "ADMIN")
+                        .hasAnyRole("POLICYHOLDER", "USER", "UNDERWRITER", "RISK_ENGINEER", "CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
 
                         .pathMatchers(
                                 "/api/policies",
                                 "/api/policies/**"
                         )
-                        .hasAnyRole("POLICYHOLDER", "UNDERWRITER", "CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
+                        .hasAnyRole("POLICYHOLDER", "UNDERWRITER", "RISK_ENGINEER", "CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
 
 
                         /*
@@ -233,15 +233,20 @@ public class SecurityConfig {
                         .hasAnyRole("VENDOR_APPLICANT", "VENDOR_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
 
                         .pathMatchers(
+                                "/api/vendors",
                                 "/api/vendors/**",
+                                "/api/vendor-assignments",
                                 "/api/vendor-assignments/**",
                                 "/api/partners/**"
                         )
                         .hasAnyRole(
+                                "VENDOR",
                                 "VENDOR_MANAGER",
                                 "VENDOR_APPLICANT",
                                 "CLAIMS_ADJUSTER",
                                 "CLAIMS_MANAGER",
+                                "POLICYHOLDER",
+                                "USER",
                                 "SYSTEM_ADMINISTRATOR",
                                 "ADMIN"
                         )

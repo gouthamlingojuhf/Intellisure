@@ -176,6 +176,40 @@ interface ProductPreset {
                       <span class="field-error">{{ getFieldError('businessOperations') }}</span>
                     }
                   </div>
+
+                  <div class="col-span-2 property-valuation-section">
+                    <span class="sub-heading">Commercial Property & Asset Valuation (₹)</span>
+                    <p class="section-subtext">Declare replacement asset values to establish underwriting insurable values.</p>
+                    <div class="valuation-grid">
+                      <div>
+                        <is-input
+                          id="buildingValue"
+                          label="Building Replacement Value (₹)"
+                          type="number"
+                          placeholder="e.g. 5000000"
+                          formControlName="buildingValue"
+                        />
+                      </div>
+                      <div>
+                        <is-input
+                          id="machineryValue"
+                          label="Machinery & Equipment Value (₹)"
+                          type="number"
+                          placeholder="e.g. 1500000"
+                          formControlName="machineryValue"
+                        />
+                      </div>
+                      <div>
+                        <is-input
+                          id="stockValue"
+                          label="Stock / Inventory Value (₹)"
+                          type="number"
+                          placeholder="e.g. 800000"
+                          formControlName="stockValue"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             }
@@ -241,7 +275,7 @@ interface ProductPreset {
 
                         <div>
                           <is-input
-                            label="Requested Limit ($) *"
+                            label="Requested Limit (₹) *"
                             type="number"
                             placeholder="e.g. 500000"
                             formControlName="requestedLimit"
@@ -251,7 +285,7 @@ interface ProductPreset {
 
                         <div>
                           <is-input
-                            label="Requested Deductible ($) *"
+                            label="Requested Deductible (₹) *"
                             type="number"
                             placeholder="e.g. 5000"
                             formControlName="requestedDeductible"
@@ -298,6 +332,17 @@ interface ProductPreset {
                     <span class="summary-label">Business Operations</span>
                     <p class="summary-text">{{ form.get('businessOperations')?.value }}</p>
                   </div>
+
+                  @if (form.get('buildingValue')?.value || form.get('machineryValue')?.value || form.get('stockValue')?.value) {
+                    <div class="summary-item col-span-2">
+                      <span class="summary-label">Declared Property & Asset Valuations</span>
+                      <p class="summary-text">
+                        @if (form.get('buildingValue')?.value) { Building: ₹{{ form.get('buildingValue')?.value | number:'1.0-0' }} · }
+                        @if (form.get('machineryValue')?.value) { Machinery & Equipment: ₹{{ form.get('machineryValue')?.value | number:'1.0-0' }} · }
+                        @if (form.get('stockValue')?.value) { Inventory / Stock: ₹{{ form.get('stockValue')?.value | number:'1.0-0' }} }
+                      </p>
+                    </div>
+                  }
                 </div>
 
                 <h5 class="sub-heading">Configured Coverages ({{ coveragesArray.length }})</h5>
@@ -317,10 +362,10 @@ interface ProductPreset {
                           <td><code>{{ cov.coverageCode }}</code></td>
                           <td><strong>{{ cov.coverageName }}</strong></td>
                           <td class="text-right">
-                            <strong class="text-emerald">\${{ cov.requestedLimit | number:'1.0-0' }}</strong>
+                            <strong class="text-emerald">₹{{ cov.requestedLimit | number:'1.0-0' }}</strong>
                           </td>
                           <td class="text-right">
-                            \${{ cov.requestedDeductible | number:'1.0-0' }}
+                            ₹{{ cov.requestedDeductible | number:'1.0-0' }}
                           </td>
                         </tr>
                       }
@@ -649,6 +694,26 @@ interface ProductPreset {
       background: var(--warm-light, #f7f5f3);
     }
 
+    .property-valuation-section {
+      background: var(--warm-light, #f7f5f3);
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border, #eae5df);
+      margin-top: 8px;
+    }
+
+    .valuation-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 10px;
+    }
+    @media (max-width: 768px) {
+      .valuation-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .coverage-row-header {
       display: flex;
       justify-content: space-between;
@@ -920,11 +985,14 @@ export class QuoteCreateComponent implements OnInit {
     { code: 'INLAND_MARINE', name: 'Inland Marine' },
   ];
 
-  readonly form = this.fb.nonNullable.group({
-    productCode: ['COMMERCIAL_PROPERTY', [Validators.required]],
+  readonly form = this.fb.group({
+    productCode: ['', [Validators.required]],
     requestedEffectiveDate: [new Date().toISOString().slice(0, 10), [Validators.required]],
     insuranceNeed: ['', [Validators.required, Validators.minLength(5)]],
     businessOperations: ['', [Validators.required, Validators.minLength(5)]],
+    buildingValue: [null as number | null, [Validators.min(0)]],
+    machineryValue: [null as number | null, [Validators.min(0)]],
+    stockValue: [null as number | null, [Validators.min(0)]],
     coverages: this.fb.array([]),
   });
 
@@ -934,7 +1002,11 @@ export class QuoteCreateComponent implements OnInit {
 
   ngOnInit(): void {
     this.initCustomerProfile();
-    this.applyPreset('COMMERCIAL_PROPERTY');
+    this.form.get('productCode')?.valueChanges.subscribe((selected) => {
+      if (selected) {
+        this.onProductSelected(selected);
+      }
+    });
   }
 
   private initCustomerProfile(): void {
@@ -966,12 +1038,21 @@ export class QuoteCreateComponent implements OnInit {
     });
   }
 
-  onProductChange(): void {
-    const selected = this.form.get('productCode')?.value;
-    if (selected && this.productPresets[selected]) this.applyPreset(selected);
-    else {
+  onProductSelected(selected: string): void {
+    if (selected && this.productPresets[selected]) {
+      this.applyPreset(selected);
+    } else if (selected) {
       this.coveragesArray.clear();
       this.addCoverage();
+    }
+  }
+
+  onProductChange(): void {
+    const selected = this.form.get('productCode')?.value;
+    if (selected) {
+      this.onProductSelected(selected);
+    } else {
+      this.coveragesArray.clear();
     }
   }
 
@@ -1020,35 +1101,66 @@ export class QuoteCreateComponent implements OnInit {
     }
   }
 
-  onStepClick(index: number): void {
-    if (index < this.currentStep) {
-      this.currentStep = index;
-    } else if (index === this.currentStep + 1) {
-      this.onNextStep();
-    }
-  }
-
-  onNextStep(): void {
-    if (this.currentStep === 0) {
+  isStepValid(step: number): boolean {
+    if (step === 0) {
       const controls = ['productCode', 'requestedEffectiveDate', 'insuranceNeed', 'businessOperations'];
       for (const ctrl of controls) {
         this.form.get(ctrl)?.markAsTouched();
       }
+      const productCodeVal = this.form.get('productCode')?.value;
       if (
+        !productCodeVal ||
         this.form.get('productCode')?.invalid ||
         this.form.get('requestedEffectiveDate')?.invalid ||
         this.form.get('insuranceNeed')?.invalid ||
         this.form.get('businessOperations')?.invalid
       ) {
-        return;
+        return false;
       }
-    } else if (this.currentStep === 1) {
+      return true;
+    } else if (step === 1) {
       if (this.coveragesArray.invalid || this.coveragesArray.length === 0) {
         this.coveragesArray.markAllAsTouched();
+        return false;
+      }
+      return true;
+    }
+    return true;
+  }
+
+  onStepClick(index: number): void {
+    if (index < this.currentStep) {
+      this.currentStep = index;
+      return;
+    }
+    if (index === this.currentStep) {
+      return;
+    }
+    // Prevent skipping ahead if current or any intermediate step is invalid
+    for (let step = 0; step < index; step++) {
+      if (!this.isStepValid(step)) {
         return;
       }
+      if (step === 0) {
+        const productCodeVal = this.form.get('productCode')?.value;
+        if (this.coveragesArray.length === 0 && productCodeVal) {
+          this.onProductSelected(productCodeVal);
+        }
+      }
     }
+    this.currentStep = index;
+  }
 
+  onNextStep(): void {
+    if (!this.isStepValid(this.currentStep)) {
+      return;
+    }
+    if (this.currentStep === 0) {
+      const productCodeVal = this.form.get('productCode')?.value;
+      if (this.coveragesArray.length === 0 && productCodeVal) {
+        this.onProductSelected(productCodeVal);
+      }
+    }
     if (this.currentStep < this.steps.length - 1) {
       this.currentStep++;
     }
@@ -1061,6 +1173,10 @@ export class QuoteCreateComponent implements OnInit {
   }
 
   onSubmitQuote(): void {
+    if (!this.customerId) {
+      this.customerId = this.profile?.customerId ?? (typeof localStorage !== 'undefined' ? localStorage.getItem('is_customer_id') : null);
+    }
+
     if (this.form.invalid || !this.customerId) {
       this.form.markAllAsTouched();
       return;
@@ -1070,15 +1186,24 @@ export class QuoteCreateComponent implements OnInit {
     this.errorMessage = null;
 
     const raw = this.form.getRawValue();
+    let opsDesc = (raw.businessOperations || '').trim();
+    const valuations: string[] = [];
+    if (raw.buildingValue) valuations.push(`Building: ₹${Number(raw.buildingValue).toLocaleString()}`);
+    if (raw.machineryValue) valuations.push(`Machinery & Equipment: ₹${Number(raw.machineryValue).toLocaleString()}`);
+    if (raw.stockValue) valuations.push(`Stock/Inventory: ₹${Number(raw.stockValue).toLocaleString()}`);
+    if (valuations.length > 0) {
+      opsDesc += ` [Declared Asset Valuations: ${valuations.join(', ')}]`;
+    }
+
     const payload: CreateQuoteRequest = {
       customerId: this.customerId,
-      productCode: raw.productCode,
-      insuranceNeed: raw.insuranceNeed.trim(),
-      businessOperations: raw.businessOperations.trim(),
-      requestedEffectiveDate: raw.requestedEffectiveDate,
-      coverages: raw.coverages.map((c: any) => ({
-        coverageCode: c.coverageCode.trim(),
-        coverageName: c.coverageName.trim(),
+      productCode: raw.productCode || '',
+      insuranceNeed: (raw.insuranceNeed || '').trim(),
+      businessOperations: opsDesc,
+      requestedEffectiveDate: raw.requestedEffectiveDate || new Date().toISOString().slice(0, 10),
+      coverages: (raw.coverages || []).map((c: any) => ({
+        coverageCode: (c.coverageCode || '').trim(),
+        coverageName: (c.coverageName || '').trim(),
         requestedLimit: Number(c.requestedLimit),
         requestedDeductible: Number(c.requestedDeductible),
         waitingPeriodDays: c.waitingPeriodDays ? Number(c.waitingPeriodDays) : undefined,

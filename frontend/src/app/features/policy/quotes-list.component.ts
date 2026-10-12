@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap, take } from 'rxjs/operators';
@@ -150,7 +150,7 @@ interface UnderwriterUser {
                 </thead>
                 <tbody>
                   @for (quote of filteredQuotes; track quote.quoteId) {
-                    <tr>
+                    <tr (click)="onRowClick(quote, $event)" class="clickable-row">
                       <td>
                         <strong>{{ quote.quoteNumber }}</strong>
                       </td>
@@ -297,6 +297,7 @@ interface UnderwriterUser {
     .data-table th { padding: 12px 16px; text-align: left; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); background: var(--surface-hover); }
     .data-table td { padding: 14px 16px; border-bottom: 1px solid var(--border); color: var(--ink); vertical-align: middle; }
     .data-table tr:hover td { background: var(--surface-hover); }
+    .clickable-row { cursor: pointer; }
     .code-pill { display: inline-block; padding: 3px 7px; border-radius: 4px; font-family: ui-monospace, monospace; font-size: 10px; background: var(--warm-light); color: var(--claret); font-weight: 600; }
     .text-muted { color: var(--muted); }
     .text-right { text-align: right; }
@@ -325,6 +326,7 @@ interface UnderwriterUser {
 })
 export class QuotesListComponent implements OnInit {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly store = inject(Store);
   private readonly quoteService = inject(QuoteService);
   private readonly customerProfileService = inject(CustomerProfileService);
@@ -364,6 +366,12 @@ export class QuotesListComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe((params) => {
+      if (params['search']) {
+        this.searchQuery = params['search'];
+      }
+    });
+
     this.store.select(selectUserId).pipe(take(1)).subscribe((uid) => {
       this.currentUserId = uid;
     });
@@ -489,6 +497,14 @@ export class QuotesListComponent implements OnInit {
 
   navigate(path: string): void {
     this.router.navigateByUrl(path);
+  }
+
+  onRowClick(quote: QuoteResponse, event: Event): void {
+    const target = event.target as HTMLElement;
+    if (target.closest('button') || target.closest('is-button') || target.closest('select') || target.closest('input') || target.closest('.btn-reassign')) {
+      return;
+    }
+    this.navigate('/quotes/' + quote.quoteId);
   }
 
   getQuoteStatusVariant(status: string): BadgeVariant {

@@ -15,6 +15,7 @@ import {
   ChatChannelResponse,
   ChatContactResponse,
   ChatMessageResponse,
+  ChatParticipantResponse,
   CreateChannelRequest
 } from '../../core/models/chat.models';
 import { ChatService } from '../../core/services/chat.service';
@@ -84,14 +85,15 @@ import { selectUserId, selectUserRole } from '../../core/store/auth/auth.selecto
                     <div
                       class="channel-item"
                       [class.active]="selectedChannel?.channelId === ch.channelId"
+                      [class.has-unread]="getUnreadCount(ch) > 0"
                       (click)="selectChannel(ch)"
                     >
                       <div class="channel-icon">#</div>
                       <div class="channel-info">
                         <div class="channel-top">
                           <span class="channel-name">{{ ch.name }}</span>
-                          @if (ch.unreadCount > 0) {
-                            <span class="unread-pill">{{ ch.unreadCount }}</span>
+                          @if (getUnreadCount(ch) > 0) {
+                            <span class="unread-pill">{{ getUnreadCount(ch) }}</span>
                           }
                         </div>
                         <div class="channel-snippet">
@@ -111,6 +113,7 @@ import { selectUserId, selectUserRole } from '../../core/store/auth/auth.selecto
                     <div
                       class="channel-item"
                       [class.active]="selectedChannel?.channelId === ch.channelId"
+                      [class.has-unread]="getUnreadCount(ch) > 0"
                       (click)="selectChannel(ch)"
                     >
                       <div class="channel-avatar">
@@ -119,15 +122,15 @@ import { selectUserId, selectUserRole } from '../../core/store/auth/auth.selecto
                       <div class="channel-info">
                         <div class="channel-top">
                           <span class="channel-name">{{ getChannelDisplayName(ch) }}</span>
-                          @if (ch.unreadCount > 0) {
-                            <span class="unread-pill">{{ ch.unreadCount }}</span>
+                          @if (getUnreadCount(ch) > 0) {
+                            <span class="unread-pill">{{ getUnreadCount(ch) }}</span>
                           }
                         </div>
                         <div class="channel-meta">
                           <is-badge [variant]="ch.channelType === 'CUSTOMER_SUPPORT' ? 'warning' : 'neutral'" size="sm">
                             {{ ch.channelType === 'CUSTOMER_SUPPORT' ? 'Support' : 'Direct' }}
                           </is-badge>
-                          <span class="time-ago">{{ formatTime(ch.updatedAt) }}</span>
+                          <span class="time-ago">{{ formatTime(ch.lastMessage?.sentAt || ch.lastMessage?.createdAt || ch.updatedAt) }}</span>
                         </div>
                         <div class="channel-snippet">
                           {{ ch.lastMessage ? ch.lastMessage.content : 'No messages yet' }}
@@ -163,14 +166,14 @@ import { selectUserId, selectUserRole } from '../../core/store/auth/auth.selecto
                   <is-badge [variant]="getChannelBadgeVariant(selectedChannel)" size="sm">
                     {{ selectedChannel.channelType.replace('_', ' ') }}
                   </is-badge>
-                  @if (selectedChannel.entityType && selectedChannel.entityId) {
-                    <span class="context-tag">{{ selectedChannel.entityType }}: {{ selectedChannel.entityId }}</span>
+                  @if (selectedChannel.entityType) {
+                    <span class="context-tag">{{ formatContextTag(selectedChannel) }}</span>
                   }
                 </div>
                 <div class="participants-summary">
                   @for (p of selectedChannel.participants; track p.participantId) {
                     <span class="participant-pill" [class.is-self]="p.userId === currentUserId">
-                      {{ p.displayName }} ({{ p.role }})
+                      {{ getParticipantDisplayName(p) }}
                     </span>
                   }
                 </div>
@@ -200,19 +203,19 @@ import { selectUserId, selectUserRole } from '../../core/store/auth/auth.selecto
                   @for (msg of messages; track msg.messageId) {
                     <div
                       class="message-row"
-                      [class.message-self]="msg.senderUserId === currentUserId"
-                      [class.message-other]="msg.senderUserId !== currentUserId"
+                      [class.message-self]="isSelf(msg)"
+                      [class.message-other]="!isSelf(msg)"
                     >
-                      @if (msg.senderUserId !== currentUserId) {
+                      @if (!isSelf(msg)) {
                         <div class="sender-avatar" [ngClass]="getRoleAvatarClass(msg.senderRole)">
-                          {{ (msg.senderDisplayName || 'U').charAt(0).toUpperCase() }}
+                          {{ getSenderInitial(msg) }}
                         </div>
                       }
                       <div class="message-bubble-wrapper">
                         <div class="message-meta">
-                          <span class="sender-name">{{ msg.senderDisplayName }}</span>
-                          <span class="sender-role" [ngClass]="getRoleClass(msg.senderRole)">{{ msg.senderRole }}</span>
-                          <span class="message-time">{{ msg.sentAt | date:'shortTime' }}</span>
+                          <span class="sender-name">{{ getSenderName(msg) }}</span>
+                          <span class="sender-role" [ngClass]="getRoleClass(msg.senderRole)">{{ formatRoleName(msg.senderRole) }}</span>
+                          <span class="message-time">{{ formatMessageTime(msg) }}</span>
                         </div>
                         <div class="message-bubble">
                           {{ msg.content }}
@@ -398,14 +401,24 @@ import { selectUserId, selectUserRole } from '../../core/store/auth/auth.selecto
     }
     .channel-info { flex: 1; min-width: 0; }
     .channel-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
-    .channel-name { font-size: 13px; color: #111; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .unread-pill {
-      background: var(--claret, #75013f);
+      background: #25d366;
       color: #fff;
       font-size: 10px;
-      font-weight: 700;
-      padding: 1px 6px;
-      border-radius: 10px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 12px;
+      min-width: 18px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(37, 211, 102, 0.4);
+    }
+    .channel-item.has-unread {
+      background: #f0fdf4;
+      border-left: 3px solid #25d366;
+    }
+    .channel-item.has-unread .channel-name {
+      font-weight: 800;
+      color: #0f172a;
     }
     .channel-meta { display: flex; align-items: center; gap: 8px; margin: 2px 0; }
     .time-ago { font-size: 10px; color: #888; }
@@ -500,6 +513,7 @@ import { selectUserId, selectUserRole } from '../../core/store/auth/auth.selecto
     .message-bubble-wrapper { display: flex; flex-direction: column; gap: 3px; }
     .message-self .message-bubble-wrapper { align-items: flex-end; }
     .message-meta { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+    .message-self .message-meta { flex-direction: row-reverse; }
     .sender-name { font-weight: 600; color: #222; }
     .sender-role { font-size: 9px; padding: 1px 5px; border-radius: 3px; font-weight: 700; text-transform: uppercase; }
     .message-time { color: #888; font-size: 10px; }
@@ -645,6 +659,10 @@ import { selectUserId, selectUserRole } from '../../core/store/auth/auth.selecto
     .avatar-policyholder { background: #00695c; }
     .role-admin { background: #fce4ec; color: #880e4f; }
     .avatar-admin { background: #880e4f; }
+    .role-vendor { background: #f3e8ff; color: #6b21a8; }
+    .avatar-vendor { background: #6b21a8; }
+    .role-vendor_manager { background: #e0e7ff; color: #3730a3; }
+    .avatar-vendor_manager { background: #3730a3; }
     .role-default { background: #f5f5f5; color: #424242; }
     .avatar-default { background: #616161; }
 
@@ -699,11 +717,15 @@ export class ChatWorkspaceComponent implements OnInit, OnDestroy {
 
   get filteredChannels(): ChatChannelResponse[] {
     const q = this.searchQuery.trim().toLowerCase();
-    if (!q) return this.channels;
-    return this.channels.filter(ch =>
+    const list = !q ? this.channels : this.channels.filter(ch =>
       ch.name.toLowerCase().includes(q) ||
       (ch.lastMessage && ch.lastMessage.content.toLowerCase().includes(q))
     );
+    return [...list].sort((a, b) => {
+      const timeA = this.parseDate(a.lastMessage?.sentAt || a.lastMessage?.createdAt || a.updatedAt || a.createdAt)?.getTime() ?? 0;
+      const timeB = this.parseDate(b.lastMessage?.sentAt || b.lastMessage?.createdAt || b.updatedAt || b.createdAt)?.getTime() ?? 0;
+      return timeB - timeA;
+    });
   }
 
   get teamChannels(): ChatChannelResponse[] {
@@ -735,8 +757,6 @@ export class ChatWorkspaceComponent implements OnInit, OnDestroy {
           if (found) this.selectChannel(found);
         } else if (recipientId) {
           this.initiateChatFromParams(recipientId, params['name'], entityType, entityId);
-        } else if (this.channels.length > 0 && !this.selectedChannel) {
-          this.selectChannel(this.channels[0]);
         }
       });
     });
@@ -770,7 +790,26 @@ export class ChatWorkspaceComponent implements OnInit, OnDestroy {
 
   selectChannel(channel: ChatChannelResponse): void {
     this.selectedChannel = channel;
+    this.markChannelAsRead(channel.channelId);
     this.loadMessages(channel.channelId);
+  }
+
+  getUnreadCount(channel: ChatChannelResponse): number {
+    if (this.selectedChannel?.channelId === channel.channelId) return 0;
+    if (typeof localStorage === 'undefined') return 0;
+    const lastRead = localStorage.getItem(`chat_last_read_${channel.channelId}`);
+    if (!channel.lastMessage) return 0;
+    if (this.isSelf(channel.lastMessage)) return 0;
+    if (!lastRead) return 1;
+    const msgTime = this.parseDate(channel.lastMessage.sentAt || channel.lastMessage.createdAt)?.getTime() ?? 0;
+    const readTime = new Date(lastRead).getTime();
+    return msgTime > readTime ? 1 : 0;
+  }
+
+  markChannelAsRead(channelId: string): void {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(`chat_last_read_${channelId}`, new Date().toISOString());
+    }
   }
 
   loadMessages(channelId: string): void {
@@ -871,6 +910,16 @@ export class ChatWorkspaceComponent implements OnInit, OnDestroy {
   }
 
   startChatWithContact(contact: ChatContactResponse): void {
+    // 1. Check if a channel already exists with this contact
+    const existing = this.channels.find(ch =>
+      ch.participants?.some(p => p.userId?.toLowerCase() === contact.userId.toLowerCase())
+    );
+    if (existing) {
+      this.closeNewChatModal();
+      this.selectChannel(existing);
+      return;
+    }
+
     const isSupport = !this.isEmployee;
     const req: CreateChannelRequest = {
       name: contact.displayName,
@@ -900,9 +949,17 @@ export class ChatWorkspaceComponent implements OnInit, OnDestroy {
     entityType?: string,
     entityId?: string
   ): void {
+    const existing = this.channels.find(ch =>
+      ch.participants?.some(p => p.userId?.toLowerCase() === recipientId.toLowerCase())
+    );
+    if (existing) {
+      this.selectChannel(existing);
+      return;
+    }
+
     const isSupport = !this.isEmployee;
     const req: CreateChannelRequest = {
-      name: name || 'Support Conversation',
+      name: name || 'Direct Conversation',
       channelType: isSupport ? 'CUSTOMER_SUPPORT' : 'DIRECT',
       entityType,
       entityId,
@@ -918,11 +975,111 @@ export class ChatWorkspaceComponent implements OnInit, OnDestroy {
     });
   }
 
+  isSelf(msg: ChatMessageResponse): boolean {
+    const sender = msg.senderUserId || msg.senderId;
+    return !!sender && !!this.currentUserId && sender.toLowerCase() === this.currentUserId.toLowerCase();
+  }
+
+  isUuid(str?: string | null): boolean {
+    if (!str) return false;
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str.trim());
+  }
+
+  formatRoleName(role?: string | null): string {
+    if (!role) return 'Participant';
+    const r = role.toUpperCase().replace(/^ROLE_/, '');
+    switch (r) {
+      case 'UNDERWRITER': return 'Underwriter';
+      case 'POLICYHOLDER': return 'Policyholder';
+      case 'CLAIMS_ADJUSTER': return 'Claims Adjuster';
+      case 'CLAIMS_MANAGER': return 'Claims Manager';
+      case 'RISK_ENGINEER': return 'Risk Engineer';
+      case 'VENDOR_MANAGER': return 'Vendor Manager';
+      case 'SYSTEM_ADMINISTRATOR':
+      case 'ADMIN': return 'Admin';
+      case 'VENDOR': return 'Vendor Partner';
+      default: return r.replace(/_/g, ' ');
+    }
+  }
+
+  getSenderName(msg: ChatMessageResponse): string {
+    if (this.isSelf(msg)) {
+      return 'You';
+    }
+    const rawName = msg.senderDisplayName || msg.senderName;
+    if (rawName && !this.isUuid(rawName) && rawName.toLowerCase() !== 'participant') {
+      return rawName;
+    }
+    const senderId = (msg.senderUserId || msg.senderId)?.toLowerCase();
+    if (senderId && this.selectedChannel?.participants) {
+      const p = this.selectedChannel.participants.find(part => part.userId?.toLowerCase() === senderId);
+      if (p?.displayName && !this.isUuid(p.displayName) && p.displayName.toLowerCase() !== 'participant') {
+        return p.displayName;
+      }
+    }
+    return this.formatRoleName(msg.senderRole);
+  }
+
+  getSenderInitial(msg: ChatMessageResponse): string {
+    const name = this.getSenderName(msg);
+    return (name || 'U').charAt(0).toUpperCase();
+  }
+
+  parseDate(iso?: string | null): Date | null {
+    if (!iso) return null;
+    const str = String(iso).trim();
+    // Docker Spring Boot outputs UTC LocalDateTime without 'Z'; append 'Z' if missing timezone offset
+    const hasTz = str.endsWith('Z') || /[+-]\d{2}:?\d{2}$/.test(str);
+    const normalized = hasTz ? str : `${str}Z`;
+    const d = new Date(normalized);
+    return isNaN(d.getTime()) ? new Date(str) : d;
+  }
+
+  formatMessageTime(msg: ChatMessageResponse): string {
+    const raw = msg.sentAt || msg.createdAt;
+    if (!raw) return '';
+    const d = this.parseDate(String(raw));
+    if (!d) return '';
+    return d.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: 'numeric', minute: '2-digit', hour12: true });
+  }
+
+  formatContextTag(ch: ChatChannelResponse): string {
+    const type = (ch.entityType || '').toUpperCase();
+    if (type === 'QUOTE') return 'Quote Inquiry';
+    if (type === 'CLAIM') return 'Claim Operations';
+    if (type === 'POLICY') return 'Policy Support';
+    return `${ch.entityType || 'Support'} Context`;
+  }
+
+  getParticipantDisplayName(p: ChatParticipantResponse): string {
+    if (this.currentUserId && p.userId?.toLowerCase() === this.currentUserId.toLowerCase()) {
+      const myRole = this.currentUserRole ? this.formatRoleName(this.currentUserRole) : this.formatRoleName(p.role);
+      return `You (${myRole})`;
+    }
+    const name = (!p.displayName || this.isUuid(p.displayName) || p.displayName.toLowerCase() === 'participant')
+      ? this.formatRoleName(p.role)
+      : p.displayName;
+    const role = this.formatRoleName(p.role);
+    if (name.toLowerCase() === role.toLowerCase()) {
+      return name;
+    }
+    return `${name} (${role})`;
+  }
+
   getChannelDisplayName(ch: ChatChannelResponse): string {
     if (ch.channelType === 'INTERNAL_GROUP') return ch.name;
-    // For direct or customer support, show other participant's name
-    const other = ch.participants?.find(p => p.userId !== this.currentUserId);
-    return other ? other.displayName : ch.name;
+    const other = ch.participants?.find(p => p.userId?.toLowerCase() !== this.currentUserId?.toLowerCase());
+    if (other) {
+      const name = (!other.displayName || this.isUuid(other.displayName) || other.displayName.toLowerCase() === 'participant')
+        ? this.formatRoleName(other.role)
+        : other.displayName;
+      const role = this.formatRoleName(other.role);
+      return name.toLowerCase() === role.toLowerCase() ? name : `${name} (${role})`;
+    }
+    if (ch.name && !this.isUuid(ch.name) && ch.name.toLowerCase() !== 'support conversation') {
+      return ch.name;
+    }
+    return ch.channelType === 'CUSTOMER_SUPPORT' ? 'Support Desk' : 'Direct Conversation';
   }
 
   getChannelInitial(ch: ChatChannelResponse): string {
@@ -938,6 +1095,8 @@ export class ChatWorkspaceComponent implements OnInit, OnDestroy {
 
   getRoleClass(role: string): string {
     const r = (role || '').toUpperCase();
+    if (r.includes('VENDOR_MANAGER')) return 'role-vendor_manager';
+    if (r.includes('VENDOR')) return 'role-vendor';
     if (r.includes('UNDERWRITER')) return 'role-underwriter';
     if (r.includes('ADJUSTER') || r.includes('CLAIMS')) return 'role-adjuster';
     if (r.includes('POLICYHOLDER') || r.includes('USER')) return 'role-policyholder';
@@ -947,6 +1106,8 @@ export class ChatWorkspaceComponent implements OnInit, OnDestroy {
 
   getRoleAvatarClass(role: string): string {
     const r = (role || '').toUpperCase();
+    if (r.includes('VENDOR_MANAGER')) return 'avatar-vendor_manager';
+    if (r.includes('VENDOR')) return 'avatar-vendor';
     if (r.includes('UNDERWRITER')) return 'avatar-underwriter';
     if (r.includes('ADJUSTER') || r.includes('CLAIMS')) return 'avatar-adjuster';
     if (r.includes('POLICYHOLDER') || r.includes('USER')) return 'avatar-policyholder';
@@ -956,12 +1117,9 @@ export class ChatWorkspaceComponent implements OnInit, OnDestroy {
 
   formatTime(iso?: string): string {
     if (!iso) return '';
-    try {
-      const d = new Date(iso);
-      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } catch {
-      return '';
-    }
+    const d = this.parseDate(iso);
+    if (!d) return '';
+    return d.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: 'numeric', minute: '2-digit', hour12: true });
   }
 
   private scrollToBottom(): void {

@@ -36,7 +36,7 @@ import { CardComponent, ButtonComponent, InputComponent, SelectComponent, Textar
           [currentStep]="currentStep"
           [orientation]="'horizontal'"
           [submitLabel]="submitting ? 'Submitting…' : 'Submit claim'"
-          (currentStepChange)="currentStep = $event"
+          (currentStepChange)="onStepChange($event)"
           (next)="onNext()"
           (previous)="onPrevious()"
           (submit)="onSubmit()"
@@ -56,7 +56,7 @@ import { CardComponent, ButtonComponent, InputComponent, SelectComponent, Textar
       <div class="form-grid" [formGroup]="claimForm">
         <div class="md:col-span-2">
           <is-select
-            label="Policy number"
+            label="Policy number *"
             placeholder="Select the policy for this claim"
             [options]="policyOptions"
             formControlName="policyId"
@@ -67,7 +67,10 @@ import { CardComponent, ButtonComponent, InputComponent, SelectComponent, Textar
           } @else if (policyLookupError) {
             <small class="field-error">{{ policyLookupError }}</small>
           } @else if (!policyOptions.length) {
-            <small class="field-hint">No eligible policies were found for this account.</small>
+            <div class="policy-alert-box" role="alert">
+              <strong>No active policies found for this business account</strong>
+              <p>An active commercial policy in good standing is required before submitting a First Notice of Loss (FNOL).</p>
+            </div>
           }
         </div>
         <is-input
@@ -77,7 +80,7 @@ import { CardComponent, ButtonComponent, InputComponent, SelectComponent, Textar
           [error]="getError('incidentDate')"
         />
         <is-input
-          label="Estimated loss (USD)"
+          label="Estimated loss (₹)"
           type="number"
           placeholder="0.00"
           formControlName="estimatedLoss"
@@ -140,6 +143,25 @@ import { CardComponent, ButtonComponent, InputComponent, SelectComponent, Textar
     }
     .error-banner p {
       margin: 2px 0 0;
+    }
+
+    .policy-alert-box {
+      margin-top: 8px;
+      padding: 10px 14px;
+      background: #fff8f1;
+      border: 1px solid #fed7aa;
+      border-radius: 6px;
+      color: #9a3412;
+      font-size: 11px;
+    }
+    .policy-alert-box strong {
+      display: block;
+      margin-bottom: 2px;
+      font-weight: 600;
+    }
+    .policy-alert-box p {
+      margin: 0;
+      color: #7c2d12;
     }
     
     .form-grid {
@@ -241,7 +263,8 @@ export class ClaimCreateComponent {
   getError(controlName: string): string | undefined {
     const control = this.claimForm.get(controlName);
     if (control?.invalid && (control.dirty || control.touched)) {
-      if (control.errors?.['required']) return `${this.getFieldLabel(controlName)} is required`;
+      if (control.errors?.['required'] || control.errors?.['requiredPolicy']) return `${this.getFieldLabel(controlName)} is required`;
+      if (control.errors?.['pattern']) return 'Please select a valid policy identifier';
       if (control.errors?.['min']) return 'Amount must be greater than or equal to 0';
       if (control.errors?.['minlength']) return 'Description must be at least 5 characters';
     }
@@ -294,19 +317,61 @@ export class ClaimCreateComponent {
     return productCode.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
   }
 
-  onNext(): void {
-    if (this.currentStep === 0) {
-      const pControl = this.claimForm.get('policyId');
-      const dControl = this.claimForm.get('incidentDate');
-      pControl?.markAsTouched();
-      dControl?.markAsTouched();
-      if (pControl?.invalid || dControl?.invalid) return;
-    } else if (this.currentStep === 1) {
-      const descControl = this.claimForm.get('description');
-      descControl?.markAsTouched();
-      if (descControl?.invalid) return;
-    }
+  canAdvanceFrom(step: number): boolean {
+    if (step === 0) {
+      const pControl = this.claimForm.controls.policyId;
+      const dControl = this.claimForm.controls.incidentDate;
+      const lControl = this.claimForm.controls.estimatedLoss;
+      pControl.markAsTouched();
+      dControl.markAsTouched();
+      lControl.markAsTouched();
 
+      const policyId = (pControl.value || '').trim();
+      const isValidSelected = !!policyId && this.policyOptions.some((opt) => opt.value === policyId);
+
+      if (!isValidSelected) {
+        pControl.setErrors({ requiredPolicy: true });
+        this.error = this.policyOptions.length === 0
+          ? 'You must have an active commercial policy to file a claim. No eligible policies found.'
+          : 'Please select an eligible active policy from the list before proceeding.';
+        return false;
+      }
+
+      if (dControl.invalid || lControl.invalid) {
+        this.error = 'Please enter a valid incident date and non-negative estimated loss.';
+        return false;
+      }
+
+      this.error = null;
+      return true;
+    } else if (step === 1) {
+      const descControl = this.claimForm.controls.description;
+      descControl.markAsTouched();
+      if (descControl.invalid) {
+        this.error = 'Please provide an incident description with at least 5 characters.';
+        return false;
+      }
+      this.error = null;
+      return true;
+    }
+    return true;
+  }
+
+  onStepChange(targetIndex: number): void {
+    if (targetIndex > this.currentStep) {
+      for (let s = this.currentStep; s < targetIndex; s++) {
+        if (!this.canAdvanceFrom(s)) {
+          return;
+        }
+      }
+    }
+    this.currentStep = targetIndex;
+  }
+
+  onNext(): void {
+    if (!this.canAdvanceFrom(this.currentStep)) {
+      return;
+    }
     if (this.currentStep < this.steps.length - 1) {
       this.currentStep++;
     }
@@ -319,8 +384,17 @@ export class ClaimCreateComponent {
   }
 
   onSubmit(): void {
+    if (!this.canAdvanceFrom(0)) {
+      this.currentStep = 0;
+      return;
+    }
+    if (!this.canAdvanceFrom(1)) {
+      this.currentStep = 1;
+      return;
+    }
     if (this.claimForm.invalid) {
       this.claimForm.markAllAsTouched();
+      this.error = 'Please complete all required fields before submitting.';
       return;
     }
 

@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter, ContentChild, TemplateRef, AfterContentInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonComponent } from '../button/button.component';
+import { BadgeComponent, BadgeVariant } from '../badge/badge.component';
 
 export interface TableColumn<T> {
   key: string;
@@ -8,6 +9,7 @@ export interface TableColumn<T> {
   width?: string;
   align?: 'left' | 'center' | 'right';
   render?: (row: T, value: any) => string;
+  badge?: (row: T, value: any) => { text: string; variant?: BadgeVariant };
   sticky?: boolean | 'left' | 'right';
 }
 
@@ -22,7 +24,7 @@ export interface TableAction<T> {
 @Component({
   selector: 'is-table',
   standalone: true,
-  imports: [CommonModule, ButtonComponent],
+  imports: [CommonModule, ButtonComponent, BadgeComponent],
   template: `
     <div class="table-wrap" [class.table-wrap-sticky]="stickyHeader">
       <table class="table" [style.min-width.px]="minWidth">
@@ -46,14 +48,22 @@ export interface TableAction<T> {
         </thead>
         <tbody>
           @for (row of data; track trackByFn($index, row)) {
-            <tr [class]="'row-' + rowIndex($index)">
+            <tr
+              [class]="'row-' + rowIndex($index)"
+              [class.table-row-clickable]="isRowClickable()"
+              (click)="onRowClick(row, $event)"
+            >
               @for (column of columns; track column.key) {
                 <td
                   [style.text-align]="column.align"
                   [class.table-value]="column.align === 'right'"
                 >
-                  @if (column.render) {
-                    {{ column.render(row, getValue(row, column.key)) }}
+                  @if (column.badge) {
+                    <is-badge [variant]="column.badge(row, getValue(row, column.key)).variant || 'neutral'" size="sm">
+                      {{ column.badge(row, getValue(row, column.key)).text }}
+                    </is-badge>
+                  } @else if (column.render) {
+                    {{ stripTags(column.render(row, getValue(row, column.key))) }}
                   } @else {
                     {{ getValue(row, column.key) }}
                   }
@@ -67,7 +77,7 @@ export interface TableAction<T> {
                         [variant]="action.variant || 'text'"
                         [size]="'sm'"
                         [disabled]="action.disabled ? action.disabled(row) : false"
-                        (click)="action.handler(row)"
+                        (click)="onActionClick(action, row, $event)"
                       >
                         @if (action.icon) {
                           <span aria-hidden="true">{{ action.icon }}</span>
@@ -166,6 +176,14 @@ export interface TableAction<T> {
       background: #fcfbfa;
     }
     
+    .table-row-clickable {
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+    .table-row-clickable:hover {
+      background: #f7f4f0 !important;
+    }
+    
     .table td strong {
       color: #242224;
       font-weight: 600;
@@ -239,10 +257,32 @@ export class TableComponent<T = any> implements AfterContentInit {
   @Input() pageSize = 10;
   @Input() totalItems = 0;
   @Output() pageChange = new EventEmitter<number>();
+  @Output() rowClick = new EventEmitter<T>();
 
   @ContentChild('rowExpansion') rowExpansionTemplate?: TemplateRef<any>;
 
   ngAfterContentInit(): void {}
+
+  isRowClickable(): boolean {
+    return this.rowClick.observed || (this.actions && this.actions.length > 0);
+  }
+
+  onRowClick(row: T, event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (target.closest('.table-actions') || target.closest('button') || target.closest('a')) {
+      return;
+    }
+    if (this.rowClick.observed) {
+      this.rowClick.emit(row);
+    } else if (this.actions && this.actions.length > 0) {
+      this.actions[0].handler(row);
+    }
+  }
+
+  onActionClick(action: TableAction<T>, row: T, event: MouseEvent): void {
+    event.stopPropagation();
+    action.handler(row);
+  }
 
   rowIndex(index: number): string {
     return `row-${index}`;
@@ -250,6 +290,13 @@ export class TableComponent<T = any> implements AfterContentInit {
 
   getValue(row: T, key: string): any {
     return (row as Record<string, any>)[key];
+  }
+
+  stripTags(value: any): string {
+    if (typeof value === 'string' && value.includes('<')) {
+      return value.replace(/<[^>]*>/g, '').trim();
+    }
+    return String(value ?? '');
   }
 
   Math = Math;

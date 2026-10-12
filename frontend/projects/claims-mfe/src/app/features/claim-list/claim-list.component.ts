@@ -1,6 +1,6 @@
 import { CurrencyPipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ClaimResponse } from '../../models/claim.models';
 import { ClaimsService } from '../../services/claims.service';
 
@@ -84,6 +84,7 @@ import { CardComponent, ButtonComponent, BadgeComponent, TableComponent, TableCo
           [columns]="columns"
           [data]="claims"
           [actions]="actions"
+          (rowClick)="onRowClick($event)"
           [trackByFn]="trackByClaimId"
           [emptyMessage]="'No claims found'"
         />
@@ -202,16 +203,29 @@ import { CardComponent, ButtonComponent, BadgeComponent, TableComponent, TableCo
 export class ClaimListComponent implements OnInit {
   private readonly claimsService = inject(ClaimsService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
+  allClaims: ClaimResponse[] = [];
   claims: ClaimResponse[] = [];
   loading = false;
   error: string | null = null;
   selectedStatus = '';
+  searchQuery = '';
   isPolicyholder = false;
 
   columns: TableColumn<ClaimResponse>[] = [
-    { key: 'claimNumber', header: 'Claim #', width: '150px' },
-    { key: 'status', header: 'Status', width: '130px', render: this.renderStatus.bind(this) },
+    { key: 'claimNumber', header: 'Claim #', width: '140px' },
+    { key: 'policyNumber', header: 'Policy #', width: '150px', render: (row: ClaimResponse) => row.policyNumber || 'POL-LINKED' },
+    {
+      key: 'status',
+      header: 'Status',
+      width: '160px',
+      badge: (row, value) => ({
+        text: this.renderStatus(row, value),
+        variant: this.getStatusVariant(value),
+      }),
+      render: this.renderStatus.bind(this),
+    },
     { key: 'estimatedLoss', header: 'Estimated Loss', width: '130px', align: 'right', render: this.renderAmount.bind(this) },
     { key: 'incidentDate', header: 'Incident Date', width: '120px' },
     { key: 'reportedDate', header: 'Reported', width: '120px' },
@@ -229,6 +243,12 @@ export class ClaimListComponent implements OnInit {
     const rawRole = typeof localStorage !== 'undefined' ? localStorage.getItem('is_role') : null;
     const role = (rawRole ?? '').toUpperCase().replace(/^ROLE_/, '');
     this.isPolicyholder = ['POLICYHOLDER', 'USER'].includes(role);
+
+    this.route.queryParams.subscribe((params) => {
+      this.searchQuery = params['search'] || '';
+      this.applyFilter();
+    });
+
     this.loadClaims();
   }
 
@@ -237,7 +257,8 @@ export class ClaimListComponent implements OnInit {
     this.error = null;
     this.claimsService.getClaims(this.selectedStatus).subscribe({
       next: (data) => {
-        this.claims = data || [];
+        this.allClaims = data || [];
+        this.applyFilter();
         this.loading = false;
       },
       error: (err) => {
@@ -245,6 +266,20 @@ export class ClaimListComponent implements OnInit {
         this.loading = false;
       },
     });
+  }
+
+  applyFilter(): void {
+    if (!this.searchQuery) {
+      this.claims = [...this.allClaims];
+      return;
+    }
+    const q = this.searchQuery.toLowerCase();
+    this.claims = this.allClaims.filter((c) =>
+      (c.claimNumber && c.claimNumber.toLowerCase().includes(q)) ||
+      (c.status && c.status.toLowerCase().includes(q)) ||
+      (c.description && c.description.toLowerCase().includes(q)) ||
+      (c.incidentType && c.incidentType.toLowerCase().includes(q))
+    );
   }
 
   onStatusChange(event: Event): void {
@@ -257,26 +292,35 @@ export class ClaimListComponent implements OnInit {
     this.router.navigate(['/claims', 'new']);
   }
 
+  onRowClick(claim: ClaimResponse): void {
+    this.router.navigate(['/claims', claim.claimId]);
+  }
+
   trackByClaimId(index: number, item: ClaimResponse): string {
     return item.claimId;
   }
 
-  renderStatus(row: ClaimResponse, value: string): string {
+  getStatusVariant(value: string): 'success' | 'warning' | 'danger' | 'info' | 'neutral' {
     const val = (value || '').toUpperCase();
     const statusMap: Record<string, 'success' | 'warning' | 'danger' | 'info' | 'neutral'> = {
       'OPEN': 'info',
       'FNOL_RECEIVED': 'info',
       'COVERAGE_REVIEW': 'warning',
       'RESERVED': 'warning',
+      'ADJUSTER_REVIEWED': 'info',
       'APPROVED': 'success',
       'SETTLED': 'success',
       'PAID': 'success',
       'DENIED': 'danger',
       'CLOSED': 'neutral',
     };
-    const variant = statusMap[val] || 'neutral';
-    const label = val.replace(/_/g, ' ');
-    return `<is-badge variant="${variant}" size="sm">${label}</is-badge>`;
+    return statusMap[val] || 'neutral';
+  }
+
+  renderStatus(row: ClaimResponse, value: string): string {
+    const val = (value || '').toUpperCase();
+    if (val === 'ADJUSTER_REVIEWED') return 'ADJUSTER REVIEWED & APPROVED';
+    return val.replace(/_/g, ' ');
   }
 
   renderAmount(row: ClaimResponse, value: number): string {

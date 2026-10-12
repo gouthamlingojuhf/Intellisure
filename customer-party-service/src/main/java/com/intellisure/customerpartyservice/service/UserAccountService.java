@@ -134,6 +134,31 @@ public class UserAccountService {
         return value != null && value.toLowerCase(Locale.ROOT).contains(search);
     }
 
+    public Mono<Void> changePassword(UUID userId, com.intellisure.customerpartyservice.dto.ChangePasswordRequest request) {
+        return userAccountRepo.findById(userId)
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException("User not found")))
+                .flatMap(user -> {
+                    if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+                        return Mono.error(new com.intellisure.customerpartyservice.exception.BusinessException("Current password does not match"));
+                    }
+                    user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+                    user.setUpdatedAt(LocalDateTime.now());
+                    return r2dbcEntityTemplate.update(user).then();
+                });
+    }
+
+    public Mono<UserResponse> promoteVendorByEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return Mono.empty();
+        }
+        return userAccountRepo.findByEmail(email.trim().toLowerCase(Locale.ROOT))
+                .flatMap(user -> {
+                    user.setRole("VENDOR");
+                    user.setUpdatedAt(LocalDateTime.now());
+                    return r2dbcEntityTemplate.update(user).map(userAccountMapper::toUserResponse);
+                });
+    }
+
     private String normalizeRole(String role) {
         if (role == null || role.isBlank()) {
             return "POLICYHOLDER";
@@ -146,3 +171,4 @@ public class UserAccountService {
     }
 
 }
+

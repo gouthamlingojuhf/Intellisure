@@ -36,18 +36,26 @@ public class SecurityActorService {
             ));
         }
 
-        return hasAnyRole(
-                "UNDERWRITER",
-                "RISK_ENGINEER",
-                "CLAIMS_ADJUSTER",
-                "CLAIMS_MANAGER",
-                "VENDOR_MANAGER",
-                "SYSTEM_ADMINISTRATOR",
-                "ADMIN",
-                "SYSTEM"
-        ).flatMap(isStaff -> isStaff
-                ? Mono.empty()
-                : assertUserAccess(recipientUserId));
+        return ReactiveSecurityContextHolder.getContext()
+                .map(context -> context.getAuthentication())
+                .flatMap(auth -> {
+                    if (auth == null || !auth.isAuthenticated()) {
+                        return Mono.<Void>empty();
+                    }
+                    return hasAnyRole(
+                            "UNDERWRITER",
+                            "RISK_ENGINEER",
+                            "CLAIMS_ADJUSTER",
+                            "CLAIMS_MANAGER",
+                            "VENDOR_MANAGER",
+                            "SYSTEM_ADMINISTRATOR",
+                            "ADMIN",
+                            "SYSTEM"
+                    ).flatMap(isStaff -> isStaff
+                            ? Mono.empty()
+                            : assertUserAccess(recipientUserId));
+                })
+                .switchIfEmpty(Mono.empty());
     }
 
     public Mono<String> currentRole() {

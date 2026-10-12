@@ -19,6 +19,7 @@ import java.util.UUID;
 public class NotificationController {
 
     private final NotificationService notificationService;
+    private final com.intellisure.workflownotificationservice.security.SecurityActorService securityActorService;
 
     @PostMapping
     public Mono<NotificationResponse> createNotification(@Valid @RequestBody CreateNotificationRequest request) {
@@ -27,16 +28,24 @@ public class NotificationController {
 
     @GetMapping
     public Mono<NotificationListResponse> getNotifications(
-            @RequestParam UUID userId,
-            @RequestParam(defaultValue = "false") boolean read,
+            @RequestParam(required = false) UUID userId,
+            @RequestParam(required = false) Boolean read,
             @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "20") Integer size) {
-        return notificationService.getNotifications(userId, read, page, size);
+            @RequestParam(defaultValue = "50") Integer size) {
+        if (userId != null) {
+            return notificationService.getNotifications(userId, read, page, size);
+        }
+        return securityActorService.currentUserId()
+                .flatMap(targetId -> notificationService.getNotifications(targetId, read, page, size));
     }
 
     @GetMapping("/unread-count")
-    public Mono<Long> getUnreadCount(@RequestParam UUID userId) {
-        return notificationService.getUnreadCount(userId);
+    public Mono<Long> getUnreadCount(@RequestParam(required = false) UUID userId) {
+        if (userId != null) {
+            return notificationService.getUnreadCount(userId);
+        }
+        return securityActorService.currentUserId()
+                .flatMap(notificationService::getUnreadCount);
     }
 
     @GetMapping("/type/{type}")

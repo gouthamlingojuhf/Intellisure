@@ -25,6 +25,7 @@ import static org.mockito.Mockito.*;
 class ControllerTest {
     @Mock NotificationService notificationService;
     @Mock WorkflowOrchestrationService workflowService;
+    @Mock com.intellisure.workflownotificationservice.security.SecurityActorService securityActorService;
     @InjectMocks NotificationController notificationController;
     @InjectMocks WorkflowController workflowController;
     @InjectMocks WorkflowTaskController workflowTaskController;

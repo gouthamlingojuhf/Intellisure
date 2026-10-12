@@ -89,8 +89,9 @@ describe('ClaimListComponent', () => {
     component.goToFileClaim(); expect(router.navigate).toHaveBeenCalledWith(['/claims', 'new']);
     component.onStatusChange({ target: { value: 'OPEN' } } as any); expect(claimsService.getClaims).toHaveBeenCalledWith('OPEN');
     expect(component.trackByClaimId(0, claim)).toBe('claim-1');
-    expect(component.renderStatus(claim, 'APPROVED')).toContain('success');
-    expect(component.renderStatus(claim, 'UNKNOWN')).toContain('neutral');
+    expect(component.getStatusVariant('APPROVED')).toBe('success');
+    expect(component.getStatusVariant('UNKNOWN')).toBe('neutral');
+    expect(component.renderStatus(claim, 'APPROVED')).toBe('APPROVED');
     expect(component.renderAmount(claim, 12345)).toContain('12,345');
     localStorage.clear();
   });
@@ -156,6 +157,7 @@ describe('ClaimCreateComponent', () => {
     localStorage.setItem('is_customer_id', 'customer-1');
     const failed = TestBed.createComponent(ClaimCreateComponent).componentInstance;
     expect(failed.policyLookupError).toContain('could not be loaded');
+    failed.policyOptions = [{ value: policyId, label: 'POL-1' }];
     failed.claimForm.setValue({ policyId, incidentDate: '2026-01-01', estimatedLoss: 0, description: 'Valid loss' });
     claimsService.fileClaim.and.returnValue(throwError(() => ({ status: 401 })));
     failed.onSubmit(); expect(failed.error).toContain('session');

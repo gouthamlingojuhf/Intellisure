@@ -77,15 +77,16 @@ public class SecurityConfig {
                                         "/swagger-ui.html",
                                         "/swagger-ui/**",
                                         "/v3/api-docs",
-                                        "/v3/api-docs/**"
+                                        "/v3/api-docs/**",
+                                        "/api/users/available",
+                                        "/api/users/role/**",
+                                        "/api/customers/by-user/**"
                                 )
                                 .permitAll()
                                 .pathMatchers("/api/admin/**")
                                 .hasAnyRole("SYSTEM_ADMINISTRATOR", "ADMIN")
-                                .pathMatchers("/api/users/available", "/api/users/role/*/available", "/api/users/role/CLAIMS_ADJUSTER/available")
-                                .authenticated()
-                                .pathMatchers("/api/users/role/**")
-                                .hasAnyRole("CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "UNDERWRITER", "RISK_ENGINEER", "VENDOR_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
+                                .pathMatchers("/api/users/promote-vendor")
+                                .hasAnyRole("VENDOR_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
                                 .anyExchange()
                                 .authenticated()
                 )

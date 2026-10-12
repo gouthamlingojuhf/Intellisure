@@ -7,22 +7,17 @@ import { NotificationListResponse, NotificationResponse } from '../models/notifi
 export class NotificationService {
   private readonly api = inject(ApiService);
 
-  getNotifications(userId: string, read: boolean): Observable<NotificationListResponse> {
-    return this.api.get<NotificationListResponse>('/api/notifications', {
-      userId,
-      read,
-      page: 0,
-      size: 50,
-    });
+  getNotifications(userId: string, read?: boolean): Observable<NotificationListResponse> {
+    const params: any = { userId, page: 0, size: 100 };
+    if (read !== undefined) {
+      params.read = read;
+    }
+    return this.api.get<NotificationListResponse>('/api/notifications', params);
   }
 
   getAllNotifications(userId: string): Observable<NotificationResponse[]> {
-    return forkJoin({
-      unread: this.getNotifications(userId, false),
-      read: this.getNotifications(userId, true),
-    }).pipe(
-      map(({ unread, read }) => [...(unread?.items ?? []), ...(read?.items ?? [])]
-        .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? '')))
+    return this.getNotifications(userId).pipe(
+      map((res) => (res?.items ?? []).sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? '')))
     );
   }
 

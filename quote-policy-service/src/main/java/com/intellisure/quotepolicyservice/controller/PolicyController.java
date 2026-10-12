@@ -119,6 +119,23 @@ public class PolicyController {
         return policyService.getPolicyById(policyId);
     }
 
+    @GetMapping("/by-quote/{quoteId}")
+    @Operation(summary = "Get policy by originating quote ID")
+    @PreAuthorize("""
+                    hasAnyRole(
+                    'POLICYHOLDER',
+                    'UNDERWRITER',
+                    'ADMIN',
+                    'SYSTEM_ADMINISTRATOR',
+                    'CLAIMS_ADJUSTER',
+                    'CLAIMS_MANAGER'
+                    )""")
+    public Mono<PolicyResponse> getPolicyByQuoteId(
+            @PathVariable UUID quoteId
+    ) {
+        return policyService.getPolicyByQuoteId(quoteId);
+    }
+
     @GetMapping("/number/{policyNumber}")
     @Operation(summary = "Get policy by policy number")
     @PreAuthorize("""
@@ -151,7 +168,7 @@ public class PolicyController {
         );
     }
 
-    @GetMapping("/admin")
+    @GetMapping({"", "/admin"})
     @Operation(summary = "Get all policies for administrators")
     public Flux<PolicyResponse> getAllPoliciesForAdministration() {
         return policyService.getAllPoliciesForAdministration();

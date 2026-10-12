@@ -72,4 +72,8 @@ export class QuoteService {
   reassignUnderwriter(quoteId: string, underwriterId: string): Observable<QuoteResponse> {
     return this.api.patch<QuoteResponse>(`/api/quotes/${quoteId}/underwriter/reassign`, { underwriterId });
   }
+
+  getAvailableUnderwriters(): Observable<any[]> {
+    return this.api.get<any[]>('/api/users/role/UNDERWRITER/available');
+  }
 }

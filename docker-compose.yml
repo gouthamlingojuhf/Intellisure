@@ -6,6 +6,7 @@ x-backend-defaults: &backend-defaults
     - intellisure-network
   environment: &backend-environment
     SPRING_PROFILES_ACTIVE: docker
+    TZ: Asia/Kolkata
     SPRING_R2DBC_USERNAME: root
     SPRING_R2DBC_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD for Docker development}
     EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -28,6 +29,7 @@ services:
     networks:
       - intellisure-network
     environment:
+      TZ: Asia/Kolkata
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD for Docker development}
     ports:
       - "3306:3306"

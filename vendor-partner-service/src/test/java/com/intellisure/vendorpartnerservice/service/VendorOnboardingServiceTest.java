@@ -25,6 +25,7 @@ import static org.mockito.Mockito.*;
 class VendorOnboardingServiceTest {
     @Mock VendorOnboardingRequestRepository onboardingRepository;
     @Mock VendorRepository vendorRepository;
+    @Mock com.intellisure.vendorpartnerservice.client.CustomerPartyClient customerPartyClient;
     @InjectMocks VendorOnboardingService service;
 
     @Test
@@ -64,6 +65,7 @@ class VendorOnboardingServiceTest {
         when(vendorRepository.findById(vendorId)).thenReturn(Mono.just(vendor));
         when(vendorRepository.save(any(Vendor.class))).thenAnswer(i -> Mono.just(i.getArgument(0)));
         when(onboardingRepository.save(any(com.intellisure.vendorpartnerservice.entity.VendorOnboardingRequest.class))).thenAnswer(i -> Mono.just(i.getArgument(0)));
+        when(customerPartyClient.promoteVendorByEmail(any())).thenReturn(Mono.empty());
         VerifyVendorRequest approve = new VerifyVendorRequest("APPROVE", null, List.of(reviewer));
         StepVerifier.create(service.verifyVendor(vendorId, approve)).assertNext(r -> assertEquals("VERIFIED", r.status())).verifyComplete();
         assertEquals(VendorVerificationStatus.VERIFIED, vendor.getVerificationStatus()); assertEquals(VendorActiveStatus.ACTIVE, vendor.getActiveStatus());

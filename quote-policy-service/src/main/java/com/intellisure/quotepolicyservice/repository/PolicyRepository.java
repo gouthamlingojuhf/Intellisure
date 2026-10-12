@@ -17,6 +17,8 @@ public interface PolicyRepository
 
     Flux<Policy> findAllByCustomerId(UUID customerId);
 
+    Flux<Policy> findAllByIssuedByUserId(UUID issuedByUserId);
+
     Flux<Policy> findAllByStatus(
             PolicyStatus status
     );

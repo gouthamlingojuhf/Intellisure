@@ -64,10 +64,12 @@ describe('AppComponent', () => {
     expect(app.userInitial).toBe('P');
     expect(app.userRoleLabel).toBe('POLICYHOLDER');
     expect(app.isWorkspaceRoute).toBeTrue();
-    expect(app.userMenuItems.map(item => item.label)).toContain('Business profile');
+    expect(app.userMenuItems.map(item => item.label)).toContain('Profile & Security');
+    expect(app.userMenuItems.map(item => item.label)).toContain('Dashboard');
     app.role = 'UNDERWRITER';
     expect(app.isPolicyholder).toBeFalse();
-    expect(app.userMenuItems.map(item => item.label)).not.toContain('Business profile');
+    expect(app.userMenuItems.map(item => item.label)).toContain('Profile & Security');
+    expect(app.userMenuItems.map(item => item.label)).not.toContain('Dashboard');
     app.currentPath = '/';
     expect(app.isWorkspaceRoute).toBeFalse();
     app.currentPath = '/auth/login';

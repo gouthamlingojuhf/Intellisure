@@ -26,7 +26,7 @@
 
           <div class="hero-actions">
             @if (isAuthenticated$ | async) {
-              <a routerLink="/policy" class="hero-cta-btn">
+              <a [routerLink]="(workspaceLink$ | async) ?? '/quotes'" class="hero-cta-btn">
                 <is-button variant="primary" size="lg">
                   Enter Workspace
                   <span class="btn-arrow" aria-hidden="true">&rarr;</span>

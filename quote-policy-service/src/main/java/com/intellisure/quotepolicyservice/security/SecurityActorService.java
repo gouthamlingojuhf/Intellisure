@@ -1,5 +1,6 @@
 package com.intellisure.quotepolicyservice.security;
 
+import com.intellisure.quotepolicyservice.client.CustomerPartyClient;
 import com.intellisure.quotepolicyservice.exception.AccessDeniedBusinessException;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -10,6 +11,17 @@ import java.util.UUID;
 
 @Service
 public class SecurityActorService {
+
+    private final CustomerPartyClient customerPartyClient;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public SecurityActorService(CustomerPartyClient customerPartyClient) {
+        this.customerPartyClient = customerPartyClient;
+    }
+
+    public SecurityActorService() {
+        this.customerPartyClient = null;
+    }
 
     public Mono<UUID> currentUserId() {
         return currentToken()
@@ -29,29 +41,52 @@ public class SecurityActorService {
                                             "customerId"
                                     );
 
-                    if (customerId == null
-                            || customerId.isBlank()) {
-                        return Mono.error(
-                                new AccessDeniedBusinessException(
-                                        "A business customer profile "
-                                                + "is required before "
-                                                + "creating a quote"
-                                )
-                        );
+                    if (customerId != null && !customerId.isBlank()) {
+                        try {
+                            return Mono.just(
+                                    UUID.fromString(customerId)
+                            );
+                        } catch (IllegalArgumentException exception) {
+                            return Mono.error(
+                                    new AccessDeniedBusinessException(
+                                            "The authenticated token contains "
+                                                    + "an invalid customerId"
+                                    )
+                            );
+                        }
                     }
 
-                    try {
-                        return Mono.just(
-                                UUID.fromString(customerId)
-                        );
-                    } catch (IllegalArgumentException exception) {
-                        return Mono.error(
-                                new AccessDeniedBusinessException(
-                                        "The authenticated token contains "
-                                                + "an invalid customerId"
-                                )
-                        );
+                    if (customerPartyClient != null) {
+                        try {
+                            UUID userId = UUID.fromString(token.getToken().getSubject());
+                            String tokenValue = token.getToken().getTokenValue();
+                            return customerPartyClient.findCustomerIdByUserId(userId, tokenValue)
+                                    .switchIfEmpty(
+                                            Mono.error(
+                                                    new AccessDeniedBusinessException(
+                                                            "A business customer profile "
+                                                                    + "is required before "
+                                                                    + "creating a quote"
+                                                    )
+                                            )
+                                    );
+                        } catch (IllegalArgumentException exception) {
+                            return Mono.error(
+                                    new AccessDeniedBusinessException(
+                                            "The authenticated token contains "
+                                                    + "an invalid user identity"
+                                    )
+                            );
+                        }
                     }
+
+                    return Mono.error(
+                            new AccessDeniedBusinessException(
+                                    "A business customer profile "
+                                            + "is required before "
+                                            + "creating a quote"
+                            )
+                    );
                 });
     }
 
@@ -84,7 +119,10 @@ public class SecurityActorService {
                 "CLAIMS_ADJUSTER",
                 "CLAIMS_MANAGER",
                 "CLAIMS_SERVICE",
-                "SYSTEM"
+                "SYSTEM",
+                "RISK_ENGINEER",
+                "VENDOR_MANAGER",
+                "VENDOR"
         ).flatMap(isStaff -> {
             if (Boolean.TRUE.equals(isStaff)) {
                 return Mono.empty();
@@ -119,6 +157,12 @@ public class SecurityActorService {
                             return false;
                         }))
                 .defaultIfEmpty(false);
+    }
+
+    public Mono<String> currentTokenValue() {
+        return currentToken()
+                .map(token -> token.getToken().getTokenValue())
+                .onErrorResume(err -> Mono.empty());
     }
 
     private Mono<JwtAuthenticationToken> currentToken() {

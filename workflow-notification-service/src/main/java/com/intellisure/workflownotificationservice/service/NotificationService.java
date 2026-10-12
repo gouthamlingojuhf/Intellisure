@@ -117,14 +117,24 @@ public class NotificationService {
             .map(this::mapToResponse);
     }
 
-    public Mono<NotificationListResponse> getNotifications(UUID userId, boolean read, Integer page, Integer size) {
+    public Mono<NotificationListResponse> getNotifications(UUID userId, Boolean read, Integer page, Integer size) {
         return securityActorService.assertUserAccess(userId)
             .then(Mono.defer(() -> {
-                Flux<Notification> notifications = read
-                    ? notificationRepository.findByUserIdAndRead(userId, true)
-                    : notificationRepository.findByUserIdAndRead(userId, false);
+                Flux<Notification> notifications;
+                if (read == null) {
+                    notifications = notificationRepository.findByUserId(userId);
+                } else if (read) {
+                    notifications = notificationRepository.findByUserIdAndRead(userId, true);
+                } else {
+                    notifications = notificationRepository.findByUserIdAndRead(userId, false);
+                }
 
                 return notifications
+                    .sort((a, b) -> {
+                        if (a.getCreatedAt() == null) return 1;
+                        if (b.getCreatedAt() == null) return -1;
+                        return b.getCreatedAt().compareTo(a.getCreatedAt());
+                    })
                     .map(this::mapToResponse)
                     .collectList()
                     .map(list -> new NotificationListResponse(list, page, size, (long) list.size()));

@@ -22,4 +22,22 @@ export class PolicyService {
   getAllPolicies(): Observable<PolicyResponse[]> {
     return this.api.get<PolicyResponse[]>('/api/policies/admin');
   }
+
+  getPolicyByQuoteId(quoteId: string): Observable<PolicyResponse> {
+    return this.api.get<PolicyResponse>(`/api/policies/by-quote/${quoteId}`);
+  }
+
+  issuePolicy(policyId: string): Observable<PolicyResponse> {
+    return this.api.post<PolicyResponse>(`/api/policies/${policyId}/issue`, {});
+  }
+
+  cancelPolicy(policyId: string, reason?: string): Observable<PolicyResponse> {
+    const query = reason ? `?reason=${encodeURIComponent(reason)}` : '';
+    return this.api.post<PolicyResponse>(`/api/policies/${policyId}/cancel${query}`, {});
+  }
+
+  reinstatePolicy(policyId: string, reason?: string): Observable<PolicyResponse> {
+    const query = reason ? `?reason=${encodeURIComponent(reason)}` : '';
+    return this.api.post<PolicyResponse>(`/api/policies/${policyId}/reinstate${query}`, {});
+  }
 }

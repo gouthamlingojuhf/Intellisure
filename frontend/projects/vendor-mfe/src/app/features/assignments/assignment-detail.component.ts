@@ -84,11 +84,23 @@ import { VendorPerformanceResponse } from '../../models/vendor.models';
           </section>
         }
 
-        <form [formGroup]="declineForm" (ngSubmit)="decline(a.assignmentId)" class="mt-4 space-y-2">
-          <label class="block text-sm font-semibold">Decline reason</label>
-          <input class="input-field" formControlName="declineReason" placeholder="Required when declining" />
-          <button class="btn-secondary" type="submit" [disabled]="declineForm.invalid">Decline</button>
-        </form>
+        @if (canAccept(a.status)) {
+          <form [formGroup]="declineForm" (ngSubmit)="decline(a.assignmentId)" class="mt-4 space-y-2">
+            <label class="block text-sm font-semibold">Decline reason</label>
+            <input class="input-field" formControlName="declineReason" placeholder="Required when declining" />
+            <button class="btn-secondary" type="submit" [disabled]="declineForm.invalid">Decline assignment</button>
+          </form>
+        }
+
+        @if (a.status === 'DECLINED') {
+          <div class="mt-4 rounded border border-rose-200 bg-rose-50 p-4">
+            <h3 class="font-semibold text-rose-900">Assignment declined by contractor</h3>
+            <p class="mt-1 text-xs text-rose-700">This assignment was declined. Dispatch to an alternate verified contractor to keep resolution on schedule.</p>
+            <div class="mt-3">
+              <button class="btn-primary" type="button" (click)="reassign(a)">Reassign work order &rarr;</button>
+            </div>
+          </div>
+        }
 
         @if (error$ | async; as err) {
           <p class="mt-2 text-sm text-rose-600">{{ err }}</p>
@@ -250,6 +262,18 @@ export class AssignmentDetailComponent implements OnInit {
         name: 'Assigned Policyholder',
         entityType: 'CLAIM',
         entityId: assignment.claimId,
+      },
+    });
+  }
+
+  reassign(assignment: any): void {
+    this.router.navigate(['/vendor/new'], {
+      queryParams: {
+        reassignFrom: assignment.assignmentId,
+        claimId: assignment.claimId,
+        recoveryCaseId: assignment.recoveryCaseId,
+        assignmentType: assignment.assignmentType,
+        taskDescription: assignment.taskDescription,
       },
     });
   }

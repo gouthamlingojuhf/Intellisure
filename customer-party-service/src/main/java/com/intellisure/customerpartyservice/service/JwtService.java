@@ -24,12 +24,26 @@ public class JwtService {
             String role,
             UUID customerId
     ) {
+        return generateToken(userId, role, customerId, null, null);
+    }
+
+    public String generateToken(
+            UUID userId,
+            String role,
+            UUID customerId,
+            String displayName,
+            String email
+    ) {
         Date now = new Date();
         Date expiry =
                 new Date(now.getTime() + expirationTime);
 
         String normalizedRole =
                 normalizeRole(role);
+
+        List<String> rolesList = ("SYSTEM_ADMINISTRATOR".equals(normalizedRole) || "ADMIN".equals(normalizedRole))
+                ? List.of("SYSTEM_ADMINISTRATOR", "ADMIN")
+                : List.of(normalizedRole);
 
         var tokenBuilder = Jwts.builder()
                 .subject(userId.toString())
@@ -40,7 +54,7 @@ public class JwtService {
                 // Standard role list consumed by other services.
                 .claim(
                         "roles",
-                        List.of(normalizedRole)
+                        rolesList
                 )
 
                 .issuedAt(now)
@@ -59,6 +73,14 @@ public class JwtService {
                     "customerId",
                     customerId.toString()
             );
+        }
+
+        if (displayName != null && !displayName.isBlank()) {
+            tokenBuilder.claim("displayName", displayName);
+        }
+
+        if (email != null && !email.isBlank()) {
+            tokenBuilder.claim("email", email);
         }
 
         return tokenBuilder.compact();

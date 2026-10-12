@@ -5,6 +5,8 @@ export interface CustomerResponse {
   ownerName: string;
   phone?: string | null;
   businessType?: string | null;
+  annualTurnover?: number | null;
+  employeeCount?: number | null;
   address?: string | null;
   city?: string | null;
   state?: string | null;
@@ -19,6 +21,8 @@ export interface UpdateCustomerProfileRequest {
   ownerName: string;
   phone?: string | null;
   businessType?: string | null;
+  annualTurnover?: number | null;
+  employeeCount?: number | null;
   address?: string | null;
   city?: string | null;
   state?: string | null;

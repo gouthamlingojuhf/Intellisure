@@ -4,7 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
@@ -35,7 +38,33 @@ public class CustomerPartyClient {
                 .map(EmployeeSummary::userId);
     }
 
+    public Mono<UUID> findCustomerIdByUserId(UUID userId) {
+        return findCustomerIdByUserId(userId, null);
+    }
+
+    public Mono<UUID> findCustomerIdByUserId(UUID userId, String tokenValue) {
+        log.info("Querying customer-party-service for userId={}", userId);
+        var spec = webClient.get()
+                .uri("/api/customers/by-user/{userId}", userId);
+
+        if (tokenValue != null && !tokenValue.isBlank()) {
+            spec = spec.header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenValue);
+        }
+
+        return spec.retrieve()
+                .bodyToMono(CustomerSummary.class)
+                .map(CustomerSummary::customerId)
+                .doOnNext(cid -> log.info("Resolved customerId={} for userId={}", cid, userId))
+                .doOnError(err -> log.warn("Customer lookup failed for userId {}: {}", userId, err.getMessage()))
+                .onErrorResume(WebClientResponseException.NotFound.class, err -> Mono.empty())
+                .onErrorResume(err -> Mono.empty());
+    }
+
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record EmployeeSummary(UUID userId, String email, String role, String accountStatus) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record CustomerSummary(UUID customerId, UUID userId) {
     }
 }

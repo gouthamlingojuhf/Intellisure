@@ -87,6 +87,7 @@ export interface QuoteResponse {
   createdAt?: string | null;
   updatedAt?: string | null;
   coverages: QuoteCoverageResponse[];
+  boundPolicyId?: string | null;
 }
 
 export interface UnderwritingDecisionResponse {

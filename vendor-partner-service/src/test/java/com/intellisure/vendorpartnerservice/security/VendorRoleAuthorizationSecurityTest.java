@@ -27,6 +27,7 @@ class VendorRoleAuthorizationSecurityTest {
             "ROLE_VENDOR_MANAGER",
             "ROLE_CLAIMS_ADJUSTER",
             "ROLE_CLAIMS_MANAGER",
+            "ROLE_VENDOR",
             "ROLE_SYSTEM_ADMINISTRATOR",
             "ROLE_ADMIN"
     );
@@ -124,6 +125,24 @@ class VendorRoleAuthorizationSecurityTest {
                         .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(new SecurityContextImpl(authAdj))))
         )
         .assertNext(authorized -> assertTrue(authorized, "CLAIMS_ADJUSTER must be authorized"))
+        .verifyComplete();
+
+        // 3. VENDOR (Contractor)
+        Jwt jwtVendor = new Jwt(
+                "token-vendor",
+                Instant.now(),
+                Instant.now().plusSeconds(300),
+                Map.of("alg", "HS256"),
+                Map.of("sub", "vendor-123", "role", "VENDOR")
+        );
+        JwtAuthenticationToken authVendor = converter.convert(jwtVendor).block();
+        assertNotNull(authVendor);
+
+        StepVerifier.create(
+                isAuthorizedForAssignments()
+                        .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(new SecurityContextImpl(authVendor))))
+        )
+        .assertNext(authorized -> assertTrue(authorized, "VENDOR must be authorized"))
         .verifyComplete();
     }
 }

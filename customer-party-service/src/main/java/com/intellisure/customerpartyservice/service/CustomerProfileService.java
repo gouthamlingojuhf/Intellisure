@@ -68,6 +68,12 @@ public class CustomerProfileService {
                     customer.setState(request.state());
                     customer.setCountry(request.country());
                     customer.setPostalCode(request.postalCode());
+                    if (request.annualTurnover() != null) {
+                        customer.setAnnualTurnover(request.annualTurnover());
+                    }
+                    if (request.employeeCount() != null) {
+                        customer.setEmployeeCount(request.employeeCount());
+                    }
                     customer.setVersion(newVersion);
                     customer.setUpdatedAt(now);
 

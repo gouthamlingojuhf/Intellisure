@@ -21,6 +21,7 @@ import com.intellisure.quotepolicyservice.repository.QuoteRepository;
 import com.intellisure.quotepolicyservice.repository.QuoteVersionRepository;
 import com.intellisure.quotepolicyservice.repository.SubjectivityRepository;
 import com.intellisure.quotepolicyservice.repository.UnderwritingDecisionRepository;
+import com.intellisure.quotepolicyservice.repository.PolicyRepository;
 import com.intellisure.quotepolicyservice.security.SecurityActorService;
 import com.intellisure.quotepolicyservice.service.RatingService;
 import com.intellisure.quotepolicyservice.service.assignment.UnderwriterAssignmentService;
@@ -70,6 +71,7 @@ class QuoteServiceTest {
     private QuoteVersionRepository quoteVersionRepository;
     private SubjectivityRepository subjectivityRepository;
     private RatingService ratingService;
+    private PolicyRepository policyRepository;
 
     private QuoteService quoteService;
 
@@ -88,12 +90,14 @@ class QuoteServiceTest {
         quoteVersionRepository = mock(QuoteVersionRepository.class);
         subjectivityRepository = mock(SubjectivityRepository.class);
         ratingService = mock(RatingService.class);
+        policyRepository = mock(PolicyRepository.class);
 
         quoteService = new QuoteService(
                 quoteRepository,
                 quoteCoverageRepository,
                 entityTemplate,
                 new QuoteMapper(),
+                policyRepository,
                 underwriterAssignmentService,
                 underwritingDecisionRepository,
                 securityActorService,
@@ -129,6 +133,10 @@ class QuoteServiceTest {
         ).thenAnswer(
                 invocation -> Mono.just(invocation.getArgument(0))
         );
+
+        lenient().when(
+                policyRepository.findByQuoteId(any(UUID.class))
+        ).thenReturn(Mono.empty());
     }
 
     private void givenCoverages(

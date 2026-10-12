@@ -6,6 +6,7 @@ import { Store } from '@ngrx/store';
 
 import { QuoteService } from '../../core/services/quote.service';
 import { PolicyService } from '../../core/services/policy.service';
+import { ApiService } from '../../core/services/api.service';
 import {
   QuoteResponse,
   SubjectivityResponse,
@@ -198,9 +199,15 @@ import {
                     Contractually bound on {{ quote.boundAt | date:'medium' }}. Your commercial policy is active in the portfolio.
                   </p>
                 </div>
-                <is-button variant="primary" size="sm" routerLink="/policy">
-                  View Bound Policy &rarr;
-                </is-button>
+                @if (quote.boundPolicyId) {
+                  <is-button variant="primary" size="sm" [routerLink]="['/policy', quote.boundPolicyId]">
+                    View Bound Policy &rarr;
+                  </is-button>
+                } @else {
+                  <is-button variant="primary" size="sm" routerLink="/policy">
+                    View Policy Portfolio &rarr;
+                  </is-button>
+                }
               </div>
             }
 
@@ -253,20 +260,20 @@ import {
                           }
                         </td>
                         <td class="text-right">
-                          \${{ cov.requestedLimit | number:'1.0-0' }}
+                          ₹{{ cov.requestedLimit | number:'1.0-0' }}
                         </td>
                         <td class="text-right">
                           @if (cov.offeredLimit !== null && cov.offeredLimit !== undefined) {
-                            <strong class="text-emerald">\${{ cov.offeredLimit | number:'1.0-0' }}</strong>
+                            <strong class="text-emerald">₹{{ cov.offeredLimit | number:'1.0-0' }}</strong>
                           } @else {
                             <span class="text-muted">Pending Review</span>
                           }
                         </td>
                         <td class="text-right">
                           @if (cov.offeredDeductible !== null && cov.offeredDeductible !== undefined) {
-                            \${{ cov.offeredDeductible | number:'1.0-0' }}
+                            ₹{{ cov.offeredDeductible | number:'1.0-0' }}
                           } @else {
-                            \${{ cov.requestedDeductible | number:'1.0-0' }}
+                            ₹{{ cov.requestedDeductible | number:'1.0-0' }}
                           }
                         </td>
                         <td class="text-right">
@@ -367,8 +374,53 @@ import {
                 @if (quote.assignedUnderwriterId) {
                   <div>
                     <dt>Assigned Underwriter</dt>
-                    <dd class="code-sm">{{ quote.assignedUnderwriterId }}</dd>
-                    <div style="margin-top: 6px;">
+                    <dd><strong>{{ underwriterName || 'Underwriting Desk' }}</strong></dd>
+                    @if (isAdmin) {
+                      <div class="code-sm text-muted" style="font-size: 10px; margin-top: 2px;">ID: {{ quote.assignedUnderwriterId }}</div>
+                      <div style="margin-top: 6px;">
+                        <is-button
+                          variant="secondary"
+                          size="sm"
+                          [disabled]="reassigningUnderwriter"
+                          (click)="showReassignUnderwriter = !showReassignUnderwriter"
+                        >
+                          🔄 {{ showReassignUnderwriter ? 'Cancel Reassign' : 'Reassign Underwriter' }}
+                        </is-button>
+                        @if (showReassignUnderwriter) {
+                          <div class="reassign-block" style="background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid var(--border); margin-top: 6px;">
+                            <label style="font-size: 10px; font-weight: 700; display: block; margin-bottom: 4px; text-transform: uppercase;">Select Underwriter</label>
+                            <select [(ngModel)]="selectedUnderwriterId" style="width: 100%; padding: 6px; font-size: 12px; margin-bottom: 8px; border: 1px solid var(--border); border-radius: 4px;">
+                              <option value="">-- Select Underwriter --</option>
+                              @for (uw of availableUnderwriters; track uw.userId) {
+                                <option [value]="uw.userId">{{ uw.email }} ({{ uw.userId }})</option>
+                              }
+                            </select>
+                            <is-button variant="primary" size="sm" [disabled]="reassigningUnderwriter || !selectedUnderwriterId" (click)="confirmReassignUnderwriter()">
+                              {{ reassigningUnderwriter ? 'Reassigning...' : 'Confirm' }}
+                            </is-button>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+                @if (customerName) {
+                  <div>
+                    <dt>Policyholder / Applicant</dt>
+                    <dd><strong>{{ customerName }}</strong></dd>
+                  </div>
+                }
+                <div class="chat-actions-group" style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+                  @if (isUnderwriter) {
+                    <is-button
+                      variant="secondary"
+                      size="sm"
+                      (click)="openCustomerChat()"
+                    >
+                      💬 Message Policyholder
+                    </is-button>
+                  } @else if (isAdmin) {
+                    @if (quote.assignedUnderwriterId) {
                       <is-button
                         variant="secondary"
                         size="sm"
@@ -376,9 +428,24 @@ import {
                       >
                         💬 Message Underwriter
                       </is-button>
-                    </div>
-                  </div>
-                }
+                    }
+                    <is-button
+                      variant="secondary"
+                      size="sm"
+                      (click)="openCustomerChat()"
+                    >
+                      💬 Message Policyholder
+                    </is-button>
+                  } @else {
+                    <is-button
+                      variant="secondary"
+                      size="sm"
+                      (click)="openUnderwriterChat()"
+                    >
+                      💬 Message Underwriting Desk
+                    </is-button>
+                  }
+                </div>
                 @if (quote.totalPremium) {
                   <div class="premium-highlight">
                     <dt>Total Indicated Premium</dt>
@@ -761,12 +828,17 @@ export class QuoteDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly quoteService = inject(QuoteService);
+  private readonly apiService = inject(ApiService);
   private readonly store = inject(Store);
 
   quoteId = '';
   quote: QuoteResponse | null = null;
   decisions: UnderwritingDecisionResponse[] = [];
   subjectivities: SubjectivityResponse[] = [];
+
+  underwriterName = '';
+  customerName = '';
+  customerUserId = '';
 
   loading = true;
   submitting = false;
@@ -777,8 +849,23 @@ export class QuoteDetailComponent implements OnInit {
   declineReason = '';
   userRole: string | null = null;
 
+  showReassignUnderwriter = false;
+  selectedUnderwriterId = '';
+  reassigningUnderwriter = false;
+  availableUnderwriters: any[] = [];
+
+  get isUnderwriter(): boolean {
+    const role = (this.userRole || '').toUpperCase().replace(/^ROLE_/, '');
+    return role === 'UNDERWRITER';
+  }
+
+  get isAdmin(): boolean {
+    const role = (this.userRole || '').toUpperCase().replace(/^ROLE_/, '');
+    return role === 'ADMIN' || role === 'SYSTEM_ADMINISTRATOR';
+  }
+
   get isEmployee(): boolean {
-    const role = (this.userRole || '').toUpperCase();
+    const role = (this.userRole || '').toUpperCase().replace(/^ROLE_/, '');
     return (
       role === 'UNDERWRITER' ||
       role === 'ADMIN' ||
@@ -789,7 +876,7 @@ export class QuoteDetailComponent implements OnInit {
   }
 
   get canBindQuote(): boolean {
-    const role = (this.userRole || '').toUpperCase();
+    const role = (this.userRole || '').toUpperCase().replace(/^ROLE_/, '');
     return (
       (role === 'UNDERWRITER' || role === 'ADMIN' || role === 'SYSTEM_ADMINISTRATOR') &&
       this.quote?.status === 'ACCEPTED'
@@ -800,6 +887,9 @@ export class QuoteDetailComponent implements OnInit {
     this.quoteId = this.route.snapshot.paramMap.get('quoteId') ?? '';
     this.store.select(selectUserRole).subscribe((role) => {
       this.userRole = role;
+      if (this.isAdmin) {
+        this.loadAvailableUnderwriters();
+      }
     });
     this.loadQuoteData();
   }
@@ -838,6 +928,27 @@ export class QuoteDetailComponent implements OnInit {
         this.quote = q;
         this.loading = false;
         this.loadDecisionsAndSubjectivities();
+        if (q.assignedUnderwriterId) {
+          this.apiService.get<any>(`/api/users/${q.assignedUnderwriterId}`).subscribe({
+            next: (u) => {
+              this.underwriterName = u?.displayName || u?.email || 'Assigned Underwriter';
+            },
+            error: () => {
+              this.underwriterName = 'Underwriting Desk';
+            }
+          });
+        }
+        if (q.customerId) {
+          this.apiService.get<any>(`/api/customers/${q.customerId}`).subscribe({
+            next: (c) => {
+              this.customerName = c?.ownerName || c?.businessName || 'Policyholder';
+              this.customerUserId = c?.userId || '';
+            },
+            error: () => {
+              this.customerName = 'Policyholder';
+            }
+          });
+        }
       },
       error: (err) => {
         this.loading = false;
@@ -963,13 +1074,64 @@ export class QuoteDetailComponent implements OnInit {
   }
 
   openUnderwriterChat(): void {
-    if (!this.quote?.assignedUnderwriterId) return;
+    if (!this.quote) return;
     this.router.navigate(['/chat'], {
       queryParams: {
-        recipientId: this.quote.assignedUnderwriterId,
-        name: 'Assigned Underwriter',
+        recipientId: this.quote.assignedUnderwriterId || undefined,
+        name: this.underwriterName || 'Underwriting Desk',
         entityType: 'QUOTE',
         entityId: this.quote.quoteId
+      }
+    });
+  }
+
+  openCustomerChat(): void {
+    if (!this.quote) return;
+    const recipient = this.customerUserId || this.quote.customerId;
+    this.router.navigate(['/chat'], {
+      queryParams: {
+        recipientId: recipient,
+        name: this.customerName || 'Policyholder',
+        entityType: 'QUOTE',
+        entityId: this.quote.quoteId
+      }
+    });
+  }
+
+  loadAvailableUnderwriters(): void {
+    this.quoteService.getAvailableUnderwriters().subscribe({
+      next: (list) => {
+        this.availableUnderwriters = list || [];
+      },
+      error: () => {
+        this.availableUnderwriters = [];
+      }
+    });
+  }
+
+  confirmReassignUnderwriter(): void {
+    if (!this.quote || !this.selectedUnderwriterId || this.reassigningUnderwriter) return;
+    this.reassigningUnderwriter = true;
+    this.quoteService.reassignUnderwriter(this.quote.quoteId, this.selectedUnderwriterId).subscribe({
+      next: (updated) => {
+        this.quote = updated;
+        this.reassigningUnderwriter = false;
+        this.showReassignUnderwriter = false;
+        this.store.dispatch(uiActions.showToast({ message: 'Underwriter reassigned successfully.', kind: 'success' }));
+        if (updated.assignedUnderwriterId) {
+          this.apiService.get<any>(`/api/users/${updated.assignedUnderwriterId}`).subscribe({
+            next: (u) => {
+              this.underwriterName = u?.displayName || u?.email || updated.assignedUnderwriterId!;
+            },
+            error: () => {
+              this.underwriterName = updated.assignedUnderwriterId!;
+            }
+          });
+        }
+      },
+      error: (err) => {
+        this.reassigningUnderwriter = false;
+        this.store.dispatch(uiActions.showToast({ message: err?.error?.message || 'Failed to reassign underwriter.', kind: 'error' }));
       }
     });
   }

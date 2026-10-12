@@ -54,6 +54,8 @@ public record QuoteResponse(
 
         LocalDateTime updatedAt,
 
-        List<QuoteCoverageResponse> coverages
+        List<QuoteCoverageResponse> coverages,
+
+        UUID boundPolicyId
 ) {
 }

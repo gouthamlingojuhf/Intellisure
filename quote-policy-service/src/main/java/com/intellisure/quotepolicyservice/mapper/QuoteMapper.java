@@ -7,6 +7,7 @@ import com.intellisure.quotepolicyservice.entity.QuoteCoverage;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 
 @Component
 public class QuoteMapper {
@@ -31,9 +32,16 @@ public class QuoteMapper {
         );
     }
 
+    /**
+     * Maps a Quote entity + its coverages to a QuoteResponse.
+     *
+     * @param boundPolicyId the policy UUID if this quote has been bound,
+     *                      or {@code null} if no policy exists yet.
+     */
     public QuoteResponse toResponse(
             Quote quote,
-            List<QuoteCoverage> coverages
+            List<QuoteCoverage> coverages,
+            UUID boundPolicyId
     ) {
         List<QuoteCoverageResponse> coverageResponses =
                 coverages.stream()
@@ -63,7 +71,16 @@ public class QuoteMapper {
                 quote.getWithdrawalReason(),
                 quote.getCreatedAt(),
                 quote.getUpdatedAt(),
-                coverageResponses
+                coverageResponses,
+                boundPolicyId
         );
+    }
+
+    /** Convenience overload for paths where no policy lookup is needed (e.g. draft creation). */
+    public QuoteResponse toResponse(
+            Quote quote,
+            List<QuoteCoverage> coverages
+    ) {
+        return toResponse(quote, coverages, null);
     }
 }

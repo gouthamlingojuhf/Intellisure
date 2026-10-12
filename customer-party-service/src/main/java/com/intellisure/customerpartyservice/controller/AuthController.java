@@ -63,6 +63,14 @@ public class AuthController {
         return authService.login(request);
     }
 
+    @PostMapping("/refresh")
+    public Mono<LoginResponse> refresh(
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return authService.refreshToken(userId);
+    }
+
     @GetMapping("/me")
     public Mono<UserResponse> me(
             @AuthenticationPrincipal Jwt jwt
@@ -73,5 +81,15 @@ public class AuthController {
                                 jwt.getSubject()
                         )
                 );
+    }
+
+    @PostMapping("/change-password")
+    public Mono<org.springframework.http.ResponseEntity<Void>> changePassword(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody com.intellisure.customerpartyservice.dto.ChangePasswordRequest request
+    ) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return userAccountService.changePassword(userId, request)
+                .thenReturn(org.springframework.http.ResponseEntity.noContent().build());
     }
 }

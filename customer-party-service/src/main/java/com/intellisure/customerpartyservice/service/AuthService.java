@@ -55,6 +55,51 @@ public class AuthService {
                 );
     }
 
+    public Mono<LoginResponse> refreshToken(
+            UUID userId
+    ) {
+        return userAccountRepo
+                .findById(userId)
+                .switchIfEmpty(
+                        Mono.error(
+                                invalidCredentials()
+                        )
+                )
+                .flatMap(user -> {
+                    if (!"ACTIVE".equalsIgnoreCase(
+                            user.getAccountStatus()
+                    )) {
+                        return Mono.error(
+                                invalidCredentials()
+                        );
+                    }
+
+                    if (isPolicyholder(user)) {
+                        return businessCustomerRepository
+                                .findByUserId(user.getUserId())
+                                .flatMap(customer ->
+                                        issueToken(
+                                                user,
+                                                customer.getCustomerId()
+                                        )
+                                )
+                                .switchIfEmpty(
+                                        Mono.defer(() ->
+                                                issueToken(
+                                                        user,
+                                                        null
+                                                )
+                                        )
+                                );
+                    }
+
+                    return issueToken(
+                            user,
+                            null
+                    );
+                });
+    }
+
     private Mono<LoginResponse> authenticate(
             UserAccount user,
             String password
@@ -116,7 +161,9 @@ public class AuthService {
                 jwtService.generateToken(
                         user.getUserId(),
                         user.getRole(),
-                        customerId
+                        customerId,
+                        user.getDisplayName(),
+                        user.getEmail()
                 );
 
         LocalDateTime now =

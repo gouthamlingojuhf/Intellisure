@@ -27,6 +27,7 @@ export interface RecoveryCaseListResponse {
 export interface SelectRecoveryPathRequest {
   recoveryPath: RecoveryPath;
   notes?: string;
+  vendorId?: string;
 }
 
 export interface RecordRecoveryProgressRequest {

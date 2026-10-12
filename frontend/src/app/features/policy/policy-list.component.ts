@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap, take } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
@@ -79,10 +79,10 @@ import {
           title="In-Force Insurance Policies"
           subtitle="Contractually bound commercial policies protecting your operations"
         >
-          @if (policies.length === 0) {
+          @if (filteredPolicies.length === 0) {
             <is-empty-state
               title="No active policies"
-              description="No active or bound policies were found."
+              [description]="searchQuery ? 'No policies matched your search criteria.' : 'No active or bound policies were found.'"
               icon="📋"
               [actionLabel]="isEmployee ? '' : 'Create Insurance Quote'"
               (action)="isEmployee ? null : navigate('/quotes/new')"
@@ -101,8 +101,8 @@ import {
                   </tr>
                 </thead>
                 <tbody>
-                  @for (policy of policies; track policy.policyId) {
-                    <tr>
+                  @for (policy of filteredPolicies; track policy.policyId) {
+                    <tr (click)="onRowClick(policy, $event)" class="clickable-row">
                       <td>
                         <strong>{{ policy.policyNumber }}</strong>
                       </td>
@@ -251,6 +251,10 @@ import {
       color: var(--ink, #000000);
     }
 
+    .clickable-row {
+      cursor: pointer;
+    }
+
     .data-table tr:hover td {
       background: var(--warm-light, #f7f5f3);
     }
@@ -285,16 +289,31 @@ export class PolicyListComponent implements OnInit {
   private readonly policyService = inject(PolicyService);
   private readonly profileService = inject(CustomerProfileService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   customerId: string | null = null;
   loading = true;
   profileMissing = false;
   isEmployee = false;
+  searchQuery = '';
 
   quotes: QuoteResponse[] = [];
   policies: PolicyResponse[] = [];
 
+  get filteredPolicies(): PolicyResponse[] {
+    if (!this.searchQuery) return this.policies;
+    const q = this.searchQuery.toLowerCase();
+    return this.policies.filter((p) =>
+      (p.policyNumber && p.policyNumber.toLowerCase().includes(q)) ||
+      (p.productCode && p.productCode.toLowerCase().includes(q)) ||
+      (p.status && p.status.toLowerCase().includes(q))
+    );
+  }
+
   ngOnInit(): void {
+    this.route.queryParams.subscribe((params) => {
+      this.searchQuery = params['search'] || '';
+    });
     this.loadData();
   }
 
@@ -345,6 +364,14 @@ export class PolicyListComponent implements OnInit {
 
   navigate(path: string): void {
     this.router.navigateByUrl(path);
+  }
+
+  onRowClick(policy: PolicyResponse, event: Event): void {
+    const target = event.target as HTMLElement;
+    if (target.closest('button') || target.closest('is-button') || target.closest('a')) {
+      return;
+    }
+    this.navigate('/policy/' + policy.policyId);
   }
 
   formatStatus(status?: string): string {

@@ -34,7 +34,9 @@ public class AdminUserService {
             "CLAIMS_ADJUSTER",
             "CLAIMS_MANAGER",
             "VENDOR_MANAGER",
-            "SYSTEM_ADMINISTRATOR"
+            "VENDOR",
+            "SYSTEM_ADMINISTRATOR",
+            "ADMIN"
     );
 
     public Mono<AdminUserResponse> registerAdminUser(AdminUserRequest request) {
@@ -87,6 +89,9 @@ public class AdminUserService {
         String normalized = role.trim().toUpperCase();
         if (normalized.startsWith("ROLE_")) {
             normalized = normalized.substring(5);
+        }
+        if ("ADMIN".equals(normalized)) {
+            return "SYSTEM_ADMINISTRATOR";
         }
         return normalized;
     }

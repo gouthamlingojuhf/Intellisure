@@ -53,6 +53,45 @@ public record CreateRiskAssessmentRequest(
         BigDecimal priorLossAmount,
 
         @NotNull(message = "Created-by user ID is required")
-        UUID createdBy
+        UUID createdBy,
+
+        UUID assignedUnderwriterId,
+
+        UUID assignedRiskEngineerId
 ) {
+    public CreateRiskAssessmentRequest(
+            UUID quoteId,
+            UUID policyId,
+            UUID customerId,
+            String assessmentType,
+            LocalDate assessmentDate,
+            String location,
+            String businessOperations,
+            BigDecimal annualRevenue,
+            BigDecimal annualPayroll,
+            Integer employeeCount,
+            BigDecimal assetValue,
+            Integer priorClaimCount,
+            BigDecimal priorLossAmount,
+            UUID createdBy
+    ) {
+        this(
+                quoteId,
+                policyId,
+                customerId,
+                assessmentType,
+                assessmentDate,
+                location,
+                businessOperations,
+                annualRevenue,
+                annualPayroll,
+                employeeCount,
+                assetValue,
+                priorClaimCount,
+                priorLossAmount,
+                createdBy,
+                null,
+                null
+        );
+    }
 }

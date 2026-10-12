@@ -12,11 +12,14 @@ export interface ChatParticipantResponse {
 export interface ChatMessageResponse {
   messageId: string;
   channelId: string;
-  senderUserId: string;
-  senderDisplayName: string;
+  senderUserId?: string;
+  senderId?: string;
+  senderDisplayName?: string;
+  senderName?: string;
   senderRole: string;
   content: string;
-  sentAt: string;
+  sentAt?: string;
+  createdAt?: string;
 }
 
 export interface ChatChannelResponse {

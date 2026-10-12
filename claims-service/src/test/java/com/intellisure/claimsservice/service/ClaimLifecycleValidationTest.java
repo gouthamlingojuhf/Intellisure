@@ -108,4 +108,67 @@ class ClaimLifecycleValidationTest {
                 })
                 .verifyComplete();
     }
+
+    @Test
+    @DisplayName("Settlement > $10,000 rejected when caller is not Claims Manager")
+    void settlementAboveThresholdRejectedForAdjuster() {
+        UUID claimId = UUID.randomUUID();
+        Claim claim = Claim.builder()
+                .claimId(claimId)
+                .status("UNDER_INVESTIGATION")
+                .payoutAmount(new java.math.BigDecimal("15000.00"))
+                .build();
+
+        when(claimRepository.findById(claimId)).thenReturn(Mono.just(claim));
+        when(securityActorService.hasAnyRole("CLAIMS_MANAGER", "ADMIN", "SYSTEM_ADMINISTRATOR"))
+                .thenReturn(Mono.just(false));
+
+        StepVerifier.create(claimService.approveSettlement(claimId, UUID.randomUUID(), new java.math.BigDecimal("15000.00")))
+                .expectError(com.intellisure.claimsservice.exception.AccessDeniedBusinessException.class)
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Settlement > $10,000 approved when caller has Claims Manager role")
+    void settlementAboveThresholdApprovedForManager() {
+        UUID claimId = UUID.randomUUID();
+        Claim claim = Claim.builder()
+                .claimId(claimId)
+                .status("UNDER_INVESTIGATION")
+                .payoutAmount(new java.math.BigDecimal("15000.00"))
+                .build();
+
+        when(claimRepository.findById(claimId)).thenReturn(Mono.just(claim));
+        when(securityActorService.hasAnyRole("CLAIMS_MANAGER", "ADMIN", "SYSTEM_ADMINISTRATOR"))
+                .thenReturn(Mono.just(true));
+        when(claimRepository.save(any(Claim.class))).thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+
+        StepVerifier.create(claimService.approveSettlement(claimId, UUID.randomUUID(), new java.math.BigDecimal("15000.00")))
+                .assertNext(res -> {
+                    org.junit.jupiter.api.Assertions.assertEquals("APPROVED", res.status());
+                    org.junit.jupiter.api.Assertions.assertEquals(new java.math.BigDecimal("15000.00"), res.payoutAmount());
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    @DisplayName("Settlement <= $10,000 approved by adjuster without manager role")
+    void settlementBelowThresholdApprovedForAdjuster() {
+        UUID claimId = UUID.randomUUID();
+        Claim claim = Claim.builder()
+                .claimId(claimId)
+                .status("UNDER_INVESTIGATION")
+                .payoutAmount(new java.math.BigDecimal("5000.00"))
+                .build();
+
+        when(claimRepository.findById(claimId)).thenReturn(Mono.just(claim));
+        when(claimRepository.save(any(Claim.class))).thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+
+        StepVerifier.create(claimService.approveSettlement(claimId, UUID.randomUUID(), new java.math.BigDecimal("5000.00")))
+                .assertNext(res -> {
+                    org.junit.jupiter.api.Assertions.assertEquals("APPROVED", res.status());
+                    org.junit.jupiter.api.Assertions.assertEquals(new java.math.BigDecimal("5000.00"), res.payoutAmount());
+                })
+                .verifyComplete();
+    }
 }

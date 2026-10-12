@@ -18,10 +18,10 @@ export const VENDOR_REMOTE_ROUTES: Routes = [
       provideEffects(AssignmentEffects),
     ],
     children: [
-      { path: '', pathMatch: 'full', canActivate: [vendorRoleGuard(['VENDOR_MANAGER', 'CLAIMS_ADJUSTER', 'CLAIMS_MANAGER', 'SYSTEM_ADMINISTRATOR', 'ADMIN'])], component: AssignmentListComponent },
+      { path: '', pathMatch: 'full', canActivate: [vendorRoleGuard(['VENDOR_MANAGER', 'VENDOR', 'CLAIMS_ADJUSTER', 'CLAIMS_MANAGER', 'SYSTEM_ADMINISTRATOR', 'ADMIN'])], component: AssignmentListComponent },
       { path: 'new', canActivate: [vendorRoleGuard(['VENDOR_MANAGER', 'CLAIMS_ADJUSTER', 'CLAIMS_MANAGER', 'SYSTEM_ADMINISTRATOR', 'ADMIN'])], component: AssignmentCreateComponent },
       { path: 'onboarding', canActivate: [vendorRoleGuard(['VENDOR_APPLICANT', 'VENDOR_MANAGER', 'SYSTEM_ADMINISTRATOR', 'ADMIN'])], component: OnboardingListComponent },
-      { path: ':assignmentId', canActivate: [vendorRoleGuard(['VENDOR_MANAGER', 'CLAIMS_ADJUSTER', 'CLAIMS_MANAGER', 'SYSTEM_ADMINISTRATOR', 'ADMIN'])], component: AssignmentDetailComponent },
+      { path: ':assignmentId', canActivate: [vendorRoleGuard(['VENDOR_MANAGER', 'VENDOR', 'CLAIMS_ADJUSTER', 'CLAIMS_MANAGER', 'SYSTEM_ADMINISTRATOR', 'ADMIN'])], component: AssignmentDetailComponent },
     ],
   },
 ];

@@ -54,5 +54,15 @@ public class UserAccountController {
     public Flux<UserResponse> getUsersByRole(@PathVariable String role) {
         return userAccountService.getUsersByRole(role);
     }
+
+    @GetMapping("/{userId}")
+    public Mono<UserResponse> getUserById(@PathVariable UUID userId) {
+        return userAccountService.getUserById(userId);
+    }
+
+    @org.springframework.web.bind.annotation.PutMapping("/promote-vendor")
+    public Mono<UserResponse> promoteVendor(@RequestParam String email) {
+        return userAccountService.promoteVendorByEmail(email);
+    }
 }
 

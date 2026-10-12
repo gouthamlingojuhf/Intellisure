@@ -108,23 +108,25 @@ public class ChatService {
             String callerName = tuple.getT3();
             boolean isEmployee = isEmployeeRole(callerRole);
 
-            // If entityType and entityId provided (e.g. quote or claim), check if channel already exists
+            // 1. Direct 1-on-1 chat
+            if (request.channelType() == ChatChannelType.DIRECT
+                    || (request.participantUserIds() != null && request.participantUserIds().size() == 1 && request.channelType() != ChatChannelType.CUSTOMER_SUPPORT)) {
+                if (request.participantUserIds() != null && !request.participantUserIds().isEmpty()) {
+                    UUID otherUserId = request.participantUserIds().get(0);
+                    return findDirectChannelBetween(callerId, otherUserId)
+                            .flatMap(existing -> toChannelResponse(existing, callerId))
+                            .switchIfEmpty(Mono.defer(() -> createNewChannel(request, callerId, callerRole, callerName)));
+                }
+            }
+
+            // 2. Customer support channel for quote or claim entity
             if (request.entityType() != null && request.entityId() != null) {
                 return channelRepository.findByEntityTypeAndEntityId(request.entityType(), request.entityId())
                         .flatMap(existing -> toChannelResponse(existing, callerId))
                         .switchIfEmpty(Mono.defer(() -> createNewChannel(request, callerId, callerRole, callerName)));
             }
 
-            // Direct 1-on-1 chat
-            if (request.channelType() == ChatChannelType.DIRECT && request.participantUserIds() != null && !request.participantUserIds().isEmpty()) {
-                UUID otherUserId = request.participantUserIds().get(0);
-                // Check if direct channel already exists between these two users
-                return findDirectChannelBetween(callerId, otherUserId)
-                        .flatMap(existing -> toChannelResponse(existing, callerId))
-                        .switchIfEmpty(Mono.defer(() -> createNewChannel(request, callerId, callerRole, callerName)));
-            }
-
-            // Group channel: internal only
+            // 3. Group channel: internal only
             if (!isEmployee && request.channelType() == ChatChannelType.INTERNAL_GROUP) {
                 return Mono.error(new AccessDeniedBusinessException("Policyholders cannot create internal group channels"));
             }
@@ -141,6 +143,46 @@ public class ChatService {
                 .flatMap(channelRepository::findById)
                 .filter(ch -> ch.getChannelType() == ChatChannelType.DIRECT)
                 .next();
+    }
+
+    private Mono<ChatParticipant> resolveParticipant(
+            UUID channelId, UUID userId, LocalDateTime now,
+            UUID callerId, String callerRole, String callerName) {
+        if (userId.equals(callerId)) {
+            return Mono.just(ChatParticipant.builder()
+                    .participantId(UUID.randomUUID())
+                    .channelId(channelId)
+                    .userId(userId)
+                    .role(callerRole != null ? callerRole : "USER")
+                    .displayName(callerName != null && !callerName.isBlank() ? callerName : (callerRole != null ? callerRole : "User"))
+                    .joinedAt(now)
+                    .isNew(true)
+                    .build());
+        }
+
+        return webClientBuilder.build()
+                .get()
+                .uri("http://customer-party-service/api/users/" + userId)
+                .retrieve()
+                .bodyToMono(UserDto.class)
+                .map(u -> ChatParticipant.builder()
+                        .participantId(UUID.randomUUID())
+                        .channelId(channelId)
+                        .userId(userId)
+                        .role(u.role() != null ? u.role() : "USER")
+                        .displayName(u.displayName() != null && !u.displayName().isBlank() ? u.displayName() : (u.role() != null ? u.role() : "User"))
+                        .joinedAt(now)
+                        .isNew(true)
+                        .build())
+                .onErrorResume(err -> Mono.just(ChatParticipant.builder()
+                        .participantId(UUID.randomUUID())
+                        .channelId(channelId)
+                        .userId(userId)
+                        .role("USER")
+                        .displayName("User")
+                        .joinedAt(now)
+                        .isNew(true)
+                        .build()));
     }
 
     private Mono<ChatChannelResponse> createNewChannel(
@@ -172,20 +214,10 @@ public class ChatService {
                         }
                     }
 
-                    List<Mono<ChatParticipant>> participantSaves = participantIds.stream().map(pid -> {
-                        ChatParticipant cp = ChatParticipant.builder()
-                                .participantId(UUID.randomUUID())
-                                .channelId(channelId)
-                                .userId(pid)
-                                .role(pid.equals(callerId) ? callerRole : "PARTICIPANT")
-                                .displayName(pid.equals(callerId) ? callerName : "Participant")
-                                .joinedAt(now)
-                                .isNew(true)
-                                .build();
-                        return participantRepository.save(cp);
-                    }).toList();
-
-                    return Flux.concat(participantSaves).then(toChannelResponse(saved, callerId));
+                    return Flux.fromIterable(participantIds)
+                            .flatMap(pid -> resolveParticipant(channelId, pid, now, callerId, callerRole, callerName))
+                            .flatMap(participantRepository::save)
+                            .then(toChannelResponse(saved, callerId));
                 });
     }
 
@@ -201,7 +233,7 @@ public class ChatService {
 
             return channelRepository.findById(channelId)
                     .switchIfEmpty(Mono.error(new AccessDeniedBusinessException("Chat channel not found")))
-                    .flatMap(channel -> assertAccessToChannel(channel, senderId, senderRole)
+                    .flatMap(channel -> assertAccessToChannel(channel, senderId, senderRole, senderName)
                             .then(Mono.defer(() -> {
                                 LocalDateTime now = LocalDateTime.now();
                                 ChatMessage message = ChatMessage.builder()
@@ -216,6 +248,7 @@ public class ChatService {
                                         .build();
 
                                 channel.setUpdatedAt(now);
+                                channel.setNew(false);
                                 return channelRepository.save(channel)
                                         .then(messageRepository.save(message))
                                         .map(this::toMessageResponse)
@@ -227,14 +260,16 @@ public class ChatService {
     public Flux<ChatMessageResponse> getMessages(UUID channelId) {
         return Mono.zip(
                 securityActorService.currentUserId(),
-                securityActorService.currentRole()
+                securityActorService.currentRole(),
+                securityActorService.currentDisplayName()
         ).flatMapMany(tuple -> {
             UUID userId = tuple.getT1();
             String role = tuple.getT2();
+            String displayName = tuple.getT3();
 
             return channelRepository.findById(channelId)
                     .switchIfEmpty(Mono.error(new AccessDeniedBusinessException("Chat channel not found")))
-                    .flatMapMany(channel -> assertAccessToChannel(channel, userId, role)
+                    .flatMapMany(channel -> assertAccessToChannel(channel, userId, role, displayName)
                             .thenMany(messageRepository.findByChannelIdOrderByCreatedAtAsc(channelId)
                                     .map(this::toMessageResponse)));
         });
@@ -475,7 +510,7 @@ public class ChatService {
                 .distinct(ChatContactResponse::userId);
     }
 
-    private Mono<Void> assertAccessToChannel(ChatChannel channel, UUID userId, String role) {
+    private Mono<Void> assertAccessToChannel(ChatChannel channel, UUID userId, String role, String callerDisplayName) {
         boolean isEmployee = isEmployeeRole(role);
         if (channel.getChannelType() == ChatChannelType.INTERNAL_GROUP) {
             if (isEmployee) return Mono.empty();
@@ -487,12 +522,15 @@ public class ChatService {
                     if (Boolean.TRUE.equals(isParticipant)) return Mono.empty();
                     // If employee accessing a support channel, allow and join
                     if (isEmployee && channel.getChannelType() == ChatChannelType.CUSTOMER_SUPPORT) {
+                        String nameToUse = (callerDisplayName != null && !callerDisplayName.isBlank())
+                                ? callerDisplayName
+                                : (role != null ? role : "Staff");
                         ChatParticipant p = ChatParticipant.builder()
                                 .participantId(UUID.randomUUID())
                                 .channelId(channel.getChannelId())
                                 .userId(userId)
                                 .role(role)
-                                .displayName("Staff")
+                                .displayName(nameToUse)
                                 .joinedAt(LocalDateTime.now())
                                 .isNew(true)
                                 .build();
@@ -504,13 +542,23 @@ public class ChatService {
 
     private Mono<ChatChannelResponse> toChannelResponse(ChatChannel channel, UUID currentUserId) {
         return participantRepository.findByChannelId(channel.getChannelId())
-                .map(p -> new ChatParticipantResponse(
-                        p.getParticipantId(),
-                        p.getUserId(),
-                        p.getRole(),
-                        p.getDisplayName(),
-                        p.getJoinedAt()
-                ))
+                .map(p -> {
+                    String role = p.getRole();
+                    String displayName = p.getDisplayName();
+                    if ("PARTICIPANT".equalsIgnoreCase(role)) {
+                        role = "USER";
+                    }
+                    if ("Participant".equalsIgnoreCase(displayName)) {
+                        displayName = (role != null && !"USER".equalsIgnoreCase(role)) ? role : "User";
+                    }
+                    return new ChatParticipantResponse(
+                            p.getParticipantId(),
+                            p.getUserId(),
+                            role,
+                            displayName,
+                            p.getJoinedAt()
+                    );
+                })
                 .collectList()
                 .flatMap(participants -> messageRepository.findByChannelIdOrderByCreatedAtAsc(channel.getChannelId())
                         .takeLast(1)

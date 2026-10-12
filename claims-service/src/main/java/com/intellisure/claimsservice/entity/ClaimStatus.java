@@ -8,6 +8,7 @@ public enum ClaimStatus {
     ASSESSMENT,
     RESERVED,
     DECISION_PENDING,
+    ADJUSTER_REVIEWED,
     APPROVED,
     DENIED,
     RECOVERY,

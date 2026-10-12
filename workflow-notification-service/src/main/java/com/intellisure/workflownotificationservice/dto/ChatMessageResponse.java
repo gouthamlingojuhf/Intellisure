@@ -12,4 +12,15 @@ public record ChatMessageResponse(
         String content,
         LocalDateTime createdAt
 ) {
+    public UUID senderUserId() {
+        return senderId;
+    }
+
+    public String senderDisplayName() {
+        return senderName;
+    }
+
+    public LocalDateTime sentAt() {
+        return createdAt;
+    }
 }

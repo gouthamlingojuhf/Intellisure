@@ -42,4 +42,14 @@ public interface RiskAssessmentRepository
     Mono<Boolean> existsByAssessmentNumber(
             String assessmentNumber
     );
+
+    @org.springframework.data.r2dbc.repository.Query("""
+        SELECT COUNT(*)
+        FROM risk_assessment
+        WHERE assigned_risk_engineer_id = :engineerId
+          AND status IN ('DRAFT', 'IN_PROGRESS', 'NEEDS_INFORMATION', 'RISK_ENGINEERING_REQUIRED', 'UNDER_REVIEW', 'REFERRED')
+        """)
+    Mono<Long> countActiveAssessmentsByRiskEngineerId(
+            UUID engineerId
+    );
 }

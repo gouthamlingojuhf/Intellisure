@@ -51,12 +51,12 @@ public class SecurityConfig {
                                 "/v3/api-docs",
                                 "/v3/api-docs/**"
                         ).permitAll()
-                        .pathMatchers("/api/vendor-assignments/**")
-                        .hasAnyRole("VENDOR_MANAGER", "CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
+                        .pathMatchers("/api/vendor-assignments", "/api/vendor-assignments/**")
+                        .hasAnyRole("VENDOR_MANAGER", "CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "VENDOR", "SYSTEM_ADMINISTRATOR", "ADMIN", "POLICYHOLDER", "USER", "SYSTEM")
                         .pathMatchers(HttpMethod.POST, "/api/vendors/onboarding-requests")
                         .hasAnyRole("VENDOR_APPLICANT", "VENDOR_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
                         .pathMatchers(HttpMethod.GET, "/api/vendors", "/api/vendors/**")
-                        .hasAnyRole("VENDOR_MANAGER", "CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
+                        .hasAnyRole("VENDOR_MANAGER", "CLAIMS_ADJUSTER", "CLAIMS_MANAGER", "VENDOR", "SYSTEM_ADMINISTRATOR", "ADMIN", "POLICYHOLDER", "USER")
                         .pathMatchers("/api/vendors/**")
                         .hasAnyRole("VENDOR_MANAGER", "SYSTEM_ADMINISTRATOR", "ADMIN")
                         .pathMatchers("/api/**").authenticated()

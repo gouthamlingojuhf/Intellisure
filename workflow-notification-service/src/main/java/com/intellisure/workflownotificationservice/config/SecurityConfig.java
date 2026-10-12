@@ -51,6 +51,8 @@ public class SecurityConfig {
                                 "/v3/api-docs",
                                 "/v3/api-docs/**"
                         ).permitAll()
+                        .pathMatchers(HttpMethod.POST, "/api/notifications")
+                        .permitAll()
                         .pathMatchers("/api/notifications/**")
                         .authenticated()
                         .pathMatchers("/api/workflows/**")

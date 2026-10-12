@@ -112,6 +112,6 @@ export class IntelligenceDashboardComponent implements OnInit {
   }
 
   formatDate(value: string): string {
-    return new Date(value).toLocaleString();
+    return new Date(value).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
   }
 }

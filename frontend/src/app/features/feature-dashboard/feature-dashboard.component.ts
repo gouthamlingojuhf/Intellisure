@@ -1,4 +1,4 @@
-﻿import { NgClass } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CardComponent, ButtonComponent, BadgeComponent, TableComponent, TableColumn, TableAction } from 'ui-core';
@@ -354,7 +354,16 @@ export class FeatureDashboardComponent implements OnInit {
 
   tableColumns: TableColumn<DashboardTableRow>[] = [
     { key: 'name', header: 'Name', width: '200px' },
-    { key: 'status', header: 'Status', width: '120px', render: this.renderStatus.bind(this) },
+    {
+      key: 'status',
+      header: 'Status',
+      width: '120px',
+      badge: (row, value) => ({
+        text: value,
+        variant: this.getStatusVariant(value),
+      }),
+      render: (row, value) => value,
+    },
     { key: 'note', header: 'Notes', width: '250px' },
     { key: 'value', header: 'Value', width: '120px', align: 'right' },
   ];
@@ -420,14 +429,17 @@ export class FeatureDashboardComponent implements OnInit {
     return classes[tone] || 'activity-neutral';
   }
 
-  renderStatus(row: DashboardTableRow, value: string): string {
+  getStatusVariant(value: string): 'success' | 'warning' | 'danger' | 'info' | 'neutral' {
     const statusMap: Record<string, 'success' | 'warning' | 'danger' | 'info' | 'neutral'> = {
       'Healthy': 'success',
       'Monitoring': 'warning',
       'Queued': 'info',
       'Review': 'danger',
     };
-    const variant = statusMap[value] || 'neutral';
-    return `<is-badge variant="${variant}" size="sm">${value}</is-badge>`;
+    return statusMap[value] || 'neutral';
+  }
+
+  renderStatus(row: DashboardTableRow, value: string): string {
+    return value;
   }
 }

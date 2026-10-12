@@ -70,6 +70,31 @@ public class RiskAssessmentController {
         );
     }
 
+    @PatchMapping("/{assessmentId}/assign-engineer")
+    @PostMapping("/{assessmentId}/assign-engineer")
+    @Operation(summary = "Assign a risk engineer for inspection dispatch")
+    public Mono<RiskAssessmentResponse> assignEngineer(
+            @PathVariable UUID assessmentId,
+            @RequestParam(required = false) UUID riskEngineerId
+    ) {
+        if (riskEngineerId != null) {
+            return service.assignRiskEngineer(
+                    assessmentId,
+                    riskEngineerId
+            );
+        }
+        return service.autoAssignRiskEngineer(assessmentId);
+    }
+
+    @PatchMapping("/{assessmentId}/auto-assign-engineer")
+    @PostMapping("/{assessmentId}/auto-assign-engineer")
+    @Operation(summary = "Auto-assign least-loaded risk engineer")
+    public Mono<RiskAssessmentResponse> autoAssignEngineer(
+            @PathVariable UUID assessmentId
+    ) {
+        return service.autoAssignRiskEngineer(assessmentId);
+    }
+
     @PatchMapping("/{assessmentId}/submit-review")
     @Operation(summary = "Submit assessment for review")
     public Mono<RiskAssessmentResponse> submitReview(
