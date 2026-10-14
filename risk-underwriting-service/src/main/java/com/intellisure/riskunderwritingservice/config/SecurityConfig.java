@@ -99,14 +99,17 @@ public class SecurityConfig {
                          * through method-level authorization.
                          */
                         .pathMatchers(
+                                "/api/risk-assessments",
                                 "/api/risk-assessments/**"
                         )
                         .hasAnyRole(
                                 "UNDERWRITER",
                                 "RISK_ENGINEER",
                                 "ADMIN",
+                                "SYSTEM_ADMINISTRATOR",
                                 "CLAIMS_ADJUSTER",
-                                "CLAIMS_MANAGER"
+                                "CLAIMS_MANAGER",
+                                "POLICYHOLDER"
                         )
 
                         .pathMatchers("/api/**")

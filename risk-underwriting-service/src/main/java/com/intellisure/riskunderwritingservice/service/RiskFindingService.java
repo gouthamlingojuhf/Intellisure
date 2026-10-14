@@ -42,7 +42,7 @@ public class RiskFindingService {
             securityActorService;
 
     @PreAuthorize(
-            "hasAnyRole('RISK_ENGINEER', 'UNDERWRITER')"
+            "hasAnyRole('RISK_ENGINEER', 'UNDERWRITER', 'ADMIN', 'SYSTEM_ADMINISTRATOR')"
     )
     @Transactional
     public Mono<RiskFindingResponse> createFinding(
@@ -142,18 +142,45 @@ public class RiskFindingService {
         return securityActorService
                 .currentUserId()
                 .flatMap(currentUserId -> {
-                    if (!currentUserId.equals(
-                            assessment.getAssignedRiskEngineerId()
-                    )) {
-                        return Mono.error(
-                                new AccessDeniedBusinessException(
-                                        "The authenticated risk engineer "
-                                                + "is not assigned to this assessment"
-                                )
-                        );
+                    // If no engineer is assigned yet, auto-assign this assessment to the current engineer
+                    if (assessment.getAssignedRiskEngineerId() == null) {
+                        assessment.setAssignedRiskEngineerId(currentUserId);
+                        if (assessment.getStatus() == RiskAssessmentStatus.DRAFT) {
+                            assessment.setStatus(RiskAssessmentStatus.RISK_ENGINEERING_REQUIRED);
+                        }
+                        return entityTemplate.update(assessment).then();
                     }
 
-                    return Mono.empty();
+                    // If assigned to current user, permit
+                    if (currentUserId.equals(assessment.getAssignedRiskEngineerId())) {
+                        return Mono.<Void>empty();
+                    }
+
+                    // If assigned to someone else, check if caller is an underwriter or administrator
+                    return securityActorService.hasRole("ADMIN")
+                            .flatMap(isAdmin -> {
+                                if (Boolean.TRUE.equals(isAdmin)) {
+                                    return Mono.<Void>empty();
+                                }
+                                return securityActorService.hasRole("UNDERWRITER")
+                                        .flatMap(isUnderwriter -> {
+                                            if (Boolean.TRUE.equals(isUnderwriter)) {
+                                                return Mono.<Void>empty();
+                                            }
+                                            return Mono.<Void>error(
+                                                    new AccessDeniedBusinessException(
+                                                            "The authenticated risk engineer "
+                                                                    + "is not assigned to this assessment"
+                                                    )
+                                            );
+                                        });
+                            })
+                            .onErrorResume(e -> e instanceof AccessDeniedBusinessException ? Mono.error(e) : Mono.error(
+                                    new AccessDeniedBusinessException(
+                                            "The authenticated risk engineer "
+                                                    + "is not assigned to this assessment"
+                                    )
+                            ));
                 });
     }
 

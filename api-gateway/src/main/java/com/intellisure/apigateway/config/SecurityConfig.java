@@ -166,13 +166,14 @@ public class SecurityConfig {
 
                         .pathMatchers(
                                 "/api/underwriting/**",
+                                "/api/risk-assessments",
                                 "/api/risk-assessments/**",
                                 "/api/referrals/**",
                                 "/api/subjectivities/**",
                                 "/api/decisions/**",
                                 "/api/risk-rules/**"
                         )
-                        .hasAnyRole("UNDERWRITER", "RISK_ENGINEER", "SYSTEM_ADMINISTRATOR", "ADMIN")
+                        .hasAnyRole("UNDERWRITER", "RISK_ENGINEER", "SYSTEM_ADMINISTRATOR", "ADMIN", "POLICYHOLDER")
 
 
                         /*
@@ -316,6 +317,7 @@ public class SecurityConfig {
                                 "/api/analytics/**",
                                 "/api/intelligence/**",
                                 "/api/risks/**",
+                                "/api/risk-assessments",
                                 "/api/risk-assessments/**"
                         )
                         .hasAnyRole(

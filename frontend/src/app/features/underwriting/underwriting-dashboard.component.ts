@@ -1,11 +1,12 @@
 import { AsyncPipe, DatePipe, DecimalPipe, NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { Observable, Subject, catchError, forkJoin, map, of, startWith, switchMap, take, tap } from 'rxjs';
+import { Observable, Subject, catchError, forkJoin, map, of, startWith, switchMap, take, tap, throwError } from 'rxjs';
 import {
   ControlStatus,
+  CreateRiskAssessmentRequest,
   FindingSeverity,
   RecommendationPriority,
   RecommendationStatus,
@@ -206,11 +207,17 @@ interface OfferedCoverageForm extends OfferedCoverageRequest {
                               </div>
                               <div class="rec-status-wrap">
                                 <span class="status" [ngClass]="statusClass(rec.status)">{{ rec.status }}</span>
-                                @if (canManageQuote && rec.status === 'PROPOSED') {
-                                  <button type="button" class="action-btn-sm" (click)="updateRecommendationStatus(rec.recommendationId, 'ACCEPTED')">Accept</button>
-                                }
-                                @if (canManageQuote && rec.status === 'ACCEPTED') {
-                                  <button type="button" class="action-btn-sm" (click)="updateRecommendationStatus(rec.recommendationId, 'VERIFIED')">Verify</button>
+                                @if (canManageQuote || isRiskEngineer) {
+                                  @if (rec.status === 'OPEN' || rec.status === 'PROPOSED') {
+                                    <button type="button" class="action-btn-sm" (click)="updateRecommendationStatus(rec.recommendationId, 'IN_PROGRESS')">Start Work</button>
+                                    <button type="button" class="action-btn-sm" (click)="updateRecommendationStatus(rec.recommendationId, 'WAIVED')">Waive</button>
+                                  }
+                                  @if (rec.status === 'IN_PROGRESS' || rec.status === 'ACCEPTED') {
+                                    <button type="button" class="action-btn-sm" (click)="updateRecommendationStatus(rec.recommendationId, 'COMPLETED')">Complete</button>
+                                  }
+                                  @if (rec.status === 'COMPLETED') {
+                                    <button type="button" class="action-btn-sm" (click)="updateRecommendationStatus(rec.recommendationId, 'VERIFIED')">Verify & Close</button>
+                                  }
                                 }
                               </div>
                             </div>
@@ -232,6 +239,12 @@ interface OfferedCoverageForm extends OfferedCoverageRequest {
                         <button type="button" class="tab-btn" [class.active]="activeFormTab === 'rec'" (click)="activeFormTab = 'rec'">+ Issue Recommendation</button>
                         <button type="button" class="tab-btn" [class.active]="activeFormTab === 'none'" (click)="activeFormTab = 'none'">Hide Form</button>
                       </div>
+
+                      @if (!selectedAssessment && !currentAssessmentId && reviewQuote) {
+                        <div class="workbench-guide-banner" style="background: #f7f3f5; border-left: 3px solid var(--claret); padding: 8px 12px; margin-bottom: 12px; font-size: 11px; border-radius: 4px;">
+                          ℹ️ <strong>Assessment Ready:</strong> Saving a risk finding or recommendation will automatically initialize and link the risk assessment for quote <strong>{{ reviewQuote.quoteNumber }}</strong>.
+                        </div>
+                      }
 
                       @if (activeFormTab === 'finding') {
                         <div class="workbench-form">
@@ -572,11 +585,12 @@ interface OfferedCoverageForm extends OfferedCoverageRequest {
   `],
 })
 
-export class UnderwritingDashboardComponent {
+export class UnderwritingDashboardComponent implements OnInit {
   private readonly store = inject(Store);
   private readonly underwriting = inject(UnderwritingService);
   private readonly quotes = inject(QuoteService);
   private readonly apiService = inject(ApiService);
+  private readonly route = inject(ActivatedRoute);
   private readonly reloadTrigger = new Subject<void>();
 
   selectedAssessment: RiskAssessment | null = null;
@@ -663,6 +677,21 @@ export class UnderwritingDashboardComponent {
     catchError((error: HttpErrorResponse) => of({ loading: false, error: this.errorMessage(error), items: [], assignedQuotes: [] })),
     startWith({ loading: true, error: null, items: [] as RiskAssessment[], assignedQuotes: [] as QuoteResponse[] })
   );
+
+  ngOnInit(): void {
+    const quoteId = this.route.snapshot.queryParamMap.get('quoteId');
+    if (quoteId) {
+      this.reviewLoading = true;
+      this.quotes.getQuoteById(quoteId).subscribe({
+        next: (q) => {
+          this.selectQuote(q);
+        },
+        error: () => {
+          this.reviewLoading = false;
+        }
+      });
+    }
+  }
 
   reload(): void { this.reloadTrigger.next(); }
 
@@ -799,57 +828,125 @@ export class UnderwritingDashboardComponent {
     });
   }
 
+  ensureAssessment(): Observable<RiskAssessment> {
+    const existingId = this.selectedAssessment?.assessmentId || this.reviewQuote?.riskAssessmentId || this.currentAssessmentId;
+    if (existingId && this.selectedAssessment) {
+      return of(this.selectedAssessment);
+    }
+    if (existingId) {
+      return this.underwriting.getAssessmentById(existingId).pipe(
+        tap((assessment) => {
+          this.selectedAssessment = assessment;
+          this.currentAssessmentId = assessment.assessmentId;
+          this.resolveEngineerName(assessment.assignedRiskEngineerId);
+        }),
+        catchError(() => this.createAssessmentForQuote())
+      );
+    }
+    return this.createAssessmentForQuote();
+  }
+
+  createAssessmentForQuote(): Observable<RiskAssessment> {
+    if (!this.reviewQuote) {
+      return throwError(() => new Error('No quote selected for risk assessment.'));
+    }
+    const createReq: CreateRiskAssessmentRequest = {
+      quoteId: this.reviewQuote.quoteId,
+      customerId: this.reviewQuote.customerId,
+      assessmentType: this.reviewQuote.productCode || 'COMMERCIAL_PROPERTY',
+      assessmentDate: new Date().toISOString().slice(0, 10),
+      location: (this.customerProfile ? `${this.customerProfile.city || ''}, ${this.customerProfile.state || ''}`.trim() : '') || 'Commercial Facility',
+      businessOperations: this.reviewQuote.businessOperations || 'Commercial Operations',
+      annualRevenue: this.customerProfile?.annualTurnover || 500000,
+      annualPayroll: 150000,
+      employeeCount: this.customerProfile?.employeeCount || 10,
+      assetValue: 1000000,
+      priorClaimCount: 0,
+      priorLossAmount: 0,
+      createdBy: this.currentUserId || this.reviewQuote.customerId,
+      assignedUnderwriterId: this.reviewQuote.assignedUnderwriterId,
+      assignedRiskEngineerId: this.isRiskEngineer ? this.currentUserId : undefined,
+    };
+    return this.underwriting.createAssessment(createReq).pipe(
+      catchError(() => {
+        return this.underwriting.getAssessmentByQuoteId(this.reviewQuote!.quoteId);
+      }),
+      tap((created) => {
+        this.selectedAssessment = created;
+        this.currentAssessmentId = created.assessmentId;
+        if (this.reviewQuote) {
+          this.reviewQuote.riskAssessmentId = created.assessmentId;
+        }
+        this.resolveEngineerName(created.assignedRiskEngineerId);
+      })
+    );
+  }
+
   submitFinding(): void {
-    const assessmentId = this.selectedAssessment?.assessmentId || this.reviewQuote?.riskAssessmentId || this.currentAssessmentId;
-    if (!assessmentId || !this.currentUserId || !this.newFindingDesc.trim()) return;
+    if (!this.newFindingDesc.trim()) return;
     this.findingSubmitting = true;
-    this.underwriting.createFinding(assessmentId, {
-      findingType: this.newFindingType,
-      description: this.newFindingDesc.trim(),
-      severity: this.newFindingSeverity,
-      controlStatus: this.newFindingControl,
-      createdBy: this.currentUserId,
-    }).subscribe({
+    this.actionMessage = null;
+    this.actionError = null;
+
+    this.ensureAssessment().pipe(
+      switchMap((assessment) => {
+        return this.underwriting.createFinding(assessment.assessmentId, {
+          findingType: this.newFindingType,
+          description: this.newFindingDesc.trim(),
+          severity: this.newFindingSeverity,
+          controlStatus: this.newFindingControl,
+          createdBy: this.currentUserId || this.reviewQuote?.customerId || assessment.customerId,
+        });
+      })
+    ).subscribe({
       next: (created) => {
         this.findings = [created, ...this.findings];
         this.findingSubmitting = false;
         this.newFindingDesc = '';
         this.actionMessage = 'Risk finding recorded successfully.';
       },
-      error: (err: HttpErrorResponse) => {
+      error: (err: HttpErrorResponse | Error) => {
         this.findingSubmitting = false;
-        this.actionError = err?.error?.message || err?.message || 'Failed to record risk finding.';
+        const msg = (err instanceof HttpErrorResponse ? err?.error?.message : err?.message) || 'Failed to record risk finding.';
+        this.actionError = msg;
       },
     });
   }
 
   submitRecommendation(): void {
-    const assessmentId = this.selectedAssessment?.assessmentId || this.reviewQuote?.riskAssessmentId || this.currentAssessmentId;
-    if (!assessmentId || !this.currentUserId || !this.newRecDesc.trim()) return;
+    if (!this.newRecDesc.trim()) return;
     this.recSubmitting = true;
-    this.underwriting.createRecommendation(assessmentId, {
-      recommendationType: this.newRecType,
-      description: this.newRecDesc.trim(),
-      priority: this.newRecPriority,
-      requiredBeforeBind: this.newRecRequiredBeforeBind,
-      targetDate: this.newRecTargetDate || undefined,
-      createdBy: this.currentUserId,
-    }).subscribe({
+    this.actionMessage = null;
+    this.actionError = null;
+
+    this.ensureAssessment().pipe(
+      switchMap((assessment) => {
+        return this.underwriting.createRecommendation(assessment.assessmentId, {
+          recommendationType: this.newRecType,
+          description: this.newRecDesc.trim(),
+          priority: this.newRecPriority,
+          requiredBeforeBind: this.newRecRequiredBeforeBind,
+          targetDate: this.newRecTargetDate || undefined,
+          createdBy: this.currentUserId || this.reviewQuote?.customerId || assessment.customerId,
+        });
+      })
+    ).subscribe({
       next: (created) => {
         this.recommendations = [created, ...this.recommendations];
         this.recSubmitting = false;
         this.newRecDesc = '';
         this.actionMessage = 'Loss control recommendation recorded successfully.';
       },
-      error: (err: HttpErrorResponse) => {
+      error: (err: HttpErrorResponse | Error) => {
         this.recSubmitting = false;
-        this.actionError = err?.error?.message || err?.message || 'Failed to record recommendation.';
+        const msg = (err instanceof HttpErrorResponse ? err?.error?.message : err?.message) || 'Failed to record recommendation.';
+        this.actionError = msg;
       },
     });
   }
 
   updateRecommendationStatus(recId: string, status: string): void {
-    this.underwriting.updateRecommendationStatus(recId, status).subscribe({
+    this.underwriting.updateRecommendationStatus(recId, status, this.currentUserId || undefined).subscribe({
       next: (updated) => {
         this.recommendations = this.recommendations.map((r) => r.recommendationId === recId ? updated : r);
         this.actionMessage = `Recommendation status updated to ${status}.`;

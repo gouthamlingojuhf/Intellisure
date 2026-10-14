@@ -49,7 +49,7 @@ public class RiskAssessmentService {
 
 
     @PreAuthorize(
-            "hasAnyRole('UNDERWRITER', 'ADMIN', 'SYSTEM', 'POLICYHOLDER')"
+            "hasAnyRole('UNDERWRITER', 'ADMIN', 'SYSTEM', 'POLICYHOLDER', 'RISK_ENGINEER')"
     )
     @Transactional
     public Mono<RiskAssessmentResponse> createAssessment(

@@ -36,7 +36,7 @@ public class RiskRecommendationService {
 
 
     @PreAuthorize(
-            "hasAnyRole('RISK_ENGINEER', 'UNDERWRITER')"
+            "hasAnyRole('RISK_ENGINEER', 'UNDERWRITER', 'ADMIN', 'SYSTEM_ADMINISTRATOR')"
     )
     @Transactional
     public Mono<RiskRecommendationResponse>
@@ -99,7 +99,7 @@ public class RiskRecommendationService {
 
 
     @PreAuthorize(
-            "hasAnyRole('RISK_ENGINEER', 'UNDERWRITER')"
+            "hasAnyRole('RISK_ENGINEER', 'UNDERWRITER', 'ADMIN', 'SYSTEM_ADMINISTRATOR')"
     )
     @Transactional
     public Mono<RiskRecommendationResponse>

@@ -32,13 +32,15 @@ export type FindingSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type ControlStatus = 'ADEQUATE' | 'PARTIALLY_ADEQUATE' | 'INADEQUATE' | 'NOT_PRESENT' | 'NOT_ASSESSED';
 export type RecommendationPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type RecommendationStatus =
+  | 'OPEN'
+  | 'IN_PROGRESS'
+  | 'COMPLETED'
+  | 'VERIFIED'
+  | 'WAIVED'
   | 'PROPOSED'
   | 'COMMUNICATED'
   | 'ACCEPTED'
   | 'REJECTED'
-  | 'IN_PROGRESS'
-  | 'COMPLETED'
-  | 'VERIFIED'
   | 'OVERDUE';
 
 export interface RiskFinding {
@@ -84,4 +86,23 @@ export interface CreateRiskRecommendationRequest {
   requiredBeforeBind: boolean;
   targetDate?: string | null;
   createdBy: string;
+}
+
+export interface CreateRiskAssessmentRequest {
+  quoteId: string;
+  policyId?: string | null;
+  customerId: string;
+  assessmentType: string;
+  assessmentDate: string;
+  location: string;
+  businessOperations: string;
+  annualRevenue?: number;
+  annualPayroll?: number;
+  employeeCount?: number;
+  assetValue?: number;
+  priorClaimCount?: number;
+  priorLossAmount?: number;
+  createdBy: string;
+  assignedUnderwriterId?: string | null;
+  assignedRiskEngineerId?: string | null;
 }

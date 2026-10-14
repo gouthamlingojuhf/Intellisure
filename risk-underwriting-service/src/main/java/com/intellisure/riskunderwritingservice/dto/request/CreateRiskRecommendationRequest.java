@@ -25,9 +25,6 @@ public record CreateRiskRecommendationRequest(
         @NotNull(message = "Required-before-bind value is required")
         Boolean requiredBeforeBind,
 
-        @FutureOrPresent(
-                message = "Target date cannot be in the past"
-        )
         LocalDate targetDate,
 
         @NotNull(message = "Created-by user ID is required")

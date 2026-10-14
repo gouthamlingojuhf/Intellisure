@@ -48,7 +48,7 @@ spring:
             - id: risk-underwriting-service
               uri: lb://risk-underwriting-service
               predicates:
-                - Path=/api/risk-assessments/**,/api/referrals/**,/api/subjectivities/**,/api/decisions/**,/api/risk-rules/**
+                - Path=/api/risk-assessments,/api/risk-assessments/**,/api/referrals/**,/api/subjectivities/**,/api/decisions/**,/api/risk-rules/**
 
             - id: claims-service
               uri: lb://claims-service

@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import {
+  CreateRiskAssessmentRequest,
   CreateRiskFindingRequest,
   CreateRiskRecommendationRequest,
   RiskAssessment,
@@ -19,6 +20,10 @@ export class UnderwritingService {
       ? `/api/risk-assessments/risk-engineer/${userId}`
       : `/api/risk-assessments/underwriter/${userId}`;
     return this.api.get<RiskAssessment[]>(path);
+  }
+
+  createAssessment(req: CreateRiskAssessmentRequest): Observable<RiskAssessment> {
+    return this.api.post<RiskAssessment>('/api/risk-assessments', req);
   }
 
   getAssessmentByQuoteId(quoteId: string): Observable<RiskAssessment> {
@@ -45,10 +50,10 @@ export class UnderwritingService {
     return this.api.post<RiskRecommendation>(`/api/risk-assessments/${assessmentId}/recommendations`, req);
   }
 
-  updateRecommendationStatus(recommendationId: string, status: string, notes?: string): Observable<RiskRecommendation> {
+  updateRecommendationStatus(recommendationId: string, status: string, verifiedBy?: string): Observable<RiskRecommendation> {
     return this.api.patch<RiskRecommendation>(
       `/api/risk-assessments/recommendations/${recommendationId}/status`,
-      { status, notes }
+      { status, verifiedBy }
     );
   }
 

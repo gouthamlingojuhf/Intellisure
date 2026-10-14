@@ -99,12 +99,25 @@ import {
                 <div>
                   <h3>Underwriting Review in Progress</h3>
                   <p>
-                    Your submission has been assigned to an underwriter. As risk assessments, conditions, or pricing are offered, they will update here.
+                    @if (isRiskEngineer) {
+                      Quote is pending risk inspection and loss control recommendations. Open the engineering workbench to record observed hazards.
+                    } @else if (isUnderwriter) {
+                      Assigned underwriting application. Review risk evidence and publish pricing terms in the workbench.
+                    } @else {
+                      Your submission has been assigned to an underwriter. As risk assessments, conditions, or pricing are offered, they will update here.
+                    }
                   </p>
                 </div>
-                <is-button variant="secondary" size="sm" (click)="loadQuoteData()">
-                  Refresh Status ⟳
-                </is-button>
+                <div class="status-action-buttons" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                  @if (isRiskEngineer || isUnderwriter || isAdmin) {
+                    <a [routerLink]="['/underwriting']" [queryParams]="{ quoteId: quote.quoteId }" style="padding: 6px 14px; background: var(--claret, #75013f); color: white; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 12px; display: inline-flex; align-items: center; gap: 6px;">
+                      Open {{ isRiskEngineer ? 'Risk Engineering' : 'Underwriting' }} Workbench →
+                    </a>
+                  }
+                  <is-button variant="secondary" size="sm" (click)="loadQuoteData()">
+                    Refresh Status ⟳
+                  </is-button>
+                </div>
               </div>
             }
 
@@ -857,6 +870,11 @@ export class QuoteDetailComponent implements OnInit {
   get isUnderwriter(): boolean {
     const role = (this.userRole || '').toUpperCase().replace(/^ROLE_/, '');
     return role === 'UNDERWRITER';
+  }
+
+  get isRiskEngineer(): boolean {
+    const role = (this.userRole || '').toUpperCase().replace(/^ROLE_/, '');
+    return role === 'RISK_ENGINEER';
   }
 
   get isAdmin(): boolean {

@@ -67,6 +67,10 @@ describe('core API clients', () => {
     const underwriting = TestBed.inject(UnderwritingService);
     underwriting.getAssignedQueue('u1', 'RISK_ENGINEER').subscribe();
     underwriting.getAssignedQueue('u1', 'UNDERWRITER').subscribe();
+    underwriting.createAssessment({} as any).subscribe();
+    underwriting.createFinding('a1', {} as any).subscribe();
+    underwriting.createRecommendation('a1', {} as any).subscribe();
+    underwriting.updateRecommendationStatus('r1', 'IN_PROGRESS', 'u1').subscribe();
 
     expect(api.post).toHaveBeenCalledWith('/api/quotes', {});
     expect(api.patch).toHaveBeenCalledWith('/api/quotes/q1/decline', { reason: 'too expensive' });
